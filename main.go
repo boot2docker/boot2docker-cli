@@ -23,14 +23,39 @@ var B2D struct {
 	DockerPort int    // host Docker port (forward to port 4243 in VM)
 }
 
-func init() {
-	if getenv("HOME", "") == "" {
-		log.Fatalf("$HOME is not set") // TODO workaround for Windows
+func getCfgDir(name string) string {
+	if b2dDir := os.Getenv("BOOT2DOCKER_DIR"); b2dDir != "" {
+		return b2dDir
 	}
+
+	// unix
+	if home := os.Getenv("HOME"); home != "" {
+		return filepath.Join(home, name)
+	}
+
+	// windows
+	for _, env := range []string{
+		"APPDATA",
+		"LOCALAPPDATA",
+		"USERPROFILE", // let's try USERPROFILE only as a very last resort
+	} {
+		if val := os.Getenv(env); val != "" {
+			return filepath.Join(val, "boot2docker")
+		}
+	}
+	// ok, we've tried everything reasonable - now let's go for CWD
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("error getting current directory: %v\n", err)
+	}
+	return filepath.Join(cwd, name)
+}
+
+func init() {
 	B2D.VBM = getenv("BOOT2DOCKER_VBM", "VBoxManage")
 	B2D.SSH = getenv("BOOT2DOCKER_SSH", "ssh")
 	B2D.VM = getenv("BOOT2DOCKER_VM", "boot2docker-vm")
-	B2D.Dir = getenv("BOOT2DOCKER_DIR", filepath.Join(getenv("HOME", ""), ".boot2docker"))
+	B2D.Dir = getCfgDir(".boot2docker")
 	B2D.ISO = getenv("BOOT2DOCKER_ISO", filepath.Join(B2D.Dir, "boot2docker.iso"))
 	B2D.Disk = getenv("BOOT2DOCKER_DISK", filepath.Join(B2D.Dir, "boot2docker.vmdk"))
 
