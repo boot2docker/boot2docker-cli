@@ -30,8 +30,8 @@ func init() {
 		log.Fatalf("cannot get current user: %s", err)
 	}
 	B2D.VBM = getenv("BOOT2DOCKER_VBM", "VBoxManage")
+	B2D.SSH = getenv("BOOT2DOCKER_SSH", "ssh")
 	B2D.VM = getenv("BOOT2DOCKER_VM", "boot2docker-vm")
-	B2D.SSH = getenv("BOOT2DOCKER_DOCKER_SSH", "ssh")
 	B2D.Dir = getenv("BOOT2DOCKER_DIR", filepath.Join(u.HomeDir, ".boot2docker"))
 	B2D.ISO = getenv("BOOT2DOCKER_ISO", filepath.Join(B2D.Dir, "boot2docker.iso"))
 	B2D.Disk = getenv("BOOT2DOCKER_DISK", filepath.Join(B2D.Dir, "boot2docker.vmdk"))
@@ -47,11 +47,11 @@ func init() {
 	if B2D.Memory <= 0 {
 		log.Fatalf("BOOT2DOCKER_MEMORY way too small.")
 	}
-	if B2D.SSHPort, err = strconv.Atoi(getenv("BOOT2DOCKER_SSH_HOST_PORT", "2022")); err != nil {
-		log.Fatalf("Invalid BOOT2DOCKER_SSH_HOST_PORT: %s", err)
+	if B2D.SSHPort, err = strconv.Atoi(getenv("BOOT2DOCKER_SSH_PORT", "2022")); err != nil {
+		log.Fatalf("Invalid BOOT2DOCKER_SSH_PORT: %s", err)
 	}
 	if B2D.SSHPort <= 0 {
-		log.Fatalf("Invalid BOOT2DOCKER_SSH_HOST_PORT: must be in the range of 1--65535: got %d", B2D.SSHPort)
+		log.Fatalf("Invalid BOOT2DOCKER_SSH_PORT: must be in the range of 1--65535: got %d", B2D.SSHPort)
 	}
 	if B2D.DockerPort, err = strconv.Atoi(getenv("BOOT2DOCKER_DOCKER_PORT", "4243")); err != nil {
 		log.Fatalf("Invalid BOOT2DOCKER_DOCKER_PORT: %s", err)

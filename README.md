@@ -21,3 +21,64 @@ following platforms:
 Once you have the necessary Go toolchain, run
 
     make
+
+The generated binaries will be in the `bin/` folder.
+
+
+## Usage
+
+To initialize a new boot2docker VM, run
+
+    b2d init
+
+Then you can start the VM by
+
+    b2d up
+
+To stop the VM, run
+
+    b2d down
+
+And finally if you don't need the VM anymore, run
+
+    b2d delete
+
+to remove it completely. 
+
+
+## Configuration
+
+The `b2d` binary reads configuration from the environment, currently you can
+configure the following options:
+
+- `BOOT2DOCKER_VBM`: path to the VirtualBox management utility, default is
+  `VBoxManagement`.
+- `BOOT2DOCKER_SSH`: path to the `ssh` client utility, default is `ssh`.
+- `BOOT2DOCKER_VM`: name of the boot2docker virtual machine in VirtualBox,
+  default is `boot2docker-vm`.
+- `BOOT2DOCKER_DIR`: path to the boot2docker config directory, default is
+  `$HOME/.boot2docker`.
+- `BOOT2DOCKER_ISO`: path to the boot2docker ISO image, default is
+  `$BOOT2DOCKER_DIR/boot2docker.iso`.
+- `BOOT2DOCKER_DISK`: path to the boot2docker disk image, default is
+  `$BOOT2DOCKER_DIR/boot2docker.vmdk`.
+- `BOOT2DOCKER_DISKSIZE`: boot2docker disk image size in MB.
+- `BOOT2DOCKER_MEMORY`: boot2docker VM memory size in MB.
+- `BOOT2DOCKER_SSH_PORT`: port on the host forwarding to port 22 in boot2docker
+  VM, default is 2022.
+- `BOOT2DOCKER_DOCKER_PORT`: port on the host forwarding to port 4243 in
+  boot2docker VM, default is 4243.
+
+
+You can put your custom options into your shell, e.g.
+
+    export BOOT2DOCKER_VBM=VBoxManagement
+    export BOOT2DOCKER_SSH=ssh
+    export BOOT2DOCKER_VM=boot2docker-vm
+    export BOOT2DOCKER_DIR=$HOME/.boot2docker
+    export BOOT2DOCKER_ISO=$BOOT2DOCKER_DIR/boot2docker.iso
+    export BOOT2DOCKER_DISK=$BOOT2DOCKER_DIR/boot2docker.vmdk
+    export BOOT2DOCKER_DISKSIZE=20000
+    export BOOT2DOCKER_MEMORY=1024
+    export BOOT2DOCKER_SSH_PORT=2022
+    export BOOT2DOCKER_DOCKER_PORT=4243
