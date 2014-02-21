@@ -22,7 +22,7 @@ Once you have the necessary Go toolchain, run
 
     make
 
-The generated binaries will be in the `bin/` folder.
+The generated binaries will be in your `$GOPATH/bin/` folder.
 
 
 ## Usage
