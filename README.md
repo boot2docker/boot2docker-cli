@@ -1,4 +1,4 @@
-# go-boot2docker
+# boot2docker-cli
 
 This is the Go port of the boot2docker
 (https://github.com/boot2docker/boot2docker) management script. It is intended
@@ -16,39 +16,40 @@ following platforms:
 - Windows/amd64
 
 
-## Build
+## Installation
 
-Once you have the necessary Go toolchain, run
+Once you have your `$GOPATH` properly setup, run
 
-    make
+    go get github.com/boot2docker/boot2docker-cli/boot2docker
 
-The generated binaries will be in your `$GOPATH/bin/` folder.
+
+The binary will be available at `$GOPATH/bin/boot2docker`.
 
 
 ## Usage
 
 To initialize a new boot2docker VM, run
 
-    b2d init
+    boot2ocker init
 
 Then you can start the VM by
 
-    b2d up
+    boot2docker up
 
 To stop the VM, run
 
-    b2d down
+    boot2docker down
 
 And finally if you don't need the VM anymore, run
 
-    b2d delete
+    boot2docker delete
 
 to remove it completely. 
 
 
 ## Configuration
 
-The `b2d` binary reads configuration from the environment, currently you can
+The `boot2docker` binary reads configuration from the environment, currently you can
 configure the following options:
 
 - `BOOT2DOCKER_VBM`: path to the VirtualBox management utility, default is
