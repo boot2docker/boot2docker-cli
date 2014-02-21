@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -49,8 +48,7 @@ func download(dest, url string) error {
 	}
 	defer rsp.Body.Close()
 
-	// Download to a temp file first then rename it to avoid partial download.
-	f, err := ioutil.TempFile("", "")
+	f, err := os.Create(fmt.Sprintf("%s.download", dest))
 	if err != nil {
 		return err
 	}
