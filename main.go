@@ -5,7 +5,6 @@ import (
 	"flag"
 	"log"
 	"os"
-	"os/user"
 	"path/filepath"
 	"strconv"
 )
@@ -25,16 +24,17 @@ var B2D struct {
 }
 
 func init() {
-	u, err := user.Current()
-	if err != nil {
-		log.Fatalf("cannot get current user: %s", err)
+	if getenv("HOME", "") == "" {
+		log.Fatalf("$HOME is not set") // TODO workaround for Windows
 	}
 	B2D.VBM = getenv("BOOT2DOCKER_VBM", "VBoxManage")
 	B2D.SSH = getenv("BOOT2DOCKER_SSH", "ssh")
 	B2D.VM = getenv("BOOT2DOCKER_VM", "boot2docker-vm")
-	B2D.Dir = getenv("BOOT2DOCKER_DIR", filepath.Join(u.HomeDir, ".boot2docker"))
+	B2D.Dir = getenv("BOOT2DOCKER_DIR", filepath.Join(getenv("HOME", ""), ".boot2docker"))
 	B2D.ISO = getenv("BOOT2DOCKER_ISO", filepath.Join(B2D.Dir, "boot2docker.iso"))
 	B2D.Disk = getenv("BOOT2DOCKER_DISK", filepath.Join(B2D.Dir, "boot2docker.vmdk"))
+
+	var err error
 	if B2D.DiskSize, err = strconv.Atoi(getenv("BOOT2DOCKER_DISKSIZE", "20000")); err != nil {
 		log.Fatalf("Invalid BOOT2DOCKER_DISKSIZE: %s", err)
 	}
