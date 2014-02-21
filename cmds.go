@@ -292,12 +292,12 @@ func cmdInit() {
 
 // Download the boot2docker ISO image.
 func cmdDownload() {
-	log.Printf("downloading boot2docker ISO image...")
+	log.Printf("Downloading boot2docker ISO image...")
 	tag, err := getLatestReleaseName("https://api.github.com/repos/boot2docker/boot2docker/releases")
 	if err != nil {
 		log.Fatalf("Failed to get latest release: %s", err)
 	}
-	log.Printf("  %s", tag)
+	log.Printf("Latest release is %s", tag)
 
 	if err := download(B2D.ISO, fmt.Sprintf("https://github.com/boot2docker/boot2docker/releases/download/%s/boot2docker.iso", tag)); err != nil {
 		log.Fatalf("Failed to download ISO image: %s", err)
