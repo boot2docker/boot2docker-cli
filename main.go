@@ -64,19 +64,6 @@ func init() {
 	flag.Parse()
 }
 
-// State of a virtual machine.
-type vmState string
-
-const (
-	vmRunning      vmState = "running"
-	vmPoweroff             = "poweroff"
-	vmPaused               = "paused"
-	vmSaved                = "saved"
-	vmAborted              = "aborted"
-	vmUnregistered         = "(unregistered)" // not actually reported by VirtualBox
-	vmUnknown              = "(unknown)"      // not actually reported by VirtualBox
-)
-
 func main() {
 	if vm := flag.Arg(1); vm != "" {
 		B2D.VM = vm

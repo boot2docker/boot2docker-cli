@@ -8,6 +8,19 @@ import (
 	"time"
 )
 
+// State of a virtual machine.
+type vmState string
+
+const (
+	vmRunning      vmState = "running"
+	vmPoweroff             = "poweroff"
+	vmPaused               = "paused"
+	vmSaved                = "saved"
+	vmAborted              = "aborted"
+	vmUnregistered         = "(unregistered)" // not actually reported by VirtualBox
+	vmUnknown              = "(unknown)"      // not actually reported by VirtualBox
+)
+
 // Call the external SSH command to login into boot2docker VM.
 func cmdSSH() {
 	switch state := status(B2D.VM); state {
@@ -74,7 +87,7 @@ func cmdSave() {
 	case vmRunning:
 		log.Printf("Suspending %s", B2D.VM)
 		if err := vbm("controlvm", B2D.VM, "savestate"); err != nil {
-			log.Fatalf("failed to suspend vm: %s", err)
+			log.Fatalf("Failed to suspend vm: %s", err)
 		}
 	default:
 		log.Printf("%s is not running.", B2D.VM)
@@ -103,7 +116,7 @@ func cmdStop() {
 	case vmRunning:
 		log.Printf("Shutting down %s...", B2D.VM)
 		if err := vbm("controlvm", B2D.VM, "acpipowerbutton"); err != nil {
-			log.Fatalf("failed to shutdown vm: %s", err)
+			log.Fatalf("Failed to shutdown vm: %s", err)
 		}
 		for status(B2D.VM) == vmRunning {
 			time.Sleep(1 * time.Second)
@@ -165,7 +178,7 @@ func cmdDelete() {
 
 	case vmPoweroff, vmAborted:
 		if err := vbm("unregistervm", "--delete", B2D.VM); err != nil {
-			log.Fatalf("failed to delete vm: %s", err)
+			log.Fatalf("Failed to delete vm: %s", err)
 		}
 	default:
 		log.Fatalf("%s needs to be stopped to delete it.", B2D.VM)
@@ -204,7 +217,7 @@ func cmdInit() {
 
 	log.Printf("Creating VM %s...", B2D.VM)
 	if err := vbm("createvm", "--name", B2D.VM, "--register"); err != nil {
-		log.Fatalf("failed to create vm: %s", err)
+		log.Fatalf("Failed to create vm: %s", err)
 	}
 
 	if err := vbm("modifyvm", B2D.VM,
@@ -225,18 +238,18 @@ func cmdInit() {
 		"--bioslogodisplaytime", "0",
 		"--biosbootmenu", "disabled",
 		"--boot1", "dvd"); err != nil {
-		log.Fatal("failed to modify vm: %s", err)
+		log.Fatal("Failed to modify vm: %s", err)
 	}
 
 	log.Printf("Setting VM networking")
 	if err := vbm("modifyvm", B2D.VM, "--nic1", "nat", "--nictype1", "virtio", "--cableconnected1", "on"); err != nil {
-		log.Fatalf("failed to modify vm: %s", err)
+		log.Fatalf("Failed to modify vm: %s", err)
 	}
 
 	if err := vbm("modifyvm", B2D.VM,
 		"--natpf1", fmt.Sprintf("ssh,tcp,127.0.0.1,%d,,22", B2D.SSHPort),
 		"--natpf1", fmt.Sprintf("docker,tcp,127.0.0.1,%d,,4243", B2D.DockerPort)); err != nil {
-		log.Fatalf("failed to modify vm: %s", err)
+		log.Fatalf("Failed to modify vm: %s", err)
 	}
 	log.Printf("Port forwarding [ssh]: host tcp://127.0.0.1:%d --> guest tcp://0.0.0.0:22", B2D.SSHPort)
 	log.Printf("Port forwarding [docker]: host tcp://127.0.0.1:%d --> guest tcp://0.0.0.0:4243", B2D.DockerPort)
@@ -245,7 +258,7 @@ func cmdInit() {
 		if os.IsNotExist(err) {
 			cmdDownload()
 		} else {
-			log.Fatalf("failed to open ISO image: %s", err)
+			log.Fatalf("Failed to open ISO image: %s", err)
 		}
 	}
 
@@ -253,24 +266,24 @@ func cmdInit() {
 		if os.IsNotExist(err) {
 			err := makeDiskImage(B2D.Disk, B2D.DiskSize)
 			if err != nil {
-				log.Fatalf("failed to create disk image: %s", err)
+				log.Fatalf("Failed to create disk image: %s", err)
 			}
 		} else {
-			log.Fatalf("failed to open disk image: %s", err)
+			log.Fatalf("Failed to open disk image: %s", err)
 		}
 	}
 
 	log.Printf("Setting VM disks")
 	if err := vbm("storagectl", B2D.VM, "--name", "SATA", "--add", "sata", "--hostiocache", "on"); err != nil {
-		log.Fatalf("failed to add storage controller: %s", err)
+		log.Fatalf("Failed to add storage controller: %s", err)
 	}
 
 	if err := vbm("storageattach", B2D.VM, "--storagectl", "SATA", "--port", "0", "--device", "0", "--type", "dvddrive", "--medium", B2D.ISO); err != nil {
-		log.Fatalf("failed to attach storage device: %s", err)
+		log.Fatalf("Failed to attach storage device: %s", err)
 	}
 
 	if err := vbm("storageattach", B2D.VM, "--storagectl", "SATA", "--port", "1", "--device", "0", "--type", "hdd", "--medium", B2D.Disk); err != nil {
-		log.Fatalf("failed to attach storage device: %s", err)
+		log.Fatalf("Failed to attach storage device: %s", err)
 	}
 
 	log.Printf("Done.")
@@ -280,13 +293,13 @@ func cmdInit() {
 // Download the boot2docker ISO image.
 func cmdDownload() {
 	log.Printf("downloading boot2docker ISO image...")
-	tag, err := getLatestReleaseName()
+	tag, err := getLatestReleaseName("https://api.github.com/repos/boot2docker/boot2docker/releases")
 	if err != nil {
-		log.Fatalf("failed to get latest release: %s", err)
+		log.Fatalf("Failed to get latest release: %s", err)
 	}
 	log.Printf("  %s", tag)
-	url := fmt.Sprintf("https://github.com/boot2docker/boot2docker/releases/download/%s/boot2docker.iso", tag)
-	if err := download(B2D.ISO, url); err != nil {
-		log.Fatalf("failed to download ISO image: %s", err)
+
+	if err := download(B2D.ISO, fmt.Sprintf("https://github.com/boot2docker/boot2docker/releases/download/%s/boot2docker.iso", tag)); err != nil {
+		log.Fatalf("Failed to download ISO image: %s", err)
 	}
 }

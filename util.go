@@ -50,11 +50,12 @@ func download(dest, url string) error {
 	defer rsp.Body.Close()
 
 	// Download to a temp file first then rename it to avoid partial download.
-	f, err := ioutil.TempFile("", "boot2docker-")
+	f, err := ioutil.TempFile("", "")
 	if err != nil {
 		return err
 	}
 	defer os.Remove(f.Name())
+
 	if _, err := io.Copy(f, rsp.Body); err != nil {
 		// TODO: display download progress?
 		return err
@@ -68,9 +69,9 @@ func download(dest, url string) error {
 	return nil
 }
 
-// Get the latest boot2docker release tag name (e.g. "v0.6.0").
-func getLatestReleaseName() (string, error) {
-	rsp, err := http.Get("https://api.github.com/repos/boot2docker/boot2docker/releases")
+// Get latest release tag name (e.g. "v0.6.0") from a repo on GitHub.
+func getLatestReleaseName(url string) (string, error) {
+	rsp, err := http.Get(url)
 	if err != nil {
 		return "", err
 	}
