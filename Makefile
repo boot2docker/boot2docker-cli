@@ -1,3 +1,6 @@
+build:
+	go install
+
 all:
 	GOOS=linux GOARCH=386 go install
 	GOOS=linux GOARCH=amd64 go install
