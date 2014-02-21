@@ -62,12 +62,12 @@ configure the following options:
   `$BOOT2DOCKER_DIR/boot2docker.iso`.
 - `BOOT2DOCKER_DISK`: path to the boot2docker disk image, default is
   `$BOOT2DOCKER_DIR/boot2docker.vmdk`.
-- `BOOT2DOCKER_DISKSIZE`: boot2docker disk image size in MB.
-- `BOOT2DOCKER_MEMORY`: boot2docker VM memory size in MB.
+- `BOOT2DOCKER_DISKSIZE`: boot2docker disk image size in MB, default is `20000`.
+- `BOOT2DOCKER_MEMORY`: boot2docker VM memory size in MB, default is `1024`.
 - `BOOT2DOCKER_SSH_PORT`: port on the host forwarding to port 22 in boot2docker
-  VM, default is 2022.
+  VM, default is `2022`.
 - `BOOT2DOCKER_DOCKER_PORT`: port on the host forwarding to port 4243 in
-  boot2docker VM, default is 4243.
+  boot2docker VM, default is `4243`.
 
 
 You can put your custom options into your shell, e.g.
