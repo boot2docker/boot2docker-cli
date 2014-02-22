@@ -4,10 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"os"
 )
+
+func logf(fmt string, v ...interface{}) {
+	log.Printf(fmt, v...)
+}
 
 // Return the value of an ENV var, or the fallback value if the ENV var is empty/undefined.
 func getenv(key, fallback string) string {
