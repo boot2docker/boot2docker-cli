@@ -30,7 +30,7 @@ The binary will be available at `$GOPATH/bin/boot2docker`.
 
 To initialize a new boot2docker VM, run
 
-    boot2ocker init
+    boot2docker init
 
 Then you can start the VM by
 
