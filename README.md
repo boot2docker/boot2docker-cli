@@ -53,7 +53,7 @@ The `boot2docker` binary reads configuration from the environment, currently you
 configure the following options:
 
 - `BOOT2DOCKER_VBM`: path to the VirtualBox management utility, default is
-  `VBoxManagement`.
+  `VBoxManage`.
 - `BOOT2DOCKER_SSH`: path to the `ssh` client utility, default is `ssh`.
 - `BOOT2DOCKER_VM`: name of the boot2docker virtual machine in VirtualBox,
   default is `boot2docker-vm`.
@@ -73,7 +73,7 @@ configure the following options:
 
 You can put your custom options into your shell, e.g.
 
-    export BOOT2DOCKER_VBM=VBoxManagement
+    export BOOT2DOCKER_VBM=VBoxManage
     export BOOT2DOCKER_SSH=ssh
     export BOOT2DOCKER_VM=boot2docker-vm
     export BOOT2DOCKER_DIR=$HOME/.boot2docker
