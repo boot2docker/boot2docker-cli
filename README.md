@@ -49,29 +49,29 @@ to remove it completely.
 
 ## Configuration
 
-The `boot2docker` binary reads configuration from the environment, currently you can
+The `boot2docker` binary reads configuration from the environment. Currently you can
 configure the following options:
 
-- `BOOT2DOCKER_VBM`: path to the VirtualBox management utility, default is
+- `BOOT2DOCKER_VBM` path to the VirtualBox management utility, default is
   `VBoxManage`.
-- `BOOT2DOCKER_SSH`: path to the `ssh` client utility, default is `ssh`.
-- `BOOT2DOCKER_VM`: name of the boot2docker virtual machine in VirtualBox,
+- `BOOT2DOCKER_SSH` path to the `ssh` client utility, default is `ssh`.
+- `BOOT2DOCKER_VM` name of the boot2docker virtual machine in VirtualBox,
   default is `boot2docker-vm`.
-- `BOOT2DOCKER_DIR`: path to the boot2docker config directory, default is
+- `BOOT2DOCKER_DIR` path to the boot2docker config directory, default is
   `$HOME/.boot2docker`.
-- `BOOT2DOCKER_ISO`: path to the boot2docker ISO image, default is
+- `BOOT2DOCKER_ISO` path to the boot2docker ISO image, default is
   `$BOOT2DOCKER_DIR/boot2docker.iso`.
-- `BOOT2DOCKER_DISK`: path to the boot2docker disk image, default is
+- `BOOT2DOCKER_DISK` path to the boot2docker disk image, default is
   `$BOOT2DOCKER_DIR/boot2docker.vmdk`.
-- `BOOT2DOCKER_DISKSIZE`: boot2docker disk image size in MB, default is `20000`.
-- `BOOT2DOCKER_MEMORY`: boot2docker VM memory size in MB, default is `1024`.
-- `BOOT2DOCKER_SSH_PORT`: port on the host forwarding to port 22 in boot2docker
+- `BOOT2DOCKER_DISKSIZE` boot2docker disk image size in MB, default is `20000`.
+- `BOOT2DOCKER_MEMORY` boot2docker VM memory size in MB, default is `1024`.
+- `BOOT2DOCKER_SSH_PORT` port on the host forwarding to port 22 in boot2docker
   VM, default is `2022`.
-- `BOOT2DOCKER_DOCKER_PORT`: port on the host forwarding to port 4243 in
+- `BOOT2DOCKER_DOCKER_PORT` port on the host forwarding to port 4243 in
   boot2docker VM, default is `4243`.
 
 
-You can put your custom options into your shell, e.g.
+You can put custom options into your shell, e.g.
 
     export BOOT2DOCKER_VBM=VBoxManage
     export BOOT2DOCKER_SSH=ssh
