@@ -1,9 +1,9 @@
 # boot2docker-cli
 
-This is the Go port of the boot2docker
-(https://github.com/boot2docker/boot2docker) management script. It is intended
-to replace the shell version because the shell script cannot be used on Windows
-without cygwin. 
+This is the Go port of boot2docker (https://github.com/boot2docker/boot2docker)
+management script. It is intended to replace the shell script eventually. It is
+currently usable but since it is under active development, frequent changes and
+bugs are expected. USE AT YOUR OWN RISK. 
 
 The Go port will produce a single binary without extra dependencies for the
 following platforms:
