@@ -3,6 +3,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -28,12 +29,12 @@ func getCfgDir(name string) string {
 		return b2dDir
 	}
 
-	// unix
+	// Unix
 	if home := os.Getenv("HOME"); home != "" {
 		return filepath.Join(home, name)
 	}
 
-	// windows
+	// Windows
 	for _, env := range []string{
 		"APPDATA",
 		"LOCALAPPDATA",
@@ -46,7 +47,7 @@ func getCfgDir(name string) string {
 	// ok, we've tried everything reasonable - now let's go for CWD
 	cwd, err := os.Getwd()
 	if err != nil {
-		log.Fatalf("error getting current directory: %v\n", err)
+		log.Fatalf("error getting current directory: %s", err)
 	}
 	return filepath.Join(cwd, name)
 }
@@ -123,6 +124,24 @@ func main() {
 	case "delete":
 		cmdDelete()
 	default:
-		log.Fatalf("Usage: %s {init|start|up|ssh|save|pause|stop|poweroff|reset|restart|status|info|delete|download} [vm]", os.Args[0])
+		fmt.Printf(`Usage: %s COMMAND [vm]
+
+boot2docker management utility.
+
+Commands:
+
+    init            Create a new boot2docker VM.
+    up|start|boot   Start the VM from any state.
+    save|suspend    Suspend the VM (saving running state to disk).
+    down|stop|halt  Gracefully shutdown the VM.
+    restart         Gracefully reboot the VM.
+    poweroff        Forcefully shutdown the VM (might cause disk corruption).
+    reset           Forcefully reboot the VM (might cause disk corruption).
+    delete          Delete the boot2docker VM and its disk image.
+    download        Download the boot2docker ISO image.
+    info            Display the detailed information of the VM
+    status          Display the current state of the VM.
+
+`, os.Args[0])
 	}
 }
