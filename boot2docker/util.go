@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 )
 
 func logf(fmt string, v ...interface{}) {
@@ -52,6 +53,11 @@ func download(dest, url string) error {
 		return err
 	}
 	defer rsp.Body.Close()
+
+	// Create the dest dir.
+	if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
+		return err
+	}
 
 	f, err := os.Create(fmt.Sprintf("%s.download", dest))
 	if err != nil {
