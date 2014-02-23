@@ -244,7 +244,7 @@ func cmdInit() int {
 	}
 
 	if ping(fmt.Sprintf("localhost:%d", B2D.SSHPort)) {
-		logf("SSH_HOST_PORT=%d on localhost is occupied. Please choose another one.", B2D.SSHPort)
+		logf("SSH_PORT=%d on localhost is occupied. Please choose another one.", B2D.SSHPort)
 		return 1
 	}
 
@@ -271,20 +271,26 @@ func cmdInit() int {
 		"--bioslogofadeout", "off",
 		"--bioslogodisplaytime", "0",
 		"--biosbootmenu", "disabled",
-		"--boot1", "dvd"); err != nil {
+		"--boot1", "dvd",
+	); err != nil {
 		logf("Failed to modify %s: %s", B2D.VM, err)
 		return 1
 	}
 
 	logf("Setting VM networking...")
-	if err := vbm("modifyvm", B2D.VM, "--nic1", "nat", "--nictype1", "virtio", "--cableconnected1", "on"); err != nil {
+	if err := vbm("modifyvm", B2D.VM,
+		"--nic1", "nat",
+		"--nictype1", "virtio",
+		"--cableconnected1", "on",
+	); err != nil {
 		logf("Failed to modify %s: %s", B2D.VM, err)
 		return 1
 	}
 
 	if err := vbm("modifyvm", B2D.VM,
 		"--natpf1", fmt.Sprintf("ssh,tcp,127.0.0.1,%d,,22", B2D.SSHPort),
-		"--natpf1", fmt.Sprintf("docker,tcp,127.0.0.1,%d,,4243", B2D.DockerPort)); err != nil {
+		"--natpf1", fmt.Sprintf("docker,tcp,127.0.0.1,%d,,4243", B2D.DockerPort),
+	); err != nil {
 		logf("Failed to modify %s: %s", B2D.VM, err)
 		return 1
 	}
@@ -315,17 +321,33 @@ func cmdInit() int {
 	}
 
 	logf("Setting VM disks...")
-	if err := vbm("storagectl", B2D.VM, "--name", "SATA", "--add", "sata", "--hostiocache", "on"); err != nil {
+	if err := vbm("storagectl", B2D.VM,
+		"--name", "SATA",
+		"--add", "sata",
+		"--hostiocache", "on",
+	); err != nil {
 		logf("Failed to add storage controller: %s", err)
 		return 1
 	}
 
-	if err := vbm("storageattach", B2D.VM, "--storagectl", "SATA", "--port", "0", "--device", "0", "--type", "dvddrive", "--medium", B2D.ISO); err != nil {
+	if err := vbm("storageattach", B2D.VM,
+		"--storagectl", "SATA",
+		"--port", "0",
+		"--device", "0",
+		"--type", "dvddrive",
+		"--medium", B2D.ISO,
+	); err != nil {
 		logf("Failed to attach storage device %s: %s", B2D.ISO, err)
 		return 1
 	}
 
-	if err := vbm("storageattach", B2D.VM, "--storagectl", "SATA", "--port", "1", "--device", "0", "--type", "hdd", "--medium", B2D.Disk); err != nil {
+	if err := vbm("storageattach", B2D.VM,
+		"--storagectl", "SATA",
+		"--port", "1",
+		"--device", "0",
+		"--type", "hdd",
+		"--medium", B2D.Disk,
+	); err != nil {
 		logf("Failed to attach storage device %s: %s", B2D.Disk, err)
 		return 1
 	}
