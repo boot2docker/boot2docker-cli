@@ -27,6 +27,7 @@ func cmdSSH() int {
 		logf("%s is not registered.", B2D.VM)
 		return 1
 	case vmRunning:
+		// TODO What SSH client is used on Windows?
 		if err := cmd(B2D.SSH,
 			"-o", "StrictHostKeyChecking=no",
 			"-o", "UserKnownHostsFile=/dev/null",
@@ -234,7 +235,7 @@ func cmdStatus() int {
 // Initialize the boot2docker VM from scratch.
 func cmdInit() int {
 	if state := status(B2D.VM); state != vmUnregistered {
-		logf("%s already exists.\n")
+		logf("%q already exists.", B2D.VM)
 		return 1
 	}
 

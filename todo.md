@@ -3,7 +3,7 @@
 ### Configuration
 - [X] modify standard values with enviroment variables
 - [ ] modify standard values with a config file `~/profiles`
-- [ ] check if all required software exists e.g. virtualbox,..
+- [X] check if all required software exists e.g. virtualbox,..
 
 ### Commands
 - [X] init            Create a new boot2docker VM.

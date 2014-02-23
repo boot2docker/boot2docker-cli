@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 )
@@ -120,6 +121,11 @@ func run() int {
 	if err := config(); err != nil {
 		logf("%s", err)
 		return 1
+	}
+
+	if _, err := exec.LookPath(B2D.VBM); err != nil {
+		logf("failed to locate VirtualBox management utility %q", B2D.VBM)
+		return 2
 	}
 
 	switch flag.Arg(0) {
