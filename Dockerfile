@@ -33,9 +33,8 @@ ENV	DOCKER_CROSSPLATFORMS	linux/386 linux/arm darwin/amd64 darwin/386 windows/38
 ENV	GOARM	5
 RUN	cd /usr/local/go/src && bash -xc 'for platform in $DOCKER_CROSSPLATFORMS; do GOOS=${platform%/*} GOARCH=${platform##*/} ./make.bash --no-clean 2>&1; done'
 
-#VOLUME /data
 RUN mkdir -p /data
 WORKDIR /data
-ADD . /data
+ADD boot2docker /data
 
 CMD ["/bin/sh","-c","go build -o boot2docker"]
