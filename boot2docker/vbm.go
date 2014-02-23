@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"regexp"
@@ -55,7 +54,6 @@ func status(vm string) vmState {
 
 // Make a boot2docker VM disk image.
 func makeDiskImage(dest string, size int) error {
-	log.Printf("Creating %d MB hard disk image...", size)
 	cmd := exec.Command(B2D.VBM, "convertfromraw", "stdin", dest, fmt.Sprintf("%d", size*1024*1024), "--format", "VMDK")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
