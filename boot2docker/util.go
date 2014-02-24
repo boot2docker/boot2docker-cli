@@ -75,13 +75,12 @@ func download(dest, url string) error {
 	}
 
 	if err := os.Rename(f.Name(), dest); err != nil {
-		if pe, ok := err.(*os.LinkError); ok { // activate multiple partition support
-			return pe.Err
-		} else {
-			if err := fileCopy(f.Name(), dest); err != nil {
-				return err
-			}
+		if err := fileCopy(f.Name(), dest); err != nil {
+			return err
 		}
+		os.Remove(f.Name())
+	} else {
+		return err
 	}
 	return nil
 }
