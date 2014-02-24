@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -54,12 +55,7 @@ func download(dest, url string) error {
 	}
 	defer rsp.Body.Close()
 
-	// Create the dest dir.
-	if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
-		return err
-	}
-
-	f, err := os.Create(fmt.Sprintf("%s.download", dest))
+	f, err := ioutil.TempFile("", "b2diso")
 	if err != nil {
 		return err
 	}
@@ -72,7 +68,18 @@ func download(dest, url string) error {
 	if err := f.Close(); err != nil {
 		return err
 	}
+
+	// Create the dest dir.
+	if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
+		return err
+	}
+
 	if err := os.Rename(f.Name(), dest); err != nil {
+		if err := fileCopy(f.Name(), dest); err != nil {
+			return err
+		}
+		os.Remove(f.Name())
+	} else {
 		return err
 	}
 	return nil
@@ -96,4 +103,23 @@ func getLatestReleaseName(url string) (string, error) {
 		return "", fmt.Errorf("no releases found")
 	}
 	return t[0].TagName, nil
+}
+
+var fileCopy = func(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	_, err = io.Copy(out, in)
+	cerr := out.Close()
+	if err != nil {
+		return err
+	}
+	return cerr
 }
