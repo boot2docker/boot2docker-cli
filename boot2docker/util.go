@@ -75,7 +75,13 @@ func download(dest, url string) error {
 	}
 
 	if err := os.Rename(f.Name(), dest); err != nil {
-		return err
+		if pe, ok := err.(*os.LinkError); ok { // activate multiple partition support
+			return pe.Err
+		} else {
+			if err := fileCopy(f.Name(), dest); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
@@ -98,4 +104,17 @@ func getLatestReleaseName(url string) (string, error) {
 		return "", fmt.Errorf("no releases found")
 	}
 	return t[0].TagName, nil
+}
+
+var fileCopy = func(src, dst string) error {
+    in, err := os.Open(src)
+    if err != nil { return err }
+    defer in.Close()
+    out, err := os.Create(dst)
+    if err != nil { return err }
+    defer out.Close()
+    _, err = io.Copy(out, in)
+    cerr := out.Close()
+    if err != nil { return err }
+    return cerr
 }
