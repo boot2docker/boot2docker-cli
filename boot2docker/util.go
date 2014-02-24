@@ -110,7 +110,7 @@ func (f cfgImport) Get(section, key, defaultstr string) string {
 		return value
 	}
 	if value, ok := f.cf.Get(section, key); ok {
-		return value
+		return os.ExpandEnv(value)
 	}
 	return defaultstr
 }
