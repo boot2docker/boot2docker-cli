@@ -55,7 +55,7 @@ func download(dest, url string) error {
 	}
 	defer rsp.Body.Close()
 
-	f, err := ioutil.TempFile("","b2diso")
+	f, err := ioutil.TempFile("", "b2diso")
 	if err != nil {
 		return err
 	}
@@ -106,14 +106,20 @@ func getLatestReleaseName(url string) (string, error) {
 }
 
 var fileCopy = func(src, dst string) error {
-    in, err := os.Open(src)
-    if err != nil { return err }
-    defer in.Close()
-    out, err := os.Create(dst)
-    if err != nil { return err }
-    defer out.Close()
-    _, err = io.Copy(out, in)
-    cerr := out.Close()
-    if err != nil { return err }
-    return cerr
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	_, err = io.Copy(out, in)
+	cerr := out.Close()
+	if err != nil {
+		return err
+	}
+	return cerr
 }
