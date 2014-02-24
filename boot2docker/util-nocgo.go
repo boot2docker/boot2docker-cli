@@ -8,14 +8,13 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-
 )
 
 // manual add certificates and  for:
 // https://api.github.com/
 // https://s3.amazonaws.com/
 
-var chain=`-----BEGIN CERTIFICATE-----
+var chain = `-----BEGIN CERTIFICATE-----
 MIIGpjCCBY6gAwIBAgIQCc4q8gtIK3iiFj+bqb1z9jANBgkqhkiG9w0BAQUFADBm
 MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3
 d3cuZGlnaWNlcnQuY29tMSUwIwYDVQQDExxEaWdpQ2VydCBIaWdoIEFzc3VyYW5j
@@ -220,21 +219,21 @@ func decodePem(certInput string) tls.Certificate {
 	}
 	return cert
 }
-var getHttps = func(url string)(resp *http.Response, err error) {
-    certChain := decodePem(chain)
-    conf := tls.Config { }
-    conf.RootCAs = x509.NewCertPool()
-    for _, cert := range certChain.Certificate {
-	x509Cert, err := x509.ParseCertificate(cert)
-	if err != nil {
-		panic(err)
+
+var getHttps = func(url string) (resp *http.Response, err error) {
+	certChain := decodePem(chain)
+	conf := tls.Config{}
+	conf.RootCAs = x509.NewCertPool()
+	for _, cert := range certChain.Certificate {
+		x509Cert, err := x509.ParseCertificate(cert)
+		if err != nil {
+			panic(err)
+		}
+		conf.RootCAs.AddCert(x509Cert)
 	}
-	conf.RootCAs.AddCert(x509Cert)
-    }
-    conf.BuildNameToCertificate()
- 
-    tr := http.Transport{ TLSClientConfig: &conf }
-    client := &http.Client{Transport: &tr}
-    return client.Get(url)
- 
+	conf.BuildNameToCertificate()
+
+	tr := http.Transport{TLSClientConfig: &conf}
+	client := &http.Client{Transport: &tr}
+	return client.Get(url)
 }
