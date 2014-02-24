@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -54,12 +55,7 @@ func download(dest, url string) error {
 	}
 	defer rsp.Body.Close()
 
-	// Create the dest dir.
-	if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
-		return err
-	}
-
-	f, err := os.Create(fmt.Sprintf("%s.download", dest))
+	f, err := ioutil.TempFile("","b2diso")
 	if err != nil {
 		return err
 	}
@@ -72,6 +68,12 @@ func download(dest, url string) error {
 	if err := f.Close(); err != nil {
 		return err
 	}
+
+	// Create the dest dir.
+	if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
+		return err
+	}
+
 	if err := os.Rename(f.Name(), dest); err != nil {
 		return err
 	}
