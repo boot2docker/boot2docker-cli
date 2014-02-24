@@ -242,6 +242,29 @@ func cmdInit() int {
 		return 1
 	}
 
+	if _, err := os.Stat(B2D.ISO); err != nil {
+		if os.IsNotExist(err) {
+			if exitcode := cmdDownload(); exitcode != 0 {
+				return exitcode
+			}
+		} else {
+			logf("Failed to open ISO image: %s", err)
+			return 1
+		}
+	}
+
+	if _, err := os.Stat(B2D.Disk); err != nil {
+		if os.IsNotExist(err) {
+			if err := makeDiskImage(B2D.Disk, B2D.DiskSize); err != nil {
+				logf("Failed to create disk image: %s", err)
+				return 1
+			}
+		} else {
+			logf("Failed to open disk image: %s", err)
+			return 1
+		}
+	}
+
 	logf("Creating VM %s...", B2D.VM)
 	if err := vbm("createvm", "--name", B2D.VM, "--register"); err != nil {
 		logf("Failed to create vm: %s", err)
@@ -291,30 +314,7 @@ func cmdInit() int {
 	logf("Port forwarding [ssh]: host tcp://127.0.0.1:%d --> guest tcp://0.0.0.0:22", B2D.SSHPort)
 	logf("Port forwarding [docker]: host tcp://127.0.0.1:%d --> guest tcp://0.0.0.0:4243", B2D.DockerPort)
 
-	if _, err := os.Stat(B2D.ISO); err != nil {
-		if os.IsNotExist(err) {
-			if exitcode := cmdDownload(); exitcode != 0 {
-				return exitcode
-			}
-		} else {
-			logf("Failed to open ISO image: %s", err)
-			return 1
-		}
-	}
-
-	if _, err := os.Stat(B2D.Disk); err != nil {
-		if os.IsNotExist(err) {
-			if err := makeDiskImage(B2D.Disk, B2D.DiskSize); err != nil {
-				logf("Failed to create disk image: %s", err)
-				return 1
-			}
-		} else {
-			logf("Failed to open disk image: %s", err)
-			return 1
-		}
-	}
-
-	logf("Setting VM disks...")
+	logf("Setting VM storage...")
 	if err := vbm("storagectl", B2D.VM,
 		"--name", "SATA",
 		"--add", "sata",
