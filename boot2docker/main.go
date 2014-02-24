@@ -24,10 +24,10 @@ var B2D struct {
 	DockerPort int    // host Docker port (forward to port 4243 in VM)
 }
 
-var usageShort = fmt.Sprintf(`Usage: %s {help|init|start|up|ssh|save|pause|stop|poweroff|reset|restart|status|info|delete|download} [vm]
+var usageShort = fmt.Sprintf(`Usage: %s {help|init|start|up|ssh|save|pause|stop|poweroff|reset|restart|status|info|delete|download} [<vm>]
 `, os.Args[0])
 
-var usageLong = fmt.Sprintf(`Usage: %s COMMAND [vm]
+var usageLong = fmt.Sprintf(`Usage: %s <command> [<vm>]
 
 boot2docker management utility.
 
