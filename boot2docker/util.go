@@ -6,9 +6,9 @@ import (
 	"io"
 	"log"
 	"net"
-	"net/http"
 	"os"
 	"path/filepath"
+
 )
 
 func logf(fmt string, v ...interface{}) {
@@ -48,7 +48,7 @@ func ping(addr string) bool {
 
 // Download the url to the dest path.
 func download(dest, url string) error {
-	rsp, err := http.Get(url)
+	rsp, err := getHttps(url)
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func download(dest, url string) error {
 
 // Get latest release tag name (e.g. "v0.6.0") from a repo on GitHub.
 func getLatestReleaseName(url string) (string, error) {
-	rsp, err := http.Get(url)
+	rsp, err := getHttps(url)
 	if err != nil {
 		return "", err
 	}
@@ -97,3 +97,4 @@ func getLatestReleaseName(url string) (string, error) {
 	}
 	return t[0].TagName, nil
 }
+
