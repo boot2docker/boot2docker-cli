@@ -24,7 +24,10 @@ var B2D struct {
 	DockerPort int    // host Docker port (forward to port 4243 in VM)
 }
 
-var usage = fmt.Sprintf(`Usage: %s COMMAND [vm]
+var usageShort = fmt.Sprintf(`Usage: %s COMMAND {help|init|start|up|ssh|save|pause|stop|poweroff|reset|restart|status|info|delete|download} [vm]
+`, os.Args[0])
+
+var usageLong = fmt.Sprintf(`Usage: %s COMMAND [vm]
 
 boot2docker management utility.
 
@@ -32,6 +35,7 @@ Commands:
 
     init            Create a new boot2docker VM.
     up|start|boot   Start the VM from any state.
+    ssh             Login to VM.
     save|suspend    Suspend the VM (saving running state to disk).
     down|stop|halt  Gracefully shutdown the VM.
     restart         Gracefully reboot the VM.
@@ -153,13 +157,17 @@ func run() int {
 		return cmdInfo()
 	case "status":
 		return cmdStatus()
+	case "help":
+		logf(usageLong)
+		return 0
 	case "delete":
 		return cmdDelete()
 	case "":
-		logf(usage)
+		logf(usageShort)
 		return 0
 	default:
-		logf(usage)
+		logf("Unknown command '%s'",flag.Arg(0))
+		logf(usageShort)
 		return 1
 	}
 	return 0
