@@ -166,11 +166,7 @@ func cmdPoweroff() int {
 
 // Gracefully stop and then start the VM.
 func cmdRestart() int {
-	switch state := status(B2D.VM); state {
-	case vmUnregistered:
-		logf("%s is not registered.", B2D.VM)
-		return 1
-	case vmRunning:
+	if state := status(B2D.VM); state == vmRunning {
 		if exitcode := cmdStop(); exitcode != 0 {
 			return exitcode
 		}
