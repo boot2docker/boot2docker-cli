@@ -174,11 +174,8 @@ func cmdRestart() int {
 		if exitcode := cmdStop(); exitcode != 0 {
 			return exitcode
 		}
-		fallthrough
-	default:
-		return cmdStart()
 	}
-	return 0
+	return cmdStart()
 }
 
 // Forcefully reset the VM. Could potentially result in corrupted disk. Use
