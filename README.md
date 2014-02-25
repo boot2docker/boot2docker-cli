@@ -101,3 +101,7 @@ You can put custom options into your shell, e.g.
     export BOOT2DOCKER_MEMORY=1024
     export BOOT2DOCKER_SSH_PORT=2022
     export BOOT2DOCKER_DOCKER_PORT=4243
+
+**What is the development process**
+
+We are implementing the same process as [Docker merge approval](https://github.com/dotcloud/docker/blob/master/CONTRIBUTING.md#merge-approval), so all commits need to be done via pull requests, and will need 3 or more LGTMs.
