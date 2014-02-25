@@ -135,7 +135,7 @@ func run() int {
 		return 2
 	}
 
-	switch flag.Arg(0) {
+	switch cmd := flag.Arg(0); cmd {
 	case "download":
 		return cmdDownload()
 	case "init":
@@ -169,11 +169,10 @@ func run() int {
 		logf(usageShort)
 		return 0
 	default:
-		logf("Unknown command '%s'", flag.Arg(0))
+		logf("Unknown command '%s'", cmd)
 		logf(usageShort)
 		return 1
 	}
-	return 0
 }
 
 func main() {
