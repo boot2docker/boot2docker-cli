@@ -28,15 +28,15 @@ The binary will be available at `$GOPATH/bin/boot2docker`.
 If you don't want to install golang you can use the `Dockerfile` to create the
 binary for any supported target platform.
 
-1. Build the image with the Go toolchain: `docker build -t golang .`
+1. Build the image with the Go toolchain: `docker build -t boot2docker-golang .`
 2. Choose the right settings for your plattform
   * Windows: `GOOS=windows GOARCH=amd64`
   * OS X: `GOOS=darwin GOARCH=amd64`
   * Linux: `GOOS=linux GOARCH=amd64`
 3. Build the binaries
 ```
-docker run -e GOOS=darwin -e GOARCH=amd64 --name boot2docker-cli golang
-docker cp boot2docker-cli:/data/boot2docker .
+docker run -e GOOS=darwin -e GOARCH=amd64 --name boot2docker-cli boot2docker-golang
+docker cp boot2docker-cli:/data/boot2docker-cli .
 docker rm boot2docker-cli
 ```
 
