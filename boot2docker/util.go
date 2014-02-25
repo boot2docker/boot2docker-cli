@@ -122,14 +122,15 @@ var readConfigfile = func(filename string) (string, error) {
 
 var getConfigfile = func() (cfgImport, error) {
 	var cfg cfgImport
-	cfgStr, err := readConfigfile(B2D.Dir + "/profile")
+	filename := filepath.Join(B2D.Dir, "profile")
+	cfgStr, err := readConfigfile(filename)
 	if err != nil {
 		return cfg, err
 	}
 
 	cfgini, err := ini.Load(strings.NewReader(cfgStr))
 	if err != nil {
-		log.Fatalf("Failed to parse gcfg data: %s", err)
+		log.Fatalf("Failed to parse %s: %s", filename, err)
 		return cfg, err
 	}
 	cfg = cfgImport{cf: cfgini}
