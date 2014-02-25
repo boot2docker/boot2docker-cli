@@ -37,4 +37,4 @@ RUN mkdir -p /data
 WORKDIR /data
 ADD boot2docker /data
 
-CMD ["/bin/sh","-c","go build -o boot2docker-cli"]
+CMD ["/bin/sh","-c","go get all && go build -o boot2docker-cli"]
