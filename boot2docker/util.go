@@ -122,7 +122,11 @@ var readConfigfile = func(filename string) (string, error) {
 
 var getConfigfile = func() (cfgImport, error) {
 	var cfg cfgImport
-	filename := filepath.Join(B2D.Dir, "profile")
+	filename := os.Getenv("BOOT2DOCKER_PROFILE")
+	if filename == "" {
+		filename = filepath.Join(B2D.Dir, "profile")
+	}
+	
 	cfgStr, err := readConfigfile(filename)
 	if err != nil {
 		return cfg, err
