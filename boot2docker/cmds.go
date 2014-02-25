@@ -198,14 +198,16 @@ func cmdDelete() int {
 	case vmUnregistered:
 		logf("%s is not registered.", B2D.VM)
 
-	case vmPoweroff, vmAborted:
+	case vmRunning, vmPaused:
+		logf("%s needs to be stopped to delete it.", B2D.VM)
+		return 1
+
+	default:
 		if err := vbm("unregistervm", "--delete", B2D.VM); err != nil {
 			logf("Failed to delete vm: %s", err)
 			return 1
 		}
-	default:
-		logf("%s needs to be stopped to delete it.", B2D.VM)
-		return 1
+
 	}
 	return 0
 }
