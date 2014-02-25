@@ -40,7 +40,7 @@ func status(vm string) vmState {
 	if out, err = exec.Command(B2D.VBM, "showvminfo", vm, "--machinereadable").Output(); err != nil {
 		return vmUnknown
 	}
-	groups := regexp.MustCompile(`(?m)^VMState="(\w+)"$`).FindSubmatch(out)
+	groups := regexp.MustCompile(`(?m)^VMState="(\w+)"\r?$`).FindSubmatch(out)
 	if len(groups) < 2 {
 		return vmUnknown
 	}
