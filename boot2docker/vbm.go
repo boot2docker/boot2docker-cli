@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -58,20 +59,13 @@ func makeDiskImage(dest string, size int) error {
 	if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
 		return err
 	}
+
+	d1 := []byte("boot2docker, please format-me")
+	if err := ioutil.WriteFile(dest+"_RAW", d1, 0644); err != nil {
+		return err
+	}
+
 	cmd := exec.Command(B2D.VBM, "convertfromraw", "stdin", dest, fmt.Sprintf("%d", size*1024*1024), "--format", "VMDK")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	w, err := cmd.StdinPipe()
-	if err != nil {
-		return err
-	}
-	// Write the magic string so the VM auto-formats the disk upon first boot.
-	if _, err := w.Write([]byte("boot2docker, please format-me")); err != nil {
-		return err
-	}
-	if err := w.Close(); err != nil {
-		return err
-	}
 
 	return cmd.Run()
 }
