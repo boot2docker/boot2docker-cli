@@ -87,15 +87,20 @@ The `boot2docker` binary reads configuration from the environment and a configur
 - `DOCKER_PORT` port on the host forwarding to port 4243 in
   boot2docker VM, default is `4243`.
 
-You can create a custom config `${HOME}/.boot2docker/profile`:
+You can create a custom config `${HOME}/.boot2docker/profile` or `%AllUsersProfile%\boot2docker\profile`:
 
-    VBM='c:\Program Files\Oracle\VirtualBox\VBoxManage.exe'
-    BOOT2DOCKER_SSH='c:\Program Files\putty.exe'
+    VBM="c:\Program Files\Oracle\VirtualBox\VBoxManage.exe"
+    BOOT2DOCKER_SSH="c:\Program Files\putty.exe"
 
 You can put custom options into your shell enviroment which will overwrite the default values and the values from an existing config file:
 
-    export VBM='c:\Program Files\Oracle\VirtualBox\VBoxManage.exe'
-    export BOOT2DOCKER_SSH='c:\Program Files\putty.exe'
+Unix:
+    export BOOT2DOCKER_CFG_DIR="${HOME}/Library/Application\ Support/boot2docker"
+    export DOCKER_PORT=4244
+
+Windows:
+    set VBM="c:\Program Files\Oracle\VirtualBox\VBoxManage.exe"
+    set BOOT2DOCKER_SSH="c:\Program Files\putty.exe"
 
 
 **What is the development process**
