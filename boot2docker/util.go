@@ -3,12 +3,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/vaughan0/go-ini"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func logf(fmt string, v ...interface{}) {
@@ -96,4 +99,45 @@ func getLatestReleaseName(url string) (string, error) {
 		return "", fmt.Errorf("no releases found")
 	}
 	return t[0].TagName, nil
+}
+
+type cfgImport struct {
+	cf ini.File
+}
+
+func (f cfgImport) Get(section, key, defaultstr string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	if value, ok := f.cf.Get(section, key); ok {
+		return os.ExpandEnv(value)
+	}
+	return defaultstr
+}
+
+var readConfigfile = func(filename string) (string, error) {
+	value, err := ioutil.ReadFile(filename)
+	return string(value), err
+}
+
+var getConfigfile = func() (cfgImport, error) {
+	var cfg cfgImport
+	filename := os.Getenv("BOOT2DOCKER_PROFILE")
+	if filename == "" {
+		filename = filepath.Join(B2D.Dir, "profile")
+	}
+	
+	cfgStr, err := readConfigfile(filename)
+	if err != nil {
+		return cfg, err
+	}
+
+	cfgini, err := ini.Load(strings.NewReader(cfgStr))
+	if err != nil {
+		log.Fatalf("Failed to parse %s: %s", filename, err)
+		return cfg, err
+	}
+	cfg = cfgImport{cf: cfgini}
+
+	return cfg, err
 }

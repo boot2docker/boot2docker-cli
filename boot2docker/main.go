@@ -49,7 +49,7 @@ Commands:
 `, os.Args[0])
 
 func getCfgDir(name string) (string, error) {
-	if b2dDir := os.Getenv("BOOT2DOCKER_DIR"); b2dDir != "" {
+	if b2dDir := os.Getenv("BOOT2DOCKER_CFG_DIR"); b2dDir != "" {
 		return b2dDir, nil
 	}
 
@@ -78,39 +78,42 @@ func getCfgDir(name string) (string, error) {
 
 // Read configuration.
 func config() (err error) {
-	B2D.VBM = getenv("BOOT2DOCKER_VBM", "VBoxManage")
-	B2D.SSH = getenv("BOOT2DOCKER_SSH", "ssh")
-	B2D.VM = getenv("BOOT2DOCKER_VM", "boot2docker-vm")
+
 	if B2D.Dir, err = getCfgDir(".boot2docker"); err != nil {
 		return fmt.Errorf("failed to get current directory: %s", err)
 	}
+	cfgi, err := getConfigfile()
 
-	B2D.ISO = getenv("BOOT2DOCKER_ISO", filepath.Join(B2D.Dir, "boot2docker.iso"))
-	B2D.Disk = getenv("BOOT2DOCKER_DISK", filepath.Join(B2D.Dir, "boot2docker.vmdk"))
+	B2D.VBM = cfgi.Get("", "VBM", "VBoxManage")
+	B2D.SSH = cfgi.Get("", "BOOT2DOCKER_SSH", "ssh")
+	B2D.VM = cfgi.Get("", "VM_NAME", "boot2docker-vm")
 
-	if B2D.DiskSize, err = strconv.Atoi(getenv("BOOT2DOCKER_DISKSIZE", "20000")); err != nil {
-		return fmt.Errorf("invalid BOOT2DOCKER_DISKSIZE: %s", err)
+	B2D.ISO = cfgi.Get("", "BOOT2DOCKER_ISO", filepath.Join(B2D.Dir, "boot2docker.iso"))
+	B2D.Disk = cfgi.Get("", "VM_DISK", filepath.Join(B2D.Dir, "boot2docker.vmdk"))
+
+	if B2D.DiskSize, err = strconv.Atoi(cfgi.Get("", "VM_DISK_SIZE", "20000")); err != nil {
+		return fmt.Errorf("invalid VM_DISK_SIZE: %s", err)
 	}
 	if B2D.DiskSize <= 0 {
-		return fmt.Errorf("BOOT2DOCKER_DISKSIZE way too small")
+		return fmt.Errorf("VM_DISK_SIZE way too small")
 	}
-	if B2D.Memory, err = strconv.Atoi(getenv("BOOT2DOCKER_MEMORY", "1024")); err != nil {
-		return fmt.Errorf("invalid BOOT2DOCKER_MEMORY: %s", err)
+	if B2D.Memory, err = strconv.Atoi(cfgi.Get("", "VM_MEM", "1024")); err != nil {
+		return fmt.Errorf("invalid VM_MEM: %s", err)
 	}
 	if B2D.Memory <= 0 {
-		return fmt.Errorf("BOOT2DOCKER_MEMORY way too small")
+		return fmt.Errorf("VM_MEM way too small")
 	}
-	if B2D.SSHPort, err = strconv.Atoi(getenv("BOOT2DOCKER_SSH_PORT", "2022")); err != nil {
-		return fmt.Errorf("invalid BOOT2DOCKER_SSH_PORT: %s", err)
+	if B2D.SSHPort, err = strconv.Atoi(cfgi.Get("", "SSH_HOST_PORT", "2022")); err != nil {
+		return fmt.Errorf("invalid SSH_HOST_PORT: %s", err)
 	}
 	if B2D.SSHPort <= 0 {
-		return fmt.Errorf("invalid BOOT2DOCKER_SSH_PORT: must be in the range of 1--65535; got %d", B2D.SSHPort)
+		return fmt.Errorf("invalid SSH_HOST_PORT: must be in the range of 1--65535; got %d", B2D.SSHPort)
 	}
-	if B2D.DockerPort, err = strconv.Atoi(getenv("BOOT2DOCKER_DOCKER_PORT", "4243")); err != nil {
-		return fmt.Errorf("invalid BOOT2DOCKER_DOCKER_PORT: %s", err)
+	if B2D.DockerPort, err = strconv.Atoi(cfgi.Get("", "DOCKER_PORT", "4243")); err != nil {
+		return fmt.Errorf("invalid DOCKER_PORT: %s", err)
 	}
 	if B2D.DockerPort <= 0 {
-		return fmt.Errorf("invalid BOOT2DOCKER_DOCKER_PORT: must be in the range of 1--65535; got %d", B2D.DockerPort)
+		return fmt.Errorf("invalid DOCKER_PORT: must be in the range of 1--65535; got %d", B2D.DockerPort)
 	}
 
 	// TODO maybe allow flags to override ENV vars?
