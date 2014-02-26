@@ -166,6 +166,8 @@ func run() int {
 		return cmdInfo()
 	case "status":
 		return cmdStatus()
+	case "delete":
+		return cmdDelete()
 	case "version":
 		fmt.Println("Client version:", Version)
 		fmt.Println("Git commit:", GitSHA)
@@ -173,8 +175,6 @@ func run() int {
 	case "help":
 		logf(usageLong)
 		return 0
-	case "delete":
-		return cmdDelete()
 	case "":
 		logf(usageShort)
 		return 0
