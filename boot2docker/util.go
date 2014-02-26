@@ -126,7 +126,7 @@ var getConfigfile = func() (cfgImport, error) {
 	if filename == "" {
 		filename = filepath.Join(B2D.Dir, "profile")
 	}
-	
+
 	cfgStr, err := readConfigfile(filename)
 	if err != nil {
 		return cfg, err
