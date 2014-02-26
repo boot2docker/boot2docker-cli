@@ -10,6 +10,12 @@ import (
 	"strconv"
 )
 
+// The following will be injected during the build process.
+var (
+	Version string
+	GitSHA  string
+)
+
 // B2D reprents boot2docker config.
 var B2D struct {
 	VBM        string // VirtualBox management utility
@@ -160,11 +166,15 @@ func run() int {
 		return cmdInfo()
 	case "status":
 		return cmdStatus()
+	case "delete":
+		return cmdDelete()
+	case "version":
+		fmt.Println("Client version:", Version)
+		fmt.Println("Git commit:", GitSHA)
+		return 0
 	case "help":
 		logf(usageLong)
 		return 0
-	case "delete":
-		return cmdDelete()
 	case "":
 		logf(usageShort)
 		return 0
