@@ -95,14 +95,14 @@ func makeDiskImage(dest string, size int) error {
 
 // Write n zero bytes into w.
 func zeroFill(w io.Writer, n int64) (err error) {
-	const blocksize = 4 * 1024 * 1024
+	const blocksize = 32 * 1024
 	zeros := make([]byte, blocksize)
 	var k int
 	for n > 0 {
 		if n > blocksize {
 			k, err = w.Write(zeros)
 		} else {
-			k, err = w.Write(make([]byte, n))
+			k, err = w.Write(zeros[:n])
 		}
 		if err != nil {
 			return
