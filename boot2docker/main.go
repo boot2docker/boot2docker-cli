@@ -167,7 +167,8 @@ func run() int {
 	case "status":
 		return cmdStatus()
 	case "version":
-		fmt.Println(Version)
+		fmt.Println("Client version:", Version)
+		fmt.Println("Git commit:", GitSHA)
 		return 0
 	case "help":
 		logf(usageLong)
