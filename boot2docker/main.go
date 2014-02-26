@@ -10,6 +10,8 @@ import (
 	"strconv"
 )
 
+const Version = "v0.7.0-dev" // during development we keep the -dev suffix
+
 // B2D reprents boot2docker config.
 var B2D struct {
 	VBM        string // VirtualBox management utility
@@ -160,6 +162,9 @@ func run() int {
 		return cmdInfo()
 	case "status":
 		return cmdStatus()
+	case "version":
+		fmt.Println(Version)
+		return 0
 	case "help":
 		logf(usageLong)
 		return 0
