@@ -15,8 +15,8 @@ MAINTAINER Andreas Heissenberger <andreas@heissenberger.at> (@aheissenberger)
 RUN	apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -yq \
 	automake \
 	build-essential \
-	curl \
 	ca-certificates \
+	curl \
 	git \
 	mercurial \
 	--no-install-recommends
@@ -24,7 +24,6 @@ RUN	apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -yq \
 # Install Go
 RUN	curl -s https://go.googlecode.com/files/go1.2.src.tar.gz | tar -v -C /usr/local -xz
 ENV	PATH	/usr/local/go/bin:$PATH
-ENV	GOPATH	/go:/go/src/github.com/dotcloud/docker/vendor
 RUN	cd /usr/local/go/src && ./make.bash --no-clean 2>&1
 
 # Compile Go for cross compilation
@@ -33,8 +32,9 @@ ENV	DOCKER_CROSSPLATFORMS	linux/386 linux/arm darwin/amd64 darwin/386 windows/38
 ENV	GOARM	5
 RUN	cd /usr/local/go/src && bash -xc 'for platform in $DOCKER_CROSSPLATFORMS; do GOOS=${platform%/*} GOARCH=${platform##*/} ./make.bash --no-clean 2>&1; done'
 
-RUN mkdir -p /data
-WORKDIR /data
-ADD boot2docker /data
+ENV	GOPATH	/go
+ADD	. /go/src/github.com/boot2docker/boot2docker-cli
+WORKDIR	/go/src/github.com/boot2docker/boot2docker-cli
 
-CMD ["/bin/sh","-c","go build -o boot2docker-cli"]
+RUN	go get -d
+CMD	["./build.sh"]
