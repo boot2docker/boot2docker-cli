@@ -90,7 +90,7 @@ The `boot2docker` binary reads configuration from the environment and a configur
 You can create a custom config `${HOME}/.boot2docker/profile` or `%AllUsersProfile%\boot2docker\profile`:
 
     VBM=%ProgramFiles%\Oracle\VirtualBox\VBoxManage.exe
-    BOOT2DOCKER_SSH=c:\Program Files\putty\putty.exe
+    BOOT2DOCKER_SSH=%ProgramFiles%\putty\putty.exe
 
 You can put custom options into your shell enviroment which will overwrite the default values and the values from an existing config file:
 
@@ -100,7 +100,7 @@ Unix:
 
 Windows:
     set VBM=%ProgramFiles%\Oracle\VirtualBox\VBoxManage.exe
-    set BOOT2DOCKER_SSH=c:\Program Files\putty\putty.exe
+    set BOOT2DOCKER_SSH=%ProgramFiles%\putty\putty.exe
 
 
 **What is the development process**
