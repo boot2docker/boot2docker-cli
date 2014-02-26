@@ -40,8 +40,8 @@ docker cp boot2docker-cli:/data/boot2docker-cli .
 docker rm boot2docker-cli
 ```
 
-The binary `boot2docker` will be in your current folder. Please do not forget to
-rename the binary on Windows to `boot2docker.exe`
+The binary `boot2docker-cli` will be in your current folder.
+Please do not forget to rename the binary on Windows to `boot2docker-cli.exe`
 
 
 ## Usage
@@ -67,40 +67,36 @@ to remove it completely.
 
 ## Configuration
 
-The `boot2docker` binary reads configuration from the environment. Currently you can
-configure the following options:
+The `boot2docker` binary reads configuration from the environment and a configuration file. Currently you can configure the following options:
 
-- `BOOT2DOCKER_VBM` path to the VirtualBox management utility, default is
+- `BOOT2DOCKER_CFG_DIR` path to the directory with all tool related files (custom config, ISO, persistent hard disk), default ${HOME}/.boot2docker
+- `BOOT2DOCKER_PROFILE` path to custom config file, default ${HOME}/.boot2docker/profile
+- `VBM` path to the VirtualBox management utility, default is
   `VBoxManage`.
 - `BOOT2DOCKER_SSH` path to the `ssh` client utility, default is `ssh`.
-- `BOOT2DOCKER_VM` name of the boot2docker virtual machine in VirtualBox,
+- `VM_NAME` name of the boot2docker virtual machine in VirtualBox,
   default is `boot2docker-vm`.
-- `BOOT2DOCKER_DIR` path to the boot2docker config directory, default is
-  `$HOME/.boot2docker`.
 - `BOOT2DOCKER_ISO` path to the boot2docker ISO image, default is
   `$BOOT2DOCKER_DIR/boot2docker.iso`.
-- `BOOT2DOCKER_DISK` path to the boot2docker disk image, default is
-  `$BOOT2DOCKER_DIR/boot2docker.vmdk`.
-- `BOOT2DOCKER_DISKSIZE` boot2docker disk image size in MB, default is `20000`.
-- `BOOT2DOCKER_MEMORY` boot2docker VM memory size in MB, default is `1024`.
-- `BOOT2DOCKER_SSH_PORT` port on the host forwarding to port 22 in boot2docker
+- `VM_DISK` path to the boot2docker disk image, default is
+  `$BOOT2DOCKER_CFG_DIR/boot2docker.vmdk`.
+- `VM_DISK_SIZE` boot2docker disk image size in MB, default is `20000`.
+- `VM_MEM` boot2docker VM memory size in MB, default is `1024`.
+- `SSH_HOST_PORT` port on the host forwarding to port 22 in boot2docker
   VM, default is `2022`.
-- `BOOT2DOCKER_DOCKER_PORT` port on the host forwarding to port 4243 in
+- `DOCKER_PORT` port on the host forwarding to port 4243 in
   boot2docker VM, default is `4243`.
 
+You can create a custom config `${HOME}/.boot2docker/profile`:
 
-You can put custom options into your shell, e.g.
+    VBM='c:\Program Files\Oracle\VirtualBox\VBoxManage.exe'
+    BOOT2DOCKER_SSH='c:\Program Files\putty.exe'
 
-    export BOOT2DOCKER_VBM=VBoxManage
-    export BOOT2DOCKER_SSH=ssh
-    export BOOT2DOCKER_VM=boot2docker-vm
-    export BOOT2DOCKER_DIR=$HOME/.boot2docker
-    export BOOT2DOCKER_ISO=$BOOT2DOCKER_DIR/boot2docker.iso
-    export BOOT2DOCKER_DISK=$BOOT2DOCKER_DIR/boot2docker.vmdk
-    export BOOT2DOCKER_DISKSIZE=20000
-    export BOOT2DOCKER_MEMORY=1024
-    export BOOT2DOCKER_SSH_PORT=2022
-    export BOOT2DOCKER_DOCKER_PORT=4243
+You can put custom options into your shell enviroment which will overwrite the default values and the values from an existing config file:
+
+    export VBM='c:\Program Files\Oracle\VirtualBox\VBoxManage.exe'
+    export BOOT2DOCKER_SSH='c:\Program Files\putty.exe'
+
 
 **What is the development process**
 
