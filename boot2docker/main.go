@@ -30,7 +30,7 @@ var B2D struct {
 	DockerPort int    // host Docker port (forward to port 4243 in VM)
 }
 
-var usageShort = fmt.Sprintf(`Usage: %s {help|init|start|up|ssh|save|pause|stop|poweroff|reset|restart|status|info|delete|download} [<vm>]
+var usageShort = fmt.Sprintf(`Usage: %s {help|init|start|up|ssh|save|pause|stop|poweroff|reset|restart|status|info|delete|download|version} [<vm>]
 `, os.Args[0])
 
 var usageLong = fmt.Sprintf(`Usage: %s <command> [<vm>]
@@ -51,6 +51,7 @@ Commands:
     download        Download the boot2docker ISO image.
     info            Display the detailed information of the VM
     status          Display the current state of the VM.
+	version			Display version information.
 
 `, os.Args[0])
 
