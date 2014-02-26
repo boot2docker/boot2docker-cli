@@ -10,7 +10,11 @@ import (
 	"strconv"
 )
 
-const Version = "v0.7.0-dev" // during development we keep the -dev suffix
+// The following will be injected during the build process.
+var (
+	Version string
+	GitSHA  string
+)
 
 // B2D reprents boot2docker config.
 var B2D struct {
