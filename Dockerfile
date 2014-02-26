@@ -4,7 +4,7 @@
 # 
 # change GOOS and GOARCH to your target plattform
 # docker run -e GOOS=darwin -e GOARCH=amd64 --name boot2docker-cli golang
-# docker cp boot2docker-cli:/data/boot2docker .
+# docker cp boot2docker-cli:/data/boot2docker boot2docker/boot2docker
 # docker rm boot2docker-cli
 
  
@@ -37,4 +37,4 @@ RUN mkdir -p /data
 WORKDIR /data
 ADD boot2docker /data
 
-CMD ["/bin/sh","-c","go build -o boot2docker"]
+CMD ["/bin/sh","-c","go build -o boot2docker-cli"]
