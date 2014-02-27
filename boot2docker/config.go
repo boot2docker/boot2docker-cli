@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -51,7 +50,7 @@ func getCfgDir(name string) (string, error) {
 }
 
 // Read configuration.
-func config() (err error) {
+func config(vm string) (err error) {
 
 	if B2D.Dir, err = getCfgDir(".boot2docker"); err != nil {
 		return fmt.Errorf("failed to get current directory: %s", err)
@@ -91,8 +90,7 @@ func config() (err error) {
 	}
 
 	// TODO maybe allow flags to override ENV vars?
-	flag.Parse()
-	if vm := flag.Arg(1); vm != "" {
+	if vm != "" {
 		B2D.VM = vm
 	}
 	return

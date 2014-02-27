@@ -33,7 +33,10 @@ Commands:
 `, os.Args[0])
 
 func run() int {
-	if err := config(); err != nil {
+	flag.Parse()
+
+	vm := flag.Arg(1)
+	if err := config(vm); err != nil {
 		logf("%s", err)
 		return 1
 	}
