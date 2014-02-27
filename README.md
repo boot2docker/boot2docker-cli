@@ -48,26 +48,26 @@ Please do not forget to rename the binary on Windows to `boot2docker-cli.exe`
 
 To initialize a new boot2docker VM, run
 
-    boot2docker init
+    boot2docker-cli init
 
 Then you can start the VM by
 
-    boot2docker up
+    boot2docker-cli up
 
 To stop the VM, run
 
-    boot2docker down
+    boot2docker-cli down
 
 And finally if you don't need the VM anymore, run
 
-    boot2docker delete
+    boot2docker-cli delete
 
 to remove it completely. 
 
 
 ## Configuration
 
-The `boot2docker` binary reads configuration from the environment and a configuration file. Currently you can configure the following options:
+The `boot2docker-cli` binary reads configuration from the environment and a configuration file. Currently you can configure the following options:
 
 - `BOOT2DOCKER_CFG_DIR` path to the directory with all tool related files (custom config, ISO, persistent hard disk), default ${HOME}/.boot2docker
 - `BOOT2DOCKER_PROFILE` path to custom config file, default ${HOME}/.boot2docker/profile
