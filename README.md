@@ -3,7 +3,7 @@
 This is the Go port of boot2docker (https://github.com/boot2docker/boot2docker)
 management script. It is intended to replace the shell script eventually. It is
 currently usable but since it is under active development, frequent changes and
-bugs are expected. USE AT YOUR OWN RISK. 
+bugs are expected. USE AT YOUR OWN RISK.
 
 The Go port will produce a single binary without extra dependencies for the
 following platforms:
@@ -18,56 +18,59 @@ following platforms:
 
 ## Installation
 
-Once you have your `$GOPATH` properly setup, run
+Once you have your `$GOPATH` [properly
+setup](http://golang.org/doc/code.html#GOPATH), run
 
-    go get github.com/boot2docker/boot2docker-cli/boot2docker
+    go get github.com/boot2docker/boot2docker-cli
 
 
-The binary will be available at `$GOPATH/bin/boot2docker`.
+The binary will be available at `$GOPATH/bin/boot2docker-cli`.
 
-If you don't want to install golang you can use the `Dockerfile` to create the
+If you don't want to install golang, you can use the `Dockerfile` to create the
 binary for any supported target platform.
 
 1. Build the image with the Go toolchain: `docker build -t boot2docker-golang .`
-2. Choose the right settings for your plattform
+2. Choose the right settings for your plattform:
   * Windows: `GOOS=windows GOARCH=amd64`
   * OS X: `GOOS=darwin GOARCH=amd64`
   * Linux: `GOOS=linux GOARCH=amd64`
-3. Build the binaries
-```
-docker run -e GOOS=darwin -e GOARCH=amd64 --name boot2docker-cli boot2docker-golang
-docker cp boot2docker-cli:/data/boot2docker-cli .
-docker rm boot2docker-cli
+3. Build the binaries: (if building for Windows, don't forget to add `.exe` to
+   the end of the binary name in the arguments to the `docker cp` line below)
+```sh
+docker run -e GOOS=darwin -e GOARCH=amd64 --name boot2docker-buildcli boot2docker-golang
+docker cp boot2docker-buildcli:/go/src/github.com/boot2docker/boot2docker-cli/boot2docker-cli .
+docker rm boot2docker-buildcli
+# and test it:
+./boot2docker-cli version
 ```
 
-The binary `boot2docker` will be in your current folder. Please do not forget to
-rename the binary on Windows to `boot2docker.exe`
+The binary `boot2docker-cli` will be in your current folder.
 
 
 ## Usage
 
 To initialize a new boot2docker VM, run
 
-    boot2docker init
+    boot2docker-cli init
 
 Then you can start the VM by
 
-    boot2docker up
+    boot2docker-cli up
 
 To stop the VM, run
 
-    boot2docker down
+    boot2docker-cli down
 
 And finally if you don't need the VM anymore, run
 
-    boot2docker delete
+    boot2docker-cli delete
 
-to remove it completely. 
+to remove it completely.
 
 
 ## Configuration
 
-The `boot2docker` binary reads configuration from the environment. Currently you can
+The `boot2docker-cli` binary reads configuration from the environment. Currently you can
 configure the following options:
 
 - `BOOT2DOCKER_VBM` path to the VirtualBox management utility, default is
