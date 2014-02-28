@@ -26,6 +26,12 @@ var B2D struct {
 	Memory     int    // VM memory size (MB)
 	SSHPort    int    // host SSH port (forward to port 22 in VM)
 	DockerPort int    // host Docker port (forward to port 4243 in VM)
+	HostIP         string // Host only network IP address
+	DHCPIP         string // Host only network DHCP address
+	NetworkMask    string // Host only network
+	LowerIPAddress string // Host only network
+	UpperIPAddress string // Host only network
+	DHCPEnabled    string // Host only network DHCP endabled
 }
 
 func getCfgDir(name string) (string, error) {
@@ -95,6 +101,13 @@ func config() (err error) {
 	if B2D.DockerPort <= 0 {
 		return fmt.Errorf("invalid DOCKER_PORT: must be in the range of 1--65535; got %d", B2D.DockerPort)
 	}
+	// Host only networking settings
+	B2D.HostIP = cfgi.Get("", "HOST_IP", "192.168.59.3")
+	B2D.DHCPIP = cfgi.Get("", "DHCP_IP", "192.168.59.99")
+	B2D.NetworkMask = cfgi.Get("", "NetworkMask", "255.255.255.0")
+	B2D.LowerIPAddress = cfgi.Get("", "LowerIPAddress", "192.168.59.103")
+	B2D.UpperIPAddress = cfgi.Get("", "UpperIPAddress", "192.168.59.254")
+	B2D.DHCPEnabled = cfgi.Get("", "DHCP_Enabled", "Yes")
 
 	// TODO maybe allow flags to override ENV vars?
 	flag.Parse()

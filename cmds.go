@@ -371,6 +371,24 @@ func cmdInit() int {
 	logf("Port forwarding [ssh]: host tcp://127.0.0.1:%d --> guest tcp://0.0.0.0:22", B2D.SSHPort)
 	logf("Port forwarding [docker]: host tcp://127.0.0.1:%d --> guest tcp://0.0.0.0:4243", B2D.DockerPort)
 
+	logf("Setting VM host-only networking")
+	hostifname, err := getHostOnlyNetworkInterface()
+	if err != nil {
+		logf("Failed to create %s: %s", B2D.VM, err)
+		return 1
+	}
+	logf("Adding VM host-only networking interface %s", hostifname)
+	if err := vbm("modifyvm", B2D.VM,
+		"--nic2", "hostonly",
+		"--nictype2", "virtio",
+		"--cableconnected2", "on",
+		"--hostonlyadapter2", hostifname,
+	); err != nil {
+		logf("Failed to modify %s: %s", B2D.VM, err)
+		return 1
+	}
+
+
 	logf("Setting VM storage...")
 	if err := vbm("storagectl", B2D.VM,
 		"--name", "SATA",
