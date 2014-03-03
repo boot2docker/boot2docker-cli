@@ -105,6 +105,14 @@ You can put custom options into your shell, e.g.
     export BOOT2DOCKER_SSH_PORT=2022
     export BOOT2DOCKER_DOCKER_PORT=4243
 
-**What is the development process**
 
-We are implementing the same process as [Docker merge approval](https://github.com/dotcloud/docker/blob/master/CONTRIBUTING.md#merge-approval), so all commits need to be done via pull requests, and will need 3 or more LGTMs.
+## Contribution
+
+We are implementing the same process as [Docker merge
+approval](https://github.com/dotcloud/docker/blob/master/CONTRIBUTING.md#merge-approval),
+so all commits need to be done via pull requests, and will need three or more
+LGTMs (Looks Good To Me) before merging.
+
+If you want to submit pull request, please make sure you follow the [Go Style
+Guide](https://code.google.com/p/go-wiki/wiki/Style). In particular, you MUST
+run `gofmt` before committing. We suggest you run `go tool vet -all .` as well.
