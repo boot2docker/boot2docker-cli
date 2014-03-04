@@ -28,6 +28,9 @@ func status(vm string) vmState {
 	// Check if the VM exists.
 	out, err := exec.Command(B2D.VBM, "list", "vms").Output()
 	if err != nil {
+		if err.(*exec.Error).Err == exec.ErrNotFound {
+			return vmVBMNotFound
+		}
 		return vmUnknown
 	}
 	found, err := regexp.Match(fmt.Sprintf(`(?m)^"%s"`, regexp.QuoteMeta(vm)), out)
@@ -39,6 +42,9 @@ func status(vm string) vmState {
 	}
 
 	if out, err = exec.Command(B2D.VBM, "showvminfo", vm, "--machinereadable").Output(); err != nil {
+		if err.(*exec.Error).Err == exec.ErrNotFound {
+			return vmVBMNotFound
+		}
 		return vmUnknown
 	}
 	groups := regexp.MustCompile(`(?m)^VMState="(\w+)"\r?$`).FindSubmatch(out)

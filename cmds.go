@@ -11,18 +11,27 @@ import (
 type vmState string
 
 const (
-	vmRunning      vmState = "running"
-	vmPoweroff             = "poweroff"
-	vmPaused               = "paused"
-	vmSaved                = "saved"
-	vmAborted              = "aborted"
-	vmUnregistered         = "(unregistered)" // not actually reported by VirtualBox
-	vmUnknown              = "(unknown)"      // not actually reported by VirtualBox
+	vmRunning  vmState = "running"
+	vmPoweroff         = "poweroff"
+	vmPaused           = "paused"
+	vmSaved            = "saved"
+	vmAborted          = "aborted"
+)
+
+// The following shadow states are not actually reported by VirtualBox. We
+// invented them to make handling code simpler.
+const (
+	vmUnregistered vmState = "(unregistered)" // No such VM registerd.
+	vmVBMNotFound          = "(VBMNotFound)"  // VBoxManage cannot be found.
+	vmUnknown              = "(unknown)"      // Any other unknown state.
 )
 
 // Call the external SSH command to login into boot2docker VM.
 func cmdSSH() int {
 	switch state := status(B2D.VM); state {
+	case vmVBMNotFound:
+		logf("failed to locate VirtualBox management utility %q", B2D.VBM)
+		return 2
 	case vmUnregistered:
 		logf("%s is not registered.", B2D.VM)
 		return 1
@@ -32,7 +41,8 @@ func cmdSSH() int {
 			"-o", "StrictHostKeyChecking=no",
 			"-o", "UserKnownHostsFile=/dev/null",
 			"-p", fmt.Sprintf("%d", B2D.SSHPort),
-			"docker@localhost"); err != nil {
+			"docker@localhost",
+		); err != nil {
 			logf("%s", err)
 			return 1
 		}
@@ -46,6 +56,9 @@ func cmdSSH() int {
 // Start the VM from all possible states.
 func cmdStart() int {
 	switch state := status(B2D.VM); state {
+	case vmVBMNotFound:
+		logf("failed to locate VirtualBox management utility %q", B2D.VBM)
+		return 2
 	case vmUnregistered:
 		logf("%s is not registered.", B2D.VM)
 		return 1
@@ -64,7 +77,7 @@ func cmdStart() int {
 			return 1
 		}
 	default:
-		logf("Cannot start %s from state %.", B2D.VM, state)
+		logf("Cannot start %s from state %s", B2D.VM, state)
 		return 1
 	}
 
@@ -94,6 +107,9 @@ func cmdStart() int {
 // Save the current state of VM on disk.
 func cmdSave() int {
 	switch state := status(B2D.VM); state {
+	case vmVBMNotFound:
+		logf("failed to locate VirtualBox management utility %q", B2D.VBM)
+		return 2
 	case vmUnregistered:
 		logf("%s is not registered.", B2D.VM)
 		return 1
@@ -112,6 +128,9 @@ func cmdSave() int {
 // Pause the VM.
 func cmdPause() int {
 	switch state := status(B2D.VM); state {
+	case vmVBMNotFound:
+		logf("failed to locate VirtualBox management utility %q", B2D.VBM)
+		return 2
 	case vmUnregistered:
 		logf("%s is not registered.", B2D.VM)
 		return 1
@@ -129,6 +148,9 @@ func cmdPause() int {
 // Gracefully stop the VM by sending ACPI shutdown signal.
 func cmdStop() int {
 	switch state := status(B2D.VM); state {
+	case vmVBMNotFound:
+		logf("failed to locate VirtualBox management utility %q", B2D.VBM)
+		return 2
 	case vmUnregistered:
 		logf("%s is not registered.", B2D.VM)
 		return 1
@@ -151,6 +173,9 @@ func cmdStop() int {
 // result in corrupted disk. Use with care.
 func cmdPoweroff() int {
 	switch state := status(B2D.VM); state {
+	case vmVBMNotFound:
+		logf("failed to locate VirtualBox management utility %q", B2D.VBM)
+		return 2
 	case vmUnregistered:
 		logf("%s is not registered.", B2D.VM)
 		return 1
@@ -179,6 +204,9 @@ func cmdRestart() int {
 // with care.
 func cmdReset() int {
 	switch state := status(B2D.VM); state {
+	case vmVBMNotFound:
+		logf("failed to locate VirtualBox management utility %q", B2D.VBM)
+		return 2
 	case vmUnregistered:
 		logf("%s is not registered.", B2D.VM)
 		return 1
@@ -196,6 +224,9 @@ func cmdReset() int {
 // Delete the VM and remove associated files.
 func cmdDelete() int {
 	switch state := status(B2D.VM); state {
+	case vmVBMNotFound:
+		logf("failed to locate VirtualBox management utility %q", B2D.VBM)
+		return 2
 	case vmUnregistered:
 		logf("%s is not registered.", B2D.VM)
 
@@ -215,23 +246,46 @@ func cmdDelete() int {
 
 // Show detailed info of the VM.
 func cmdInfo() int {
-	if err := vbm("showvminfo", B2D.VM); err != nil {
-		logf("%s", err)
+	switch state := status(B2D.VM); state {
+	case vmVBMNotFound:
+		logf("failed to locate VirtualBox management utility %q", B2D.VBM)
+		return 2
+	case vmUnregistered:
+		logf("%q does not exist", B2D.VM)
 		return 1
+	default:
+		if err := vbm("showvminfo", B2D.VM); err != nil {
+			logf("%s", err)
+			return 1
+		}
+		return 0
 	}
-	return 0
 }
 
 // Show the current state of the VM.
 func cmdStatus() int {
-	fmt.Printf("%s\n", status(B2D.VM))
-	return 0
+	switch state := status(B2D.VM); state {
+	case vmVBMNotFound:
+		logf("failed to locate VirtualBox management utility %q", B2D.VBM)
+		return 2
+	case vmUnregistered:
+		logf("%q does not exist", B2D.VM)
+		return 1
+	default:
+		fmt.Println(state)
+		return 0
+	}
 }
 
 // Initialize the boot2docker VM from scratch.
 func cmdInit() int {
-	if state := status(B2D.VM); state != vmUnregistered {
-		logf("%q already exists.", B2D.VM)
+	switch status(B2D.VM) {
+	case vmUnregistered: // continue
+	case vmVBMNotFound:
+		logf("failed to locate VirtualBox management utility %q", B2D.VBM)
+		return 2
+	default:
+		logf("%q already exists. %s", B2D.VM)
 		return 1
 	}
 
