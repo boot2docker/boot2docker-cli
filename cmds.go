@@ -57,35 +57,36 @@ func cmdStart() int {
 			logf("Failed to resume vm: %s", err)
 			return 1
 		}
-		addr := fmt.Sprintf("localhost:%d", B2D.SSHPort)
-		if err := read(addr); err != nil {
-			logf("Failed to connect to SSH port at %s: %s", addr, err)
-			return 1
-		}
-		logf("Resumed.")
 	case vmSaved, vmPoweroff, vmAborted:
 		logf("Starting %s...", B2D.VM)
 		if err := vbm("startvm", B2D.VM, "--type", "headless"); err != nil {
 			logf("Failed to start vm: %s", err)
 			return 1
 		}
-		logf("Waiting for SSH server to start...")
-		addr := fmt.Sprintf("localhost:%d", B2D.SSHPort)
-		if err := read(addr); err != nil {
-			logf("Failed to connect to SSH port at %s: %s", addr, err)
-			return 1
-		}
-		logf("Started.")
 	default:
 		logf("Cannot start %s from state %.", B2D.VM, state)
 		return 1
 	}
 
-	// Check if $DOCKER_HOST ENV var is properly configured.
-	DockerHost := getenv("DOCKER_HOST", "")
-	if DockerHost != fmt.Sprintf("tcp://localhost:%d", B2D.DockerPort) {
-		fmt.Printf("\nTo connect the docker client to the Docker daemon, please set:\n")
-		fmt.Printf("export DOCKER_HOST=tcp://localhost:%d\n\n", B2D.DockerPort)
+	logf("Waiting for SSH server to start...")
+	addr := fmt.Sprintf("localhost:%d", B2D.SSHPort)
+	if err := read(addr); err != nil {
+		logf("Failed to connect to SSH port at %s: %s", addr, err)
+		return 1
+	}
+	logf("Started.")
+
+	switch runtime.GOOS {
+	case "windows":
+		logf("Docker client does not run on Windows for now. Please use")
+		logf("    %s ssh", os.Args[0])
+		logf("to SSH into the VM instead.")
+	default:
+		// Check if $DOCKER_HOST ENV var is properly configured.
+		if os.Getenv("DOCKER_HOST") != fmt.Sprintf("tcp://localhost:%d", B2D.DockerPort) {
+			logf("To connect the Docker client to the Docker daemon, please set:")
+			logf("    export DOCKER_HOST=tcp://localhost:%d", B2D.DockerPort)
+		}
 	}
 	return 0
 }
