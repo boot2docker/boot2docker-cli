@@ -71,7 +71,7 @@ func config() (err error) {
 	}
 	cfgi, err := getConfigfile()
 
-	if vboxPath := os.Getenv("VBOX_INSTALL_PATH") ; vboxPath != "" && runtime.GOOS == "windows" {
+	if vboxPath := os.Getenv("VBOX_INSTALL_PATH"); vboxPath != "" && runtime.GOOS == "windows" {
 		B2D.VBM = cfgi.Get("", "VBM", filepath.Join(vboxPath, "VBoxManage.exe"))
 	} else {
 		B2D.VBM = cfgi.Get("", "VBM", "VBoxManage")
