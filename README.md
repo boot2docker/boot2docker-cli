@@ -1,6 +1,6 @@
 # boot2docker-cli
 
-This is the Go port of boot2docker (https://github.com/boot2docker/boot2docker)
+This is the Go port of the boot2docker (https://github.com/boot2docker/boot2docker)
 management script. It is intended to replace the shell script eventually. It is
 currently usable but since it is under active development, frequent changes and
 bugs are expected. USE AT YOUR OWN RISK.
@@ -67,6 +67,15 @@ And finally if you don't need the VM anymore, run
 
 to remove it completely.
 
+## What boot2docker-cli does
+
+This tool downloads the boot2docker.iso, creates a virtual machine, sets up 2 
+networks for that virtual machine (one NAT to allow the VM and containers to access
+the internet, the other to allow container port mapping to work securely), and then 
+provides the user a simple way to connect to the vm using an external ssh client.
+
+On Windows, [MSYS ssh](http://www.mingw.org/) provides a first class way to connect
+to the boo2docker vm (using ``boot2docker-cli.exe ssh``.
 
 ## Configuration
 
@@ -90,6 +99,12 @@ configure the following options:
   VM, default is `2022`.
 - `BOOT2DOCKER_DOCKER_PORT` port on the host forwarding to port 4243 in
   boot2docker VM, default is `4243`.
+- `BOOT2DOCKER_HostIp` - host only network's Host IP
+- `BOOT2DOCKER_DHCPIP` - host only network's DHCP Server IP
+- `BOOT2DOCKER_NetworkMask` - host only network's network mask
+- `BOOT2DOCKER_LowerIPAddress` - host only network's DHCP Server IP range
+- `BOOT2DOCKER_UpperIPAddress` - host only network's DHCP Server IP range
+- `BOOT2DOCKER_DHCPEnabled` - host only network's DHCP Server enabled flag
 
 
 You can put custom options into your shell, e.g.
