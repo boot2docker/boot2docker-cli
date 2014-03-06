@@ -23,7 +23,8 @@ func vbm(args ...string) error {
 	return cmd(B2D.VBM, args...)
 }
 
-//TODO: delete the hostonlyif and dhcpserver when we delete the vm! (need to reference count to make sure there are no other vms relying on them)
+// TODO: delete the hostonlyif and dhcpserver when we delete the vm! (need to
+// reference count to make sure there are no other vms relying on them)
 
 // Get or create the hostonly network interface
 func getHostOnlyNetworkInterface() (string, error) {
