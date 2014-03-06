@@ -32,7 +32,7 @@ var B2D struct {
 }
 
 func getCfgDir(name string) (string, error) {
-	if b2dDir := os.Getenv("BOOT2DOCKER_CFG_DIR"); b2dDir != "" {
+	if b2dDir := os.Getenv("BOOT2DOCKER_DIR"); b2dDir != "" {
 		return b2dDir, nil
 	}
 
