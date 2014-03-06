@@ -79,46 +79,30 @@ to the boo2docker vm (using ``boot2docker-cli.exe ssh``.
 
 ## Configuration
 
-The `boot2docker-cli` binary reads configuration from the environment. Currently you can
-configure the following options:
+The `boot2docker-cli` binary reads configuration from `$BOOT2DOCKER_PROFILE`, or
+if not found, from `$BOOT2DOCKER_CFG_DIR/profile`. Currently you can configure
+the following options (undefined options take default values):
 
-- `BOOT2DOCKER_VBM` path to the VirtualBox management utility, default is
-  `VBoxManage`.
-- `BOOT2DOCKER_SSH` path to the `ssh` client utility, default is `ssh`.
-- `BOOT2DOCKER_VM` name of the boot2docker virtual machine in VirtualBox,
-  default is `boot2docker-vm`.
-- `BOOT2DOCKER_DIR` path to the boot2docker config directory, default is
-  `$HOME/.boot2docker`.
-- `BOOT2DOCKER_ISO` path to the boot2docker ISO image, default is
-  `$BOOT2DOCKER_DIR/boot2docker.iso`.
-- `BOOT2DOCKER_DISK` path to the boot2docker disk image, default is
-  `$BOOT2DOCKER_DIR/boot2docker.vmdk`.
-- `BOOT2DOCKER_DISKSIZE` boot2docker disk image size in MB, default is `20000`.
-- `BOOT2DOCKER_MEMORY` boot2docker VM memory size in MB, default is `1024`.
-- `BOOT2DOCKER_SSH_PORT` port on the host forwarding to port 22 in boot2docker
-  VM, default is `2022`.
-- `BOOT2DOCKER_DOCKER_PORT` port on the host forwarding to port 4243 in
-  boot2docker VM, default is `4243`.
-- `BOOT2DOCKER_HostIp` - host only network's Host IP
-- `BOOT2DOCKER_DHCPIP` - host only network's DHCP Server IP
-- `BOOT2DOCKER_NetworkMask` - host only network's network mask
-- `BOOT2DOCKER_LowerIPAddress` - host only network's DHCP Server IP range
-- `BOOT2DOCKER_UpperIPAddress` - host only network's DHCP Server IP range
-- `BOOT2DOCKER_DHCPEnabled` - host only network's DHCP Server enabled flag
+    VBM=VBoxManage                  # path to the VirtualBox management utility
+    SSH=ssh                         # path to the `ssh` client utility
+    VM=boot2docker-vm               # name of the boot2docker virtual machine in VirtualBox,
+    DIR=$HOME/.boot2docker          # path to the boot2docker config directory
+    ISO=$BOOT2DOCKER_DIR/boot2docker.iso    # path to the boot2docker ISO image
+    DISK=$BOOT2DOCKER_DIR/boot2docker.vmdk  # path to the boot2docker disk image
+    DISKSIZE=20000                  # boot2docker disk image size in MB
+    MEMORY=1024                     # boot2docker VM memory size in MB
+    SSH_PORT=2022                   # host port forwarding to port 22 in the VM
+    DOCKER_PORT=4243                # host port forwarding to port 4243 in the VM
+    HostIP=192.168.59.3             # host-only network host IP
+    DHCPIP=192.168.59.99            # host-only network DHCP server IP
+    NetworkMask=255.255.255.0       # host only network network mask
+    LowerIPAddress=192.168.59.103   # host-only network IP range lower bound
+    UpperIPAddress=192.168.59.254   # host-only network IP range upper bound
+    DHCPEnabled=Yes                 # host-only network's DHCP Server enabled
 
+You can override the configurations using command line flags. Type
+`boot2docker-cli -h` for more information. 
 
-You can put custom options into your shell, e.g.
-
-    export BOOT2DOCKER_VBM=VBoxManage
-    export BOOT2DOCKER_SSH=ssh
-    export BOOT2DOCKER_VM=boot2docker-vm
-    export BOOT2DOCKER_DIR=$HOME/.boot2docker
-    export BOOT2DOCKER_ISO=$BOOT2DOCKER_DIR/boot2docker.iso
-    export BOOT2DOCKER_DISK=$BOOT2DOCKER_DIR/boot2docker.vmdk
-    export BOOT2DOCKER_DISKSIZE=20000
-    export BOOT2DOCKER_MEMORY=1024
-    export BOOT2DOCKER_SSH_PORT=2022
-    export BOOT2DOCKER_DOCKER_PORT=4243
 
 
 ## Contribution
