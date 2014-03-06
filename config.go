@@ -77,40 +77,41 @@ func config() (err error) {
 
 	B2D.VBM = profile.Get("", "VBM", "VBoxManage")
 	B2D.SSH = profile.Get("", "SSH", "ssh")
-	B2D.VM = profile.Get("", "VM_NAME", "boot2docker-vm")
+	B2D.VM = profile.Get("", "VM", "boot2docker-vm")
 	B2D.ISO = profile.Get("", "ISO", filepath.Join(B2D.Dir, "boot2docker.iso"))
-	B2D.Disk = profile.Get("", "VM_DISK", filepath.Join(B2D.Dir, "boot2docker.vmdk"))
+	B2D.Disk = profile.Get("", "Disk", filepath.Join(B2D.Dir, "boot2docker.vmdk"))
 
-	if diskSize, err := strconv.ParseUint(profile.Get("", "VM_DISK_SIZE", "20000"), 10, 32); err != nil {
-		return fmt.Errorf("invalid VM_DISK_SIZE: %s", err)
+	if diskSize, err := strconv.ParseUint(profile.Get("", "DiskSize", "20000"), 10, 32); err != nil {
+		return fmt.Errorf("invalid disk image size: %s", err)
 	} else {
 		B2D.DiskSize = uint(diskSize)
 	}
 
-	if memory, err := strconv.ParseUint(profile.Get("", "VM_MEM", "1024"), 10, 32); err != nil {
-		return fmt.Errorf("invalid VM_MEM: %s", err)
+	if memory, err := strconv.ParseUint(profile.Get("", "Memory", "1024"), 10, 32); err != nil {
+		return fmt.Errorf("invalid memory size: %s", err)
 	} else {
 		B2D.Memory = uint(memory)
 	}
 
-	if sshPort, err := strconv.ParseUint(profile.Get("", "SSH_HOST_PORT", "2022"), 10, 16); err != nil {
-		return fmt.Errorf("invalid SSH_HOST_PORT: %s", err)
+	if sshPort, err := strconv.ParseUint(profile.Get("", "SSHPort", "2022"), 10, 16); err != nil {
+		return fmt.Errorf("invalid SSH port: %s", err)
 	} else {
 		B2D.SSHPort = uint16(sshPort)
 	}
-	// Host only networking settings
-	B2D.HostIP = profile.Get("", "HOST_IP", "192.168.59.3")
-	B2D.DHCPIP = profile.Get("", "DHCP_IP", "192.168.59.99")
-	B2D.NetworkMask = profile.Get("", "NetworkMask", "255.255.255.0")
-	B2D.LowerIPAddress = profile.Get("", "LowerIPAddress", "192.168.59.103")
-	B2D.UpperIPAddress = profile.Get("", "UpperIPAddress", "192.168.59.254")
-	B2D.DHCPEnabled = profile.Get("", "DHCP_Enabled", "Yes")
 
-	if dockerPort, err := strconv.ParseUint(profile.Get("", "DOCKER_PORT", "4243"), 10, 16); err != nil {
-		return fmt.Errorf("invalid DOCKER_PORT: %s", err)
+	if dockerPort, err := strconv.ParseUint(profile.Get("", "DockerPort", "4243"), 10, 16); err != nil {
+		return fmt.Errorf("invalid DockerPort: %s", err)
 	} else {
 		B2D.DockerPort = uint16(dockerPort)
 	}
+
+	// Host only networking settings
+	B2D.HostIP = profile.Get("", "HostIP", "192.168.59.3")
+	B2D.DHCPIP = profile.Get("", "DHCPIP", "192.168.59.99")
+	B2D.NetworkMask = profile.Get("", "NetworkMask", "255.255.255.0")
+	B2D.LowerIPAddress = profile.Get("", "LowerIPAddress", "192.168.59.103")
+	B2D.UpperIPAddress = profile.Get("", "UpperIPAddress", "192.168.59.254")
+	B2D.DHCPEnabled = profile.Get("", "DHCPEnabled", "Yes")
 
 	// Commandline flags override profile settings.
 	flag.StringVar(&B2D.Dir, "dir", B2D.Dir, "boot2docker config directory")

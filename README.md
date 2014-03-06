@@ -85,20 +85,22 @@ the following options (undefined options take default values):
 
     VBM=VBoxManage                  # path to the VirtualBox management utility
     SSH=ssh                         # path to the `ssh` client utility
-    VM=boot2docker-vm               # name of the boot2docker virtual machine in VirtualBox,
-    DIR=$HOME/.boot2docker          # path to the boot2docker config directory
+    VM=boot2docker-vm          # name of the boot2docker virtual machine in VirtualBox,
+    Dir=$HOME/.boot2docker          # path to the boot2docker config directory
     ISO=$BOOT2DOCKER_DIR/boot2docker.iso    # path to the boot2docker ISO image
-    DISK=$BOOT2DOCKER_DIR/boot2docker.vmdk  # path to the boot2docker disk image
-    DISKSIZE=20000                  # boot2docker disk image size in MB
-    MEMORY=1024                     # boot2docker VM memory size in MB
-    SSH_PORT=2022                   # host port forwarding to port 22 in the VM
-    DOCKER_PORT=4243                # host port forwarding to port 4243 in the VM
+    Disk=$BOOT2DOCKER_DIR/boot2docker.vmdk  # path to the boot2docker disk image
+    DiskSize=20000                  # boot2docker disk image size in MB
+    Memory=1024                     # boot2docker VM memory size in MB
+    SSHPort=2022                   # host port forwarding to port 22 in the VM
+    DockerPort=4243                # host port forwarding to port 4243 in the VM
     HostIP=192.168.59.3             # host-only network host IP
     DHCPIP=192.168.59.99            # host-only network DHCP server IP
     NetworkMask=255.255.255.0       # host only network network mask
     LowerIPAddress=192.168.59.103   # host-only network IP range lower bound
     UpperIPAddress=192.168.59.254   # host-only network IP range upper bound
     DHCPEnabled=Yes                 # host-only network's DHCP Server enabled
+
+Environment variables in the profile will be expanded.
 
 You can override the configurations using command line flags. Type
 `boot2docker-cli -h` for more information. 
