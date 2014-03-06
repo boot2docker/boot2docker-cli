@@ -3,12 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	// keep 3rd-party imports separate from stdlib with an empty line
 	"github.com/vaughan0/go-ini"
@@ -16,22 +13,30 @@ import (
 
 // boot2docker config.
 var B2D struct {
-	VBM        string // VirtualBox management utility
-	SSH        string // SSH client executable
-	VM         string // virtual machine name
-	Dir        string // boot2docker directory
-	ISO        string // boot2docker ISO image path
-	Disk       string // VM disk image path
-	DiskSize   int    // VM disk image size (MB)
-	Memory     int    // VM memory size (MB)
-	SSHPort    int    // host SSH port (forward to port 22 in VM)
-	DockerPort int    // host Docker port (forward to port 4243 in VM)
-	HostIP         string // Host only network IP address
-	DHCPIP         string // Host only network DHCP address
-	NetworkMask    string // Host only network
-	LowerIPAddress string // Host only network
-	UpperIPAddress string // Host only network
-	DHCPEnabled    string // Host only network DHCP endabled
+	// NOTE: separate sections with blank lines so gofmt doesn't change
+	// indentation all the time.
+
+	// basic config
+	VBM      string // VirtualBox management utility
+	SSH      string // SSH client executable
+	VM       string // virtual machine name
+	Dir      string // boot2docker directory
+	ISO      string // boot2docker ISO image path
+	Disk     string // VM disk image path
+	DiskSize uint   // VM disk image size (MB)
+	Memory   uint   // VM memory size (MB)
+
+	// NAT network: port forwarding
+	SSHPort    uint16 // host SSH port (forward to port 22 in VM)
+	DockerPort uint16 // host Docker port (forward to port 4243 in VM)
+
+	// host-only network
+	HostIP         string
+	DHCPIP         string
+	NetworkMask    string
+	LowerIPAddress string
+	UpperIPAddress string
+	DHCPEnabled    string
 }
 
 func getCfgDir(name string) (string, error) {
@@ -39,7 +44,7 @@ func getCfgDir(name string) (string, error) {
 		return b2dDir, nil
 	}
 
-	// Unix
+	// *nix
 	if home := os.Getenv("HOME"); home != "" {
 		return filepath.Join(home, name), nil
 	}
@@ -48,13 +53,13 @@ func getCfgDir(name string) (string, error) {
 	for _, env := range []string{
 		"APPDATA",
 		"LOCALAPPDATA",
-		"USERPROFILE", // let's try USERPROFILE only as a very last resort
+		"USERPROFILE",
 	} {
 		if val := os.Getenv(env); val != "" {
 			return filepath.Join(val, "boot2docker"), nil
 		}
 	}
-	// ok, we've tried everything reasonable - now let's go for CWD
+	// Fallback to current working directory as a last resort
 	cwd, err := os.Getwd()
 	if err != nil {
 		return "", err
@@ -62,98 +67,106 @@ func getCfgDir(name string) (string, error) {
 	return filepath.Join(cwd, name), nil
 }
 
-// Read configuration.
+// Read configuration from both profile and flags. Flags override profile.
 func config() (err error) {
 
 	if B2D.Dir, err = getCfgDir(".boot2docker"); err != nil {
 		return fmt.Errorf("failed to get current directory: %s", err)
 	}
-	cfgi, err := getConfigfile()
 
-	B2D.VBM = cfgi.Get("", "VBM", "VBoxManage")
-	B2D.SSH = cfgi.Get("", "BOOT2DOCKER_SSH", "ssh")
-	B2D.VM = cfgi.Get("", "VM_NAME", "boot2docker-vm")
+	filename := os.Getenv("BOOT2DOCKER_PROFILE")
+	if filename == "" {
+		filename = filepath.Join(B2D.Dir, "profile")
+	}
+	profile, err := getProfile(filename)
+	if err != nil && !os.IsNotExist(err) { // undefined/empty profile works
+		return err
+	}
 
-	B2D.ISO = cfgi.Get("", "BOOT2DOCKER_ISO", filepath.Join(B2D.Dir, "boot2docker.iso"))
-	B2D.Disk = cfgi.Get("", "VM_DISK", filepath.Join(B2D.Dir, "boot2docker.vmdk"))
+	B2D.VBM = profile.Get("", "VBM", "VBoxManage")
+	B2D.SSH = profile.Get("", "SSH", "ssh")
+	B2D.VM = profile.Get("", "VM_NAME", "boot2docker-vm")
+	B2D.ISO = profile.Get("", "ISO", filepath.Join(B2D.Dir, "boot2docker.iso"))
+	B2D.Disk = profile.Get("", "VM_DISK", filepath.Join(B2D.Dir, "boot2docker.vmdk"))
 
-	if B2D.DiskSize, err = strconv.Atoi(cfgi.Get("", "VM_DISK_SIZE", "20000")); err != nil {
+	if diskSize, err := strconv.ParseUint(profile.Get("", "VM_DISK_SIZE", "20000"), 10, 32); err != nil {
 		return fmt.Errorf("invalid VM_DISK_SIZE: %s", err)
+	} else {
+		B2D.DiskSize = uint(diskSize)
 	}
-	if B2D.DiskSize <= 0 {
-		return fmt.Errorf("VM_DISK_SIZE way too small")
-	}
-	if B2D.Memory, err = strconv.Atoi(cfgi.Get("", "VM_MEM", "1024")); err != nil {
+
+	if memory, err := strconv.ParseUint(profile.Get("", "VM_MEM", "1024"), 10, 32); err != nil {
 		return fmt.Errorf("invalid VM_MEM: %s", err)
+	} else {
+		B2D.Memory = uint(memory)
 	}
-	if B2D.Memory <= 0 {
-		return fmt.Errorf("VM_MEM way too small")
-	}
-	if B2D.SSHPort, err = strconv.Atoi(cfgi.Get("", "SSH_HOST_PORT", "2022")); err != nil {
+
+	if sshPort, err := strconv.ParseUint(profile.Get("", "SSH_HOST_PORT", "2022"), 10, 16); err != nil {
 		return fmt.Errorf("invalid SSH_HOST_PORT: %s", err)
-	}
-	if B2D.SSHPort <= 0 {
-		return fmt.Errorf("invalid SSH_HOST_PORT: must be in the range of 1--65535; got %d", B2D.SSHPort)
-	}
-	if B2D.DockerPort, err = strconv.Atoi(cfgi.Get("", "DOCKER_PORT", "4243")); err != nil {
-		return fmt.Errorf("invalid DOCKER_PORT: %s", err)
-	}
-	if B2D.DockerPort <= 0 {
-		return fmt.Errorf("invalid DOCKER_PORT: must be in the range of 1--65535; got %d", B2D.DockerPort)
+	} else {
+		B2D.SSHPort = uint16(sshPort)
 	}
 	// Host only networking settings
-	B2D.HostIP = cfgi.Get("", "HOST_IP", "192.168.59.3")
-	B2D.DHCPIP = cfgi.Get("", "DHCP_IP", "192.168.59.99")
-	B2D.NetworkMask = cfgi.Get("", "NetworkMask", "255.255.255.0")
-	B2D.LowerIPAddress = cfgi.Get("", "LowerIPAddress", "192.168.59.103")
-	B2D.UpperIPAddress = cfgi.Get("", "UpperIPAddress", "192.168.59.254")
-	B2D.DHCPEnabled = cfgi.Get("", "DHCP_Enabled", "Yes")
+	B2D.HostIP = profile.Get("", "HostIP", "192.168.59.3")
+	B2D.DHCPIP = profile.Get("", "DHCPIP", "192.168.59.99")
+	B2D.NetworkMask = profile.Get("", "NetworkMask", "255.255.255.0")
+	B2D.LowerIPAddress = profile.Get("", "LowerIPAddress", "192.168.59.103")
+	B2D.UpperIPAddress = profile.Get("", "UpperIPAddress", "192.168.59.254")
+	B2D.DHCPEnabled = profile.Get("", "DHCPEnabled", "Yes")
 
-	// TODO maybe allow flags to override ENV vars?
+	if dockerPort, err := strconv.ParseUint(profile.Get("", "DOCKER_PORT", "4243"), 10, 16); err != nil {
+		return fmt.Errorf("invalid DOCKER_PORT: %s", err)
+	} else {
+		B2D.DockerPort = uint16(dockerPort)
+	}
+
+	// Commandline flags override profile settings.
+	flag.StringVar(&B2D.Dir, "dir", B2D.Dir, "boot2docker config directory")
+	flag.StringVar(&B2D.ISO, "iso", B2D.ISO, "Path to boot2docker ISO image")
+	flag.StringVar(&B2D.Disk, "disk", B2D.Disk, "Path to boot2docker disk image")
+	flag.UintVar(&B2D.DiskSize, "disksize", B2D.DiskSize, "boot2docker disk image size (in MB)")
+	flag.UintVar(&B2D.Memory, "memory", B2D.Memory, "Virtual machine memory size (in MB)")
+	flag.Var(newUint16Value(B2D.SSHPort, &B2D.SSHPort), "sshport", "Host SSH port (forward to port 22 in VM)")
+	flag.Var(newUint16Value(B2D.DockerPort, &B2D.DockerPort), "dockerport", "Host Docker port (forward to port 4243 in VM)")
 	flag.Parse()
+
+	// Name of VM is the second argument after the subcommand, not a flag.
 	if vm := flag.Arg(1); vm != "" {
 		B2D.VM = vm
 	}
 	return
 }
 
-type cfgImport struct {
-	cf ini.File
+// boot2docker configuration profile.
+type Profile struct {
+	ini.File
 }
 
-func (f cfgImport) Get(section, key, defaultstr string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	if value, ok := f.cf.Get(section, key); ok {
-		return os.ExpandEnv(value)
-	}
-	return defaultstr
+func getProfile(filename string) (*Profile, error) {
+	f, err := ini.LoadFile(filename)
+	return &Profile{f}, err
 }
 
-var readConfigfile = func(filename string) (string, error) {
-	value, err := ioutil.ReadFile(filename)
-	return string(value), err
+func (f *Profile) Get(section, key, fallback string) string {
+	if val, ok := f.File.Get(section, key); ok {
+		return os.ExpandEnv(val)
+	}
+	return fallback
 }
 
-var getConfigfile = func() (cfgImport, error) {
-	var cfg cfgImport
-	filename := os.Getenv("BOOT2DOCKER_PROFILE")
-	if filename == "" {
-		filename = filepath.Join(B2D.Dir, "profile")
-	}
+// The missing flag.Uint16Var value type.
+type uint16Value uint16
 
-	cfgStr, err := readConfigfile(filename)
-	if err != nil {
-		return cfg, err
-	}
-
-	cfgini, err := ini.Load(strings.NewReader(cfgStr))
-	if err != nil {
-		log.Fatalf("Failed to parse %s: %s", filename, err)
-		return cfg, err
-	}
-	cfg = cfgImport{cf: cfgini}
-
-	return cfg, err
+func newUint16Value(val uint16, p *uint16) *uint16Value {
+	*p = val
+	return (*uint16Value)(p)
+}
+func (i *uint16Value) String() string { return fmt.Sprintf("%d", *i) }
+func (i *uint16Value) Set(s string) error {
+	v, err := strconv.ParseUint(s, 10, 16)
+	*i = uint16Value(v)
+	return err
+}
+func (i *uint16Value) Get() interface{} {
+	return uint16(*i)
 }

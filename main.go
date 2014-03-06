@@ -13,11 +13,11 @@ var (
 	GitSHA  string
 )
 
-var usageShort = fmt.Sprintf(`Usage: %s {help|init|start|up|ssh|save|pause|stop|poweroff|reset|restart|status|info|delete|download|version} [<vm>]
+var usageShort = fmt.Sprintf(`Usage: %s [<flags>] {help|init|start|up|ssh|save|pause|stop|poweroff|reset|restart|status|info|delete|download|version} [<args>]
 `, os.Args[0])
 
 // NOTE: the help message uses spaces, not tabs for indentation!
-var usageLong = fmt.Sprintf(`Usage: %s <command> [<vm>]
+var usageLong = fmt.Sprintf(`Usage: %s [<flags>] <command> [<args>]
 
 boot2docker management utility.
 
