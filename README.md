@@ -80,19 +80,19 @@ to the boo2docker vm (using ``boot2docker-cli.exe ssh``.
 ## Configuration
 
 The `boot2docker-cli` binary reads configuration from `$BOOT2DOCKER_PROFILE`, or
-if not found, from `$BOOT2DOCKER_CFG_DIR/profile`. Currently you can configure
+if not found, from `$BOOT2DOCKER_DIR/profile`. Currently you can configure
 the following options (undefined options take default values):
 
     VBM=VBoxManage                  # path to the VirtualBox management utility
     SSH=ssh                         # path to the `ssh` client utility
-    VM=boot2docker-vm          # name of the boot2docker virtual machine in VirtualBox,
+    VM=boot2docker-vm               # name of the boot2docker virtual machine in VirtualBox,
     Dir=$HOME/.boot2docker          # path to the boot2docker config directory
     ISO=$BOOT2DOCKER_DIR/boot2docker.iso    # path to the boot2docker ISO image
     Disk=$BOOT2DOCKER_DIR/boot2docker.vmdk  # path to the boot2docker disk image
     DiskSize=20000                  # boot2docker disk image size in MB
     Memory=1024                     # boot2docker VM memory size in MB
-    SSHPort=2022                   # host port forwarding to port 22 in the VM
-    DockerPort=4243                # host port forwarding to port 4243 in the VM
+    SSHPort=2022                    # host port forwarding to port 22 in the VM
+    DockerPort=4243                 # host port forwarding to port 4243 in the VM
     HostIP=192.168.59.3             # host-only network host IP
     DHCPIP=192.168.59.99            # host-only network DHCP server IP
     NetworkMask=255.255.255.0       # host only network network mask
