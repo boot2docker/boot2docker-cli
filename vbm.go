@@ -60,7 +60,7 @@ func status(vm string) vmState {
 }
 
 // Make a boot2docker VM disk image with the given size (in MB).
-func makeDiskImage(dest string, size int) error {
+func makeDiskImage(dest string, size uint) error {
 	// Create the dest dir.
 	if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
 		return err

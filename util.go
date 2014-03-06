@@ -15,14 +15,6 @@ func logf(fmt string, v ...interface{}) {
 	log.Printf(fmt, v...)
 }
 
-// Return the value of an ENV var, or the fallback value if the ENV var is empty/undefined.
-func getenv(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return fallback
-}
-
 // Check if the connection to tcp://addr is readable.
 func read(addr string) error {
 	conn, err := net.Dial("tcp", addr)
