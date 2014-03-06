@@ -13,16 +13,22 @@ import (
 
 // boot2docker config.
 var B2D struct {
-	VBM        string // VirtualBox management utility
-	SSH        string // SSH client executable
-	VM         string // virtual machine name
-	Dir        string // boot2docker directory
-	ISO        string // boot2docker ISO image path
-	Disk       string // VM disk image path
-	DiskSize   uint   // VM disk image size (MB)
-	Memory     uint   // VM memory size (MB)
-	SSHPort    uint16 // host SSH port (forward to port 22 in VM)
-	DockerPort uint16 // host Docker port (forward to port 4243 in VM)
+	VBM            string // VirtualBox management utility
+	SSH            string // SSH client executable
+	VM             string // virtual machine name
+	Dir            string // boot2docker directory
+	ISO            string // boot2docker ISO image path
+	Disk           string // VM disk image path
+	DiskSize       uint   // VM disk image size (MB)
+	Memory         uint   // VM memory size (MB)
+	SSHPort        uint16 // host SSH port (forward to port 22 in VM)
+	DockerPort     uint16 // host Docker port (forward to port 4243 in VM)
+	HostIP         string // Host only network IP address
+	DHCPIP         string // Host only network DHCP address
+	NetworkMask    string // Host only network
+	LowerIPAddress string // Host only network
+	UpperIPAddress string // Host only network
+	DHCPEnabled    string // Host only network DHCP enabled
 }
 
 func getCfgDir(name string) (string, error) {
@@ -92,6 +98,13 @@ func config() (err error) {
 	} else {
 		B2D.SSHPort = uint16(sshPort)
 	}
+	// Host only networking settings
+	B2D.HostIP = profile.Get("", "HOST_IP", "192.168.59.3")
+	B2D.DHCPIP = profile.Get("", "DHCP_IP", "192.168.59.99")
+	B2D.NetworkMask = profile.Get("", "NetworkMask", "255.255.255.0")
+	B2D.LowerIPAddress = profile.Get("", "LowerIPAddress", "192.168.59.103")
+	B2D.UpperIPAddress = profile.Get("", "UpperIPAddress", "192.168.59.254")
+	B2D.DHCPEnabled = profile.Get("", "DHCP_Enabled", "Yes")
 
 	if dockerPort, err := strconv.ParseUint(profile.Get("", "DOCKER_PORT", "4243"), 10, 16); err != nil {
 		return fmt.Errorf("invalid DOCKER_PORT: %s", err)
@@ -107,6 +120,12 @@ func config() (err error) {
 	flag.UintVar(&B2D.Memory, "memory", B2D.Memory, "Virtual machine memory size (in MB)")
 	flag.Var(newUint16Value(B2D.SSHPort, &B2D.SSHPort), "sshport", "Host SSH port (forward to port 22 in VM)")
 	flag.Var(newUint16Value(B2D.DockerPort, &B2D.DockerPort), "dockerport", "Host Docker port (forward to port 4243 in VM)")
+	flag.StringVar(&B2D.HostIP, "hostip", B2D.HostIP, "VirtualBox host-only network IP address")
+	flag.StringVar(&B2D.DHCPIP, "dhcpip", B2D.DHCPIP, "VirtualBox host-only network DHCP address")
+	flag.StringVar(&B2D.NetworkMask, "networkmask", B2D.NetworkMask, "VirtualBox host-only network mask")
+	flag.StringVar(&B2D.LowerIPAddress, "lowerip", B2D.LowerIPAddress, "VirtualBox host-only network DHCP lower bound")
+	flag.StringVar(&B2D.UpperIPAddress, "uppwerip", B2D.UpperIPAddress, "VirtualBox host-only network DHCP upper bound")
+	flag.StringVar(&B2D.DHCPEnabled, "dhcpenabled", B2D.DHCPEnabled, "Enable VirtualBox host-only network DHCP")
 	flag.Parse()
 
 	// Name of VM is the second argument after the subcommand, not a flag.
