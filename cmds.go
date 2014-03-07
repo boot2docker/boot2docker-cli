@@ -285,7 +285,7 @@ func cmdInit() int {
 		logf("failed to locate VirtualBox management utility %q", B2D.VBM)
 		return 2
 	default:
-		logf("%q already exists. %s", B2D.VM)
+		logf("%q already exists.", B2D.VM)
 		return 1
 	}
 
@@ -387,7 +387,6 @@ func cmdInit() int {
 		logf("Failed to modify %s: %s", B2D.VM, err)
 		return 1
 	}
-
 
 	logf("Setting VM storage...")
 	if err := vbm("storagectl", B2D.VM,
