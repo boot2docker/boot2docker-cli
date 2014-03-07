@@ -56,8 +56,6 @@ func run() int {
 		return cmdSSH()
 	case "save", "suspend":
 		return cmdSave()
-	case "pause":
-		return cmdPause()
 	case "halt", "down", "stop":
 		return cmdStop()
 	case "poweroff":
