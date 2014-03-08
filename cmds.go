@@ -39,18 +39,20 @@ func cmdSSH() int {
 		logf("VM %q is not registered.", B2D.VM)
 		return 1
 	case vmRunning:
-		// TODO What SSH client is used on Windows?
-		if err := cmd(B2D.SSH,
-			"-o", "StrictHostKeyChecking=no",
-			"-o", "UserKnownHostsFile=/dev/null",
-			"-p", fmt.Sprintf("%d", B2D.SSHPort),
-			"docker@localhost",
-		); err != nil {
-			logf("%s", err)
-			return 1
-		}
+		break
 	default:
 		logf("VM %q is not running.", B2D.VM)
+		return 1
+	}
+
+	// TODO What SSH client is used on Windows? Does it support the options?
+	if err := cmd(B2D.SSH,
+		"-o", "StrictHostKeyChecking=no",
+		"-o", "UserKnownHostsFile=/dev/null",
+		"-p", fmt.Sprintf("%d", B2D.SSHPort),
+		"docker@localhost",
+	); err != nil {
+		logf("%s", err)
 		return 1
 	}
 	return 0
@@ -107,7 +109,7 @@ func cmdStart() int {
 	return 0
 }
 
-// Save the current state of VM on disk.
+// Suspend and save the current state of VM on disk.
 func cmdSave() int {
 	switch state := status(B2D.VM); state {
 	case vmVBMNotFound:
@@ -116,14 +118,21 @@ func cmdSave() int {
 	case vmUnregistered:
 		logf("VM %q is not registered.", B2D.VM)
 		return 1
-	case vmRunning:
-		logf("Suspending VM %q", B2D.VM)
-		if err := vbm("controlvm", B2D.VM, "savestate"); err != nil {
-			logf("Failed to suspend VM %q: %s", B2D.VM, err)
-			return 1
+	case vmPaused: // resume from paused before saving
+		if exitcode := cmdStart(); exitcode != 0 {
+			return exitcode
 		}
+	case vmRunning:
+		break
 	default:
 		logf("VM %q is not running.", B2D.VM)
+		return 0
+	}
+
+	logf("Suspending VM %q", B2D.VM)
+	if err := vbm("controlvm", B2D.VM, "savestate"); err != nil {
+		logf("Failed to suspend VM %q: %s", B2D.VM, err)
+		return 1
 	}
 	return 0
 }
@@ -138,12 +147,15 @@ func cmdPause() int {
 		logf("VM %q is not registered.", B2D.VM)
 		return 1
 	case vmRunning:
-		if err := vbm("controlvm", B2D.VM, "pause"); err != nil {
-			logf("Failed to pause VM %q: %s", B2D.VM, err)
-			return 1
-		}
+		break
 	default:
 		logf("VM %q is not running.", B2D.VM)
+		return 0
+	}
+
+	if err := vbm("controlvm", B2D.VM, "pause"); err != nil {
+		logf("Failed to pause VM %q: %s", B2D.VM, err)
+		return 1
 	}
 	return 0
 }
@@ -157,23 +169,30 @@ func cmdStop() int {
 	case vmUnregistered:
 		logf("VM %q is not registered.", B2D.VM)
 		return 1
+	case vmPaused, vmSaved: // resume before stopping
+		if exitcode := cmdStart(); exitcode != 0 {
+			return exitcode
+		}
 	case vmRunning:
-		logf("Shutting down VM %q...", B2D.VM)
-		if err := vbm("controlvm", B2D.VM, "acpipowerbutton"); err != nil {
-			logf("Failed to shutdown VM %q: %s", B2D.VM, err)
-			return 1
-		}
-		for status(B2D.VM) == vmRunning {
-			time.Sleep(1 * time.Second)
-		}
+		break
 	default:
 		logf("VM %q is not running.", B2D.VM)
+		return 0
+	}
+
+	logf("Shutting down VM %q...", B2D.VM)
+	if err := vbm("controlvm", B2D.VM, "acpipowerbutton"); err != nil {
+		logf("Failed to shutdown VM %q: %s", B2D.VM, err)
+		return 1
+	}
+	for status(B2D.VM) == vmRunning {
+		time.Sleep(1 * time.Second)
 	}
 	return 0
 }
 
-// Forcefully power off the VM (equivalent to unplug power). Could potentially
-// result in corrupted disk. Use with care.
+// Forcefully power off the VM (equivalent to unplug power). Might corrupt disk
+// image.
 func cmdPoweroff() int {
 	switch state := status(B2D.VM); state {
 	case vmVBMNotFound:
@@ -182,29 +201,40 @@ func cmdPoweroff() int {
 	case vmUnregistered:
 		logf("VM %q is not registered.", B2D.VM)
 		return 1
-	case vmRunning:
-		if err := vbm("controlvm", B2D.VM, "poweroff"); err != nil {
-			logf("Failed to poweroff VM %q: %s", B2D.VM, err)
-			return 1
-		}
+	case vmRunning, vmPaused:
+		break
 	default:
 		logf("VM %q is not running.", B2D.VM)
+		return 0
+	}
+
+	if err := vbm("controlvm", B2D.VM, "poweroff"); err != nil {
+		logf("Failed to poweroff VM %q: %s", B2D.VM, err)
+		return 1
 	}
 	return 0
 }
 
 // Gracefully stop and then start the VM.
 func cmdRestart() int {
-	if state := status(B2D.VM); state == vmRunning {
+	switch state := status(B2D.VM); state {
+	case vmPaused, vmSaved:
+		if exitcode := cmdStart(); exitcode != 0 {
+			return exitcode
+		}
+		fallthrough
+	case vmRunning:
 		if exitcode := cmdStop(); exitcode != 0 {
 			return exitcode
 		}
+	default:
+		logf("Cannot restart VM %q from state %s", B2D.VM, state)
+		return 1
 	}
 	return cmdStart()
 }
 
-// Forcefully reset the VM. Could potentially result in corrupted disk. Use
-// with care.
+// Forcefully reset (equivalent to cold boot) the VM. Might corrupt disk image.
 func cmdReset() int {
 	switch state := status(B2D.VM); state {
 	case vmVBMNotFound:
@@ -213,18 +243,25 @@ func cmdReset() int {
 	case vmUnregistered:
 		logf("VM %q is not registered.", B2D.VM)
 		return 1
-	case vmRunning:
-		if err := vbm("controlvm", B2D.VM, "reset"); err != nil {
-			logf("Failed to reset VM %q: %s", B2D.VM, err)
-			return 1
+	case vmPaused, vmSaved:
+		if exitcode := cmdStart(); exitcode != 0 {
+			return exitcode
 		}
+	case vmRunning:
+		break
 	default:
 		logf("VM %q is not running.", B2D.VM)
+		return 0
+	}
+
+	if err := vbm("controlvm", B2D.VM, "reset"); err != nil {
+		logf("Failed to reset VM %q: %s", B2D.VM, err)
+		return 1
 	}
 	return 0
 }
 
-// Delete the VM and remove associated files.
+// Delete the VM and associated disk image.
 func cmdDelete() int {
 	switch state := status(B2D.VM); state {
 	case vmVBMNotFound:
@@ -232,17 +269,15 @@ func cmdDelete() int {
 		return 2
 	case vmUnregistered:
 		logf("VM %q is not registered.", B2D.VM)
-
 	case vmRunning, vmPaused:
-		logf("VM %q needs to be stopped to delete it.", B2D.VM)
-		return 1
-
-	default:
-		if err := vbm("unregistervm", "--delete", B2D.VM); err != nil {
-			logf("Failed to delete VM %q: %s", B2D.VM, err)
-			return 1
+		if exitcode := cmdPoweroff(); exitcode != 0 {
+			return exitcode
 		}
+	}
 
+	if err := vbm("unregistervm", "--delete", B2D.VM); err != nil {
+		logf("Failed to delete VM %q: %s", B2D.VM, err)
+		return 1
 	}
 	return 0
 }
@@ -256,13 +291,13 @@ func cmdInfo() int {
 	case vmUnregistered:
 		logf("%q does not exist", B2D.VM)
 		return 1
-	default:
-		if err := vbm("showvminfo", B2D.VM); err != nil {
-			logf("Failed to show info of VM %q: %s", B2D.VM, err)
-			return 1
-		}
-		return 0
 	}
+
+	if err := vbm("showvminfo", B2D.VM); err != nil {
+		logf("Failed to show info of VM %q: %s", B2D.VM, err)
+		return 1
+	}
+	return 0
 }
 
 // Show the current state of the VM.
@@ -283,7 +318,8 @@ func cmdStatus() int {
 // Initialize the boot2docker VM from scratch.
 func cmdInit() int {
 	switch status(B2D.VM) {
-	case vmUnregistered: // continue
+	case vmUnregistered:
+		break
 	case vmVBMNotFound:
 		logf("Failed to locate VirtualBox management utility %q", B2D.VBM)
 		return 2
