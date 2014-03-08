@@ -9,17 +9,21 @@ import (
 
 // The following will be injected during the build process.
 var (
-	Version string
-	GitSHA  string
+	Version     string
+	GitSHA      string
+	verboseFlag = flag.Bool("v", false, "verbose flag to show commands as they execute.")
 )
 
-var usageShort = fmt.Sprintf(`Usage: %s {help|init|start|up|ssh|save|pause|stop|poweroff|reset|restart|status|info|delete|download|version} [<vm>]
+var usageShort = fmt.Sprintf(`Usage: %s [-v] {help|init|start|up|ssh|save|pause|stop|poweroff|reset|restart|status|info|delete|download|version} [<vm>]
 `, os.Args[0])
 
 // NOTE: the help message uses spaces, not tabs for indentation!
-var usageLong = fmt.Sprintf(`Usage: %s <command> [<vm>]
+var usageLong = fmt.Sprintf(`Usage: %s [-v] <command> [<vm>]
 
 boot2docker management utility.
+
+Flags:
+    -v              Verbose flag to show commands as they execute.
 
 Commands:
 
@@ -90,5 +94,6 @@ func run() int {
 }
 
 func main() {
+	flag.Parse()
 	os.Exit(run())
 }
