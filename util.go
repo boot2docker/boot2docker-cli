@@ -11,6 +11,17 @@ import (
 	"path/filepath"
 )
 
+// fmt.Printf to stdout. Convention is to outf info intended for scripting.
+func outf(f string, v ...interface{}) {
+	fmt.Printf(f, v...)
+}
+
+// fmt.Printf to stderr. Convention is to errf info intended for human.
+func errf(f string, v ...interface{}) {
+	fmt.Fprintf(os.Stderr, f, v...)
+}
+
+// Verbose output for debugging.
 func logf(fmt string, v ...interface{}) {
 	log.Printf(fmt, v...)
 }

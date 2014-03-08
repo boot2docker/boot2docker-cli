@@ -1,13 +1,13 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 
 	// keep 3rd-party imports separate from stdlib with an empty line
+	flag "github.com/ogier/pflag"
 	"github.com/vaughan0/go-ini"
 )
 
@@ -83,62 +83,64 @@ func config() (err error) {
 		return err
 	}
 
-	B2D.VBM = profile.Get("", "VBM", "VBoxManage")
-	B2D.SSH = profile.Get("", "SSH", "ssh")
-	B2D.VM = profile.Get("", "VM", "boot2docker-vm")
-	B2D.ISO = profile.Get("", "ISO", filepath.Join(B2D.Dir, "boot2docker.iso"))
-	B2D.Disk = profile.Get("", "Disk", filepath.Join(B2D.Dir, "boot2docker.vmdk"))
+	B2D.VBM = profile.Get("", "vbm", "VBoxManage")
+	B2D.SSH = profile.Get("", "ssh", "ssh")
+	B2D.VM = profile.Get("", "vm", "boot2docker-vm")
+	B2D.ISO = profile.Get("", "iso", filepath.Join(B2D.Dir, "boot2docker.iso"))
+	B2D.Disk = profile.Get("", "disk", filepath.Join(B2D.Dir, "boot2docker.vmdk"))
 
-	if diskSize, err := strconv.ParseUint(profile.Get("", "DiskSize", "20000"), 10, 32); err != nil {
+	if diskSize, err := strconv.ParseUint(profile.Get("", "disksize", "20000"), 10, 32); err != nil {
 		return fmt.Errorf("invalid disk image size: %s", err)
 	} else {
 		B2D.DiskSize = uint(diskSize)
 	}
 
-	if memory, err := strconv.ParseUint(profile.Get("", "Memory", "1024"), 10, 32); err != nil {
+	if memory, err := strconv.ParseUint(profile.Get("", "memory", "1024"), 10, 32); err != nil {
 		return fmt.Errorf("invalid memory size: %s", err)
 	} else {
 		B2D.Memory = uint(memory)
 	}
 
-	if sshPort, err := strconv.ParseUint(profile.Get("", "SSHPort", "2022"), 10, 16); err != nil {
+	if sshPort, err := strconv.ParseUint(profile.Get("", "sshport", "2022"), 10, 16); err != nil {
 		return fmt.Errorf("invalid SSH port: %s", err)
 	} else {
 		B2D.SSHPort = uint16(sshPort)
 	}
 
-	if dockerPort, err := strconv.ParseUint(profile.Get("", "DockerPort", "4243"), 10, 16); err != nil {
+	if dockerPort, err := strconv.ParseUint(profile.Get("", "dockerport", "4243"), 10, 16); err != nil {
 		return fmt.Errorf("invalid DockerPort: %s", err)
 	} else {
 		B2D.DockerPort = uint16(dockerPort)
 	}
 
 	// Host only networking settings
-	B2D.HostIP = profile.Get("", "HostIP", "192.168.59.3")
-	B2D.DHCPIP = profile.Get("", "DHCPIP", "192.168.59.99")
-	B2D.NetworkMask = profile.Get("", "NetworkMask", "255.255.255.0")
-	B2D.LowerIPAddress = profile.Get("", "LowerIPAddress", "192.168.59.103")
-	B2D.UpperIPAddress = profile.Get("", "UpperIPAddress", "192.168.59.254")
-	B2D.DHCPEnabled = profile.Get("", "DHCPEnabled", "Yes")
+	B2D.HostIP = profile.Get("", "hostiP", "192.168.59.3")
+	B2D.DHCPIP = profile.Get("", "dhcpip", "192.168.59.99")
+	B2D.NetworkMask = profile.Get("", "netmask", "255.255.255.0")
+	B2D.LowerIPAddress = profile.Get("", "lowerip", "192.168.59.103")
+	B2D.UpperIPAddress = profile.Get("", "upperip", "192.168.59.254")
+	B2D.DHCPEnabled = profile.Get("", "dhcp", "Yes")
 
 	// Commandline flags override profile settings.
-	flag.StringVar(&B2D.Dir, "dir", B2D.Dir, "boot2docker config directory")
+	flag.StringVar(&B2D.VBM, "vbm", B2D.VBM, "Path to VirtualBox management utility")
+	flag.StringVar(&B2D.SSH, "ssh", B2D.SSH, "Path to SSH client utility")
+	flag.StringVarP(&B2D.Dir, "dir", "d", B2D.Dir, "boot2docker config directory")
 	flag.StringVar(&B2D.ISO, "iso", B2D.ISO, "Path to boot2docker ISO image")
 	flag.StringVar(&B2D.Disk, "disk", B2D.Disk, "Path to boot2docker disk image")
-	flag.UintVar(&B2D.DiskSize, "disksize", B2D.DiskSize, "boot2docker disk image size (in MB)")
-	flag.UintVar(&B2D.Memory, "memory", B2D.Memory, "Virtual machine memory size (in MB)")
+	flag.UintVarP(&B2D.DiskSize, "disksize", "s", B2D.DiskSize, "boot2docker disk image size (in MB)")
+	flag.UintVarP(&B2D.Memory, "memory", "m", B2D.Memory, "Virtual machine memory size (in MB)")
 	flag.Var(newUint16Value(B2D.SSHPort, &B2D.SSHPort), "sshport", "Host SSH port (forward to port 22 in VM)")
 	flag.Var(newUint16Value(B2D.DockerPort, &B2D.DockerPort), "dockerport", "Host Docker port (forward to port 4243 in VM)")
 	flag.StringVar(&B2D.HostIP, "hostip", B2D.HostIP, "VirtualBox host-only network IP address")
-	flag.StringVar(&B2D.DHCPIP, "dhcpip", B2D.DHCPIP, "VirtualBox host-only network DHCP address")
-	flag.StringVar(&B2D.NetworkMask, "networkmask", B2D.NetworkMask, "VirtualBox host-only network mask")
+	flag.StringVar(&B2D.NetworkMask, "netmask", B2D.NetworkMask, "VirtualBox host-only network mask")
+	flag.StringVar(&B2D.DHCPEnabled, "dhcp", B2D.DHCPEnabled, "Enable VirtualBox host-only network DHCP")
+	flag.StringVar(&B2D.DHCPIP, "dhcpip", B2D.DHCPIP, "VirtualBox host-only network DHCP server address")
 	flag.StringVar(&B2D.LowerIPAddress, "lowerip", B2D.LowerIPAddress, "VirtualBox host-only network DHCP lower bound")
-	flag.StringVar(&B2D.UpperIPAddress, "uppwerip", B2D.UpperIPAddress, "VirtualBox host-only network DHCP upper bound")
-	flag.StringVar(&B2D.DHCPEnabled, "dhcpenabled", B2D.DHCPEnabled, "Enable VirtualBox host-only network DHCP")
+	flag.StringVar(&B2D.UpperIPAddress, "upperip", B2D.UpperIPAddress, "VirtualBox host-only network DHCP upper bound")
 
 	flag.Parse()
 
-	// Name of VM is the second argument after the subcommand, not a flag.
+	// Name of VM is the second argument.
 	if vm := flag.Arg(1); vm != "" {
 		B2D.VM = vm
 	}

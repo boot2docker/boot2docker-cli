@@ -272,7 +272,7 @@ func cmdStatus() int {
 		logf("Failed to locate VirtualBox management utility %q", B2D.VBM)
 		return 2
 	case vmUnregistered:
-		logf("%q does not exist", B2D.VM)
+		logf("VM %q does not exist", B2D.VM)
 		return 1
 	default:
 		fmt.Println(state)
