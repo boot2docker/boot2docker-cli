@@ -132,11 +132,11 @@ func config() (err error) {
 	flag.Var(newUint16Value(B2D.SSHPort, &B2D.SSHPort), "sshport", "Host SSH port (forward to port 22 in VM)")
 	flag.Var(newUint16Value(B2D.DockerPort, &B2D.DockerPort), "dockerport", "Host Docker port (forward to port 4243 in VM)")
 	flag.StringVar(&B2D.HostIP, "hostip", B2D.HostIP, "VirtualBox host-only network IP address")
-	flag.StringVar(&B2D.DHCPIP, "dhcpip", B2D.DHCPIP, "VirtualBox host-only network DHCP address")
-	flag.StringVar(&B2D.NetworkMask, "networkmask", B2D.NetworkMask, "VirtualBox host-only network mask")
+	flag.StringVar(&B2D.NetworkMask, "netmask", B2D.NetworkMask, "VirtualBox host-only network mask")
+	flag.StringVar(&B2D.DHCPEnabled, "dhcp", B2D.DHCPEnabled, "Enable VirtualBox host-only network DHCP")
+	flag.StringVar(&B2D.DHCPIP, "dhcpip", B2D.DHCPIP, "VirtualBox host-only network DHCP server address")
 	flag.StringVar(&B2D.LowerIPAddress, "lowerip", B2D.LowerIPAddress, "VirtualBox host-only network DHCP lower bound")
-	flag.StringVar(&B2D.UpperIPAddress, "uppwerip", B2D.UpperIPAddress, "VirtualBox host-only network DHCP upper bound")
-	flag.StringVar(&B2D.DHCPEnabled, "dhcpenabled", B2D.DHCPEnabled, "Enable VirtualBox host-only network DHCP")
+	flag.StringVar(&B2D.UpperIPAddress, "upperip", B2D.UpperIPAddress, "VirtualBox host-only network DHCP upper bound")
 
 	flag.Parse()
 
