@@ -136,6 +136,19 @@ func status(vm string) vmState {
 	}
 }
 
+// Get the VirtualBox base folder of the VM.
+func basefolder(vm string) string {
+	out, err := exec.Command(B2D.VBM, "showvminfo", vm, "--machinereadable").Output()
+	if err != nil {
+		return ""
+	}
+	groups := regexp.MustCompile(`(?m)^CfgFile="(\w+)"\r?$`).FindSubmatch(out)
+	if len(groups) < 2 {
+		return ""
+	}
+	return filepath.Dir(string(groups[1]))
+}
+
 // Make a boot2docker VM disk image with the given size (in MB).
 func makeDiskImage(dest string, size uint) error {
 	// Create the dest dir.
