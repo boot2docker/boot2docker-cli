@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 
 	// keep 3rd-party imports separate from stdlib with an empty line
@@ -83,7 +84,12 @@ func config() (err error) {
 		return err
 	}
 
-	B2D.VBM = profile.Get("", "vbm", "VBoxManage")
+	if p := os.Getenv("VBOX_INSTALL_PATH"); p != "" && runtime.GOOS == "windows" {
+		B2D.VBM = profile.Get("", "vbm", filepath.Join(p, "VBoxManage.exe"))
+	} else {
+		B2D.VBM = profile.Get("", "vbm", "VBoxManage")
+	}
+
 	B2D.SSH = profile.Get("", "ssh", "ssh")
 	B2D.VM = profile.Get("", "vm", "boot2docker-vm")
 	B2D.ISO = profile.Get("", "iso", filepath.Join(B2D.Dir, "boot2docker.iso"))
