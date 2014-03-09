@@ -37,13 +37,11 @@ func run() int {
 		return cmdDownload()
 	case "init":
 		return cmdInit()
-	case "start", "up", "boot", "resume":
-		return cmdStart()
-	case "ssh":
-		return cmdSSH()
+	case "up", "start", "boot", "resume":
+		return cmdUp()
 	case "save", "suspend":
 		return cmdSave()
-	case "halt", "down", "stop":
+	case "down", "halt", "stop":
 		return cmdStop()
 	case "poweroff":
 		return cmdPoweroff()
@@ -51,12 +49,14 @@ func run() int {
 		return cmdRestart()
 	case "reset":
 		return cmdReset()
+	case "delete":
+		return cmdDelete()
 	case "info":
 		return cmdInfo()
 	case "status":
 		return cmdStatus()
-	case "delete":
-		return cmdDelete()
+	case "ssh":
+		return cmdSSH()
 	case "version":
 		outf("Client version: %s\nGit commit: %s\n", Version, GitSHA)
 		return 0
