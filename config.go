@@ -23,7 +23,6 @@ var B2D struct {
 	VM       string // virtual machine name
 	Dir      string // boot2docker directory
 	ISO      string // boot2docker ISO image path
-	Disk     string // VM disk image path
 	DiskSize uint   // VM disk image size (MB)
 	Memory   uint   // VM memory size (MB)
 
@@ -93,7 +92,6 @@ func config() (err error) {
 	B2D.SSH = profile.Get("", "ssh", "ssh")
 	B2D.VM = profile.Get("", "vm", "boot2docker-vm")
 	B2D.ISO = profile.Get("", "iso", filepath.Join(B2D.Dir, "boot2docker.iso"))
-	B2D.Disk = profile.Get("", "disk", filepath.Join(B2D.Dir, "boot2docker.vmdk"))
 
 	if diskSize, err := strconv.ParseUint(profile.Get("", "disksize", "20000"), 10, 32); err != nil {
 		return fmt.Errorf("invalid disk image size: %s", err)
@@ -132,7 +130,6 @@ func config() (err error) {
 	flag.StringVar(&B2D.SSH, "ssh", B2D.SSH, "Path to SSH client utility")
 	flag.StringVarP(&B2D.Dir, "dir", "d", B2D.Dir, "boot2docker config directory")
 	flag.StringVar(&B2D.ISO, "iso", B2D.ISO, "Path to boot2docker ISO image")
-	flag.StringVar(&B2D.Disk, "disk", B2D.Disk, "Path to boot2docker disk image")
 	flag.UintVarP(&B2D.DiskSize, "disksize", "s", B2D.DiskSize, "boot2docker disk image size (in MB)")
 	flag.UintVarP(&B2D.Memory, "memory", "m", B2D.Memory, "Virtual machine memory size (in MB)")
 	flag.Var(newUint16Value(B2D.SSHPort, &B2D.SSHPort), "sshport", "Host SSH port (forward to port 22 in VM)")

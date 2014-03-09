@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 	"time"
 )
@@ -105,18 +106,6 @@ func cmdInit() int {
 		}
 	}
 
-	if _, err := os.Stat(B2D.Disk); err != nil {
-		if !os.IsNotExist(err) {
-			logf("Failed to open disk image %q: %s", B2D.Disk, err)
-			return 1
-		}
-
-		if err := makeDiskImage(B2D.Disk, B2D.DiskSize); err != nil {
-			logf("Failed to create disk image %q: %s", B2D.Disk, err)
-			return 1
-		}
-	}
-
 	logf("Creating VM %s...", B2D.VM)
 	if err := vbm("createvm", "--name", B2D.VM, "--register"); err != nil {
 		logf("Failed to create VM %q: %s", B2D.VM, err)
@@ -169,9 +158,10 @@ func cmdInit() int {
 	logf("Setting VM host-only networking")
 	hostifname, err := getHostOnlyNetworkInterface()
 	if err != nil {
-		logf("Failed to create %s: %s", B2D.VM, err)
+		logf("Failed to create host-only network interface: %s", err)
 		return 1
 	}
+
 	logf("Adding VM host-only networking interface %s", hostifname)
 	if err := vbm("modifyvm", B2D.VM,
 		"--nic2", "hostonly",
@@ -179,7 +169,7 @@ func cmdInit() int {
 		"--cableconnected2", "on",
 		"--hostonlyadapter2", hostifname,
 	); err != nil {
-		logf("Failed to modify %s: %s", B2D.VM, err)
+		logf("Failed to add network interface to VM %q: %s", B2D.VM, err)
 		return 1
 	}
 
@@ -204,14 +194,29 @@ func cmdInit() int {
 		return 1
 	}
 
+	vmDir := basefolder(B2D.VM)
+	diskImg := filepath.Join(vmDir, fmt.Sprintf("%s.vmdk", B2D.VM))
+
+	if _, err := os.Stat(diskImg); err != nil {
+		if !os.IsNotExist(err) {
+			logf("Failed to open disk image %q: %s", diskImg, err)
+			return 1
+		}
+
+		if err := makeDiskImage(diskImg, B2D.DiskSize); err != nil {
+			logf("Failed to create disk image %q: %s", diskImg, err)
+			return 1
+		}
+	}
+
 	if err := vbm("storageattach", B2D.VM,
 		"--storagectl", "SATA",
 		"--port", "1",
 		"--device", "0",
 		"--type", "hdd",
-		"--medium", B2D.Disk,
+		"--medium", diskImg,
 	); err != nil {
-		logf("Failed to attach disk image %q: %s", B2D.Disk, err)
+		logf("Failed to attach disk image %q: %s", diskImg, err)
 		return 1
 	}
 

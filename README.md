@@ -89,7 +89,6 @@ the following options (undefined options take default values):
     vm=boot2docker-vm               # name of boot2docker virtual machine
     dir=$HOME/.boot2docker          # path to boot2docker config directory
     iso=$BOOT2DOCKER_DIR/boot2docker.iso    # path to boot2docker ISO image
-    disk=$BOOT2DOCKER_DIR/boot2docker.vmdk  # path to boot2docker disk image
     disksize=20000                  # VM disk image size in MB
     memory=1024                     # VM memory size in MB
     sshport=2022                    # host port forwarding to port 22 in the VM

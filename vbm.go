@@ -142,7 +142,7 @@ func basefolder(vm string) string {
 	if err != nil {
 		return ""
 	}
-	groups := regexp.MustCompile(`(?m)^CfgFile="(\w+)"\r?$`).FindSubmatch(out)
+	groups := regexp.MustCompile(`(?m)^CfgFile="(.+)"\r?$`).FindSubmatch(out)
 	if len(groups) < 2 {
 		return ""
 	}
