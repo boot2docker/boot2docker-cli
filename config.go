@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -70,7 +71,11 @@ func config() (err error) {
 	}
 	cfgi, err := getConfigfile()
 
-	B2D.VBM = cfgi.Get("", "VBM", "VBoxManage")
+	if vboxPath := os.Getenv("VBOX_INSTALL_PATH"); vboxPath != "" && runtime.GOOS == "windows" {
+		B2D.VBM = cfgi.Get("", "VBM", filepath.Join(vboxPath, "VBoxManage.exe"))
+	} else {
+		B2D.VBM = cfgi.Get("", "VBM", "VBoxManage")
+	}
 	B2D.SSH = cfgi.Get("", "BOOT2DOCKER_SSH", "ssh")
 	B2D.VM = cfgi.Get("", "VM_NAME", "boot2docker-vm")
 
