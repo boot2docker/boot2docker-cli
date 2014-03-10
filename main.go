@@ -8,6 +8,11 @@ import (
 	flag "github.com/ogier/pflag"
 )
 
+// Flags
+var (
+	verboseFlag = flag.BoolP("verbose", "v", false, "display verbose command invocations.")
+)
+
 // The following vars will be injected during the build process.
 var (
 	Version string
@@ -15,6 +20,7 @@ var (
 )
 
 func main() {
+	flag.Parse()
 	// os.Exit will terminate the program at the place of call without running
 	// any deferred cleanup statements. It might cause unintended effects. To
 	// be safe, we wrap the program in run() and only os.Exit() outside the
@@ -100,6 +106,7 @@ Commands:
     version                 Display version information.
 
 Options:
+    -v                      Display verbose command invocations.
 `, os.Args[0])
 	flag.PrintDefaults()
 }

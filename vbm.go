@@ -7,10 +7,14 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 )
 
 // Convenient function to exec a command.
 func cmd(name string, args ...string) error {
+	if *verboseFlag {
+		logf("executing: %v %v", name, strings.Join(args, " "))
+	}
 	cmd := exec.Command(name, args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
