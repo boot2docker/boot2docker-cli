@@ -23,7 +23,8 @@ func vbm(args ...string) error {
 	return cmd(B2D.VBM, args...)
 }
 
-//TODO: delete the hostonlyif and dhcpserver when we delete the vm! (need to reference count to make sure there are no other vms relying on them)
+// TODO: delete the hostonlyif and dhcpserver when we delete the vm! (need to
+// reference count to make sure there are no other vms relying on them)
 
 // Get or create the hostonly network interface
 func getHostOnlyNetworkInterface() (string, error) {
@@ -135,8 +136,21 @@ func status(vm string) vmState {
 	}
 }
 
+// Get the VirtualBox base folder of the VM.
+func basefolder(vm string) string {
+	out, err := exec.Command(B2D.VBM, "showvminfo", vm, "--machinereadable").Output()
+	if err != nil {
+		return ""
+	}
+	groups := regexp.MustCompile(`(?m)^CfgFile="(.+)"\r?$`).FindSubmatch(out)
+	if len(groups) < 2 {
+		return ""
+	}
+	return filepath.Dir(string(groups[1]))
+}
+
 // Make a boot2docker VM disk image with the given size (in MB).
-func makeDiskImage(dest string, size int) error {
+func makeDiskImage(dest string, size uint) error {
 	// Create the dest dir.
 	if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
 		return err
