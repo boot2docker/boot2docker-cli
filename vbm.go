@@ -27,13 +27,21 @@ func vbm(args ...string) error {
 	return cmd(B2D.VBM, args...)
 }
 
+func vbmOut(args ...string) ([]byte, error) {
+	if *verboseFlag {
+		logf("executing: %v %v", B2D.VBM, strings.Join(args, " "))
+	}
+	return exec.Command(B2D.VBM, args...).Output()
+}
+
 // TODO: delete the hostonlyif and dhcpserver when we delete the vm! (need to
 // reference count to make sure there are no other vms relying on them)
 
 // Get or create the hostonly network interface
 func getHostOnlyNetworkInterface() (string, error) {
 	// Check if the interface exists.
-	out, err := exec.Command(B2D.VBM, "list", "hostonlyifs").Output()
+	args := []string{"list", "hostonlyifs"}
+	out, err := vbmOut(args...)
 	if err != nil {
 		return "", err
 	}
@@ -44,7 +52,8 @@ func getHostOnlyNetworkInterface() (string, error) {
 	for ifname == "" && len(lists) > index {
 		if string(lists[index+1][2]) == B2D.HostIP {
 			//test to see that the dhcpserver is the same too
-			out, err := exec.Command(B2D.VBM, "list", "dhcpservers").Output()
+			args = []string{"list", "dhcpservers"}
+			out, err := vbmOut(args...)
 			if err != nil {
 				return "", err
 			}
@@ -60,7 +69,7 @@ func getHostOnlyNetworkInterface() (string, error) {
 					string(dhcp[i+4][2]) == B2D.UpperIPAddress &&
 					string(dhcp[i+5][2]) == B2D.DHCPEnabled {
 					ifname = string(lists[index][2])
-					fmt.Printf("Reusing hostonly network interface %s\n", ifname)
+					logf("Reusing hostonly network interface %s", ifname)
 				}
 
 				i = i + 5
@@ -72,8 +81,9 @@ func getHostOnlyNetworkInterface() (string, error) {
 
 	if ifname == "" {
 		//create it all fresh
-		fmt.Printf("Creating a new hostonly network interface\n")
-		out, err = exec.Command(B2D.VBM, "hostonlyif", "create").Output()
+		logf("Creating a new hostonly network interface")
+		args = []string{"hostonlyif", "create"}
+		out, err := vbmOut(args...)
 		if err != nil {
 			return "", err
 		}
@@ -82,21 +92,25 @@ func getHostOnlyNetworkInterface() (string, error) {
 			return "", err
 		}
 		ifname = string(groups[1])
-		out, err = exec.Command(B2D.VBM, "dhcpserver", "add",
+		args = []string{
+			"dhcpserver", "add",
 			"--ifname", ifname,
 			"--ip", B2D.DHCPIP,
 			"--netmask", B2D.NetworkMask,
 			"--lowerip", B2D.LowerIPAddress,
 			"--upperip", B2D.UpperIPAddress,
 			"--enable",
-		).Output()
+		}
+		out, err = vbmOut(args...)
 		if err != nil {
 			return "", err
 		}
-		out, err = exec.Command(B2D.VBM, "hostonlyif", "ipconfig", ifname,
+		args = []string{
+			"hostonlyif", "ipconfig", ifname,
 			"--ip", B2D.HostIP,
 			"--netmask", B2D.NetworkMask,
-		).Output()
+		}
+		out, err = vbmOut(args...)
 		if err != nil {
 			return "", err
 		}
@@ -107,7 +121,8 @@ func getHostOnlyNetworkInterface() (string, error) {
 // Get the state of a VM.
 func status(vm string) vmState {
 	// Check if the VM exists.
-	out, err := exec.Command(B2D.VBM, "list", "vms").Output()
+	args := []string{"list", "vms"}
+	out, err := vbmOut(args...)
 	if err != nil {
 		if err.(*exec.Error).Err == exec.ErrNotFound {
 			return vmVBMNotFound
@@ -122,7 +137,9 @@ func status(vm string) vmState {
 		return vmUnregistered
 	}
 
-	if out, err = exec.Command(B2D.VBM, "showvminfo", vm, "--machinereadable").Output(); err != nil {
+	args = []string{"showvminfo", vm, "--machinereadable"}
+	out, err = vbmOut(args...)
+	if err != nil {
 		if err.(*exec.Error).Err == exec.ErrNotFound {
 			return vmVBMNotFound
 		}
@@ -142,7 +159,8 @@ func status(vm string) vmState {
 
 // Get the VirtualBox base folder of the VM.
 func basefolder(vm string) string {
-	out, err := exec.Command(B2D.VBM, "showvminfo", vm, "--machinereadable").Output()
+	args := []string{"showvminfo", vm, "--machinereadable"}
+	out, err := vbmOut(args...)
 	if err != nil {
 		return ""
 	}
@@ -162,8 +180,13 @@ func makeDiskImage(dest string, size uint) error {
 
 	// Convert a raw image from stdin to the dest VMDK image.
 	sizeBytes := int64(size) * 1024 * 1024 // usually won't fit in 32-bit int
-	cmd := exec.Command(B2D.VBM, "convertfromraw", "stdin", dest,
-		fmt.Sprintf("%d", sizeBytes), "--format", "VMDK")
+	args := []string{"convertfromraw", "stdin", dest,
+		fmt.Sprintf("%d", sizeBytes), "--format", "VMDK",
+	}
+	if *verboseFlag {
+		logf("executing: %v %v", B2D.VBM, strings.Join(args, " "))
+	}
+	cmd := exec.Command(B2D.VBM, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	stdin, err := cmd.StdinPipe()

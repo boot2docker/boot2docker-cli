@@ -9,7 +9,7 @@ import (
 
 	// keep 3rd-party imports separate from stdlib with an empty line
 	flag "github.com/ogier/pflag"
-	"github.com/vaughan0/go-ini"
+	ini "github.com/vaughan0/go-ini"
 )
 
 // boot2docker config.
@@ -38,6 +38,11 @@ var B2D struct {
 	UpperIPAddress string
 	DHCPEnabled    string
 }
+
+// General flags.
+var (
+	verboseFlag = flag.BoolP("verbose", "v", false, "display verbose command invocations.")
+)
 
 func getCfgDir(name string) (string, error) {
 	if b2dDir := os.Getenv("BOOT2DOCKER_DIR"); b2dDir != "" {
