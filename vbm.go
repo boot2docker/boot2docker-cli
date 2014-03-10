@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 )
 
 // Convenient function to exec a command.
@@ -73,12 +74,16 @@ func getHostOnlyNetworkInterface() (string, error) {
 		if err != nil {
 			return "", err
 		}
-		groups := regexp.MustCompile(`(?m)^Interface '(\w+)' was successfully created`).FindSubmatch(out)
+		groups := regexp.MustCompile(`(?m)^Interface '(.+?)' was successfully created`).FindSubmatch(out)
 		if len(groups) < 2 {
 			return "", err
 		}
 		ifname = string(groups[1])
-		out, err = exec.Command(B2D.VBM, "dhcpserver", "add",
+		op := "add"
+		if runtime.GOOS == "windows" {
+			op = "modify" // "add" fails on Windows, but "modify" works.
+		}
+		out, err = exec.Command(B2D.VBM, "dhcpserver", op,
 			"--ifname", ifname,
 			"--ip", B2D.DHCPIP,
 			"--netmask", B2D.NetworkMask,
