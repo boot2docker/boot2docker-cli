@@ -147,7 +147,7 @@ func config() (err error) {
 	if vm := flag.Arg(1); vm != "" {
 		B2D.VM = vm
 	}
-	return
+	return nil
 }
 
 // boot2docker configuration profile.
