@@ -76,7 +76,7 @@ work securely), and then provides the user a simple way to connect to the vm
 using an external ssh client.
 
 On Windows, [MSYS SSH](http://www.mingw.org/) provides a first class way to
-connect to the boo2docker vm (using `boot2docker-cli.exe ssh`).
+connect to the boot2docker vm (using `boot2docker-cli.exe ssh`).
 
 ## Configuration
 

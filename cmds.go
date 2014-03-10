@@ -86,7 +86,7 @@ func cmdInit() int {
 	}
 
 	if ping(fmt.Sprintf("localhost:%d", B2D.DockerPort)) {
-		logf("DOCKER_PORT=%d on localhost is occupied. Please choose another none.", B2D.DockerPort)
+		logf("DOCKER_PORT=%d on localhost is occupied. Please choose another one.", B2D.DockerPort)
 		return 1
 	}
 
