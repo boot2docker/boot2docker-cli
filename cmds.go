@@ -180,7 +180,7 @@ func cmdInit() int {
 	}
 
 	if err := vbm("modifyvm", B2D.VM,
-		"--natpf1", fmt.Sprintf("hostonly_docker,tcp,%s,%d,,%d", B2D.HostIP, B2D.DockerPort, B2D.DockerPort),
+		"--natpf1", fmt.Sprintf("hostonly_docker,tcp,%s,%d,,4243", B2D.HostIP, B2D.DockerPort),
 	); err != nil {
 		logf("Failed to add port forwarding to hostonly interface %q: %s", B2D.VM, err)
 		return 1
