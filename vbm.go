@@ -73,12 +73,12 @@ func getHostOnlyNetworkInterface() (string, error) {
 		if err != nil {
 			return "", err
 		}
-		groups := regexp.MustCompile(`(?m)^Interface '(\w+)' was successfully created`).FindSubmatch(out)
+		groups := regexp.MustCompile(`(?m)^Interface '(.+?)' was successfully created`).FindSubmatch(out)
 		if len(groups) < 2 {
 			return "", err
 		}
 		ifname = string(groups[1])
-		out, err = exec.Command(B2D.VBM, "dhcpserver", "add",
+		out, err = exec.Command(B2D.VBM, "dhcpserver", "modify",
 			"--ifname", ifname,
 			"--ip", B2D.DHCPIP,
 			"--netmask", B2D.NetworkMask,
