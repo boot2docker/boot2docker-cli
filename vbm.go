@@ -48,8 +48,7 @@ func getHostOnlyNetworkInterface() (string, error) {
 			i := 0
 
 			for ifname == "" && len(dhcp) > i {
-				var info map[string]string
-				info = make(map[string]string)
+				info := map[string]string{}
 				for id := 0; id < 6; id++ {
 					info[string(dhcp[i][1])] = string(dhcp[i][2])
 					i++
@@ -62,7 +61,7 @@ func getHostOnlyNetworkInterface() (string, error) {
 					info["upperIPAddress"] == B2D.UpperIPAddress &&
 					info["Enabled"] == B2D.DHCPEnabled {
 					ifname = string(lists[index][2])
-					fmt.Printf("Reusing hostonly network interface %s\n", ifname)
+					logf("Reusing hostonly network interface %s\n", ifname)
 				}
 			}
 		}
@@ -71,7 +70,7 @@ func getHostOnlyNetworkInterface() (string, error) {
 
 	if ifname == "" {
 		//create it all fresh
-		fmt.Printf("Creating a new hostonly network interface\n")
+		logf("Creating a new hostonly network interface\n")
 		out, err = exec.Command(B2D.VBM, "hostonlyif", "create").Output()
 		if err != nil {
 			return "", err
