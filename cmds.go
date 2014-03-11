@@ -445,6 +445,7 @@ func cmdDelete() int {
 		return 2
 	case vmUnregistered:
 		logf("VM %q is not registered.", B2D.VM)
+		return 1
 	case vmRunning, vmPaused:
 		if exitcode := cmdPoweroff(); exitcode != 0 {
 			return exitcode
