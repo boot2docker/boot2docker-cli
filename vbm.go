@@ -44,24 +44,27 @@ func getHostOnlyNetworkInterface() (string, error) {
 			if err != nil {
 				return "", err
 			}
-			//WARNING: this relies on the order the virtualbox gives not changing
 			dhcp := regexp.MustCompile(`(?m)^(NetworkName|IP|NetworkMask|lowerIPAddress|upperIPAddress|Enabled):\s+(.+?)\r?$`).FindAllSubmatch(out, -1)
 			i := 0
 
 			for ifname == "" && len(dhcp) > i {
-				if string(dhcp[i][2]) == string(lists[index+2][2]) &&
-					string(dhcp[i+1][2]) == B2D.DHCPIP &&
-					string(dhcp[i+2][2]) == B2D.NetworkMask &&
-					string(dhcp[i+3][2]) == B2D.LowerIPAddress &&
-					string(dhcp[i+4][2]) == B2D.UpperIPAddress &&
-					string(dhcp[i+5][2]) == B2D.DHCPEnabled {
+				var info map[string]string
+				info = make(map[string]string)
+				for id := 0; id < 6; id++ {
+					info[string(dhcp[i][1])] = string(dhcp[i][2])
+					i++
+				}
+
+				if string(info["NetworkName"]) == string(lists[index+2][2]) &&
+					info["IP"] == B2D.DHCPIP &&
+					info["NetworkMask"] == B2D.NetworkMask &&
+					info["lowerIPAddress"] == B2D.LowerIPAddress &&
+					info["upperIPAddress"] == B2D.UpperIPAddress &&
+					info["Enabled"] == B2D.DHCPEnabled {
 					ifname = string(lists[index][2])
 					fmt.Printf("Reusing hostonly network interface %s\n", ifname)
 				}
-
-				i = i + 5
 			}
-
 		}
 		index = index + 3
 	}
@@ -73,7 +76,7 @@ func getHostOnlyNetworkInterface() (string, error) {
 		if err != nil {
 			return "", err
 		}
-		groups := regexp.MustCompile(`(?m)^Interface '(\w+)' was successfully created`).FindSubmatch(out)
+		groups := regexp.MustCompile(`(?m)^Interface '(.+)' was successfully created`).FindSubmatch(out)
 		if len(groups) < 2 {
 			return "", err
 		}
