@@ -54,14 +54,14 @@ func getHostOnlyNetworkInterface() (string, error) {
 					i++
 				}
 
-				if string(info["NetworkName"]) == string(lists[index+2][2]) &&
+				if info["NetworkName"] == string(lists[index+2][2]) &&
 					info["IP"] == B2D.DHCPIP &&
 					info["NetworkMask"] == B2D.NetworkMask &&
 					info["lowerIPAddress"] == B2D.LowerIPAddress &&
 					info["upperIPAddress"] == B2D.UpperIPAddress &&
 					info["Enabled"] == B2D.DHCPEnabled {
 					ifname = string(lists[index][2])
-					logf("Reusing hostonly network interface %s\n", ifname)
+					logf("Reusing hostonly network interface %s", ifname)
 				}
 			}
 		}
@@ -70,7 +70,7 @@ func getHostOnlyNetworkInterface() (string, error) {
 
 	if ifname == "" {
 		//create it all fresh
-		logf("Creating a new hostonly network interface\n")
+		logf("Creating a new hostonly network interface")
 		out, err = exec.Command(B2D.VBM, "hostonlyif", "create").Output()
 		if err != nil {
 			return "", err

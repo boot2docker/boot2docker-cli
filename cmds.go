@@ -486,7 +486,7 @@ func cmdStatus() int {
 		logf("VM %q does not exist", B2D.VM)
 		return 1
 	default:
-		logf(state)
+		logf(string(state))
 		return 0
 	}
 }
