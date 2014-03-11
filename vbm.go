@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"runtime"
 )
 
 // Convenient function to exec a command.
@@ -79,11 +78,7 @@ func getHostOnlyNetworkInterface() (string, error) {
 			return "", err
 		}
 		ifname = string(groups[1])
-		op := "add"
-		if runtime.GOOS == "windows" {
-			op = "modify" // "add" fails on Windows, but "modify" works.
-		}
-		out, err = exec.Command(B2D.VBM, "dhcpserver", op,
+		out, err = exec.Command(B2D.VBM, "dhcpserver", "modify",
 			"--ifname", ifname,
 			"--ip", B2D.DHCPIP,
 			"--netmask", B2D.NetworkMask,
