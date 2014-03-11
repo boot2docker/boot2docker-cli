@@ -105,11 +105,8 @@ func status(vm string) vmState {
 	// Check if the VM exists.
 	out, err := exec.Command(B2D.VBM, "list", "vms").Output()
 	if err != nil {
-		switch err := err.(type) {
-		case *exec.Error:
-			if err.Err == exec.ErrNotFound {
-				return vmVBMNotFound
-			}
+		if ee, ok := err.(*exec.Error); ok && ee == exec.ErrNotFound {
+			return vmVBMNotFound
 		}
 		return vmUnknown
 	}
@@ -122,11 +119,8 @@ func status(vm string) vmState {
 	}
 
 	if out, err = exec.Command(B2D.VBM, "showvminfo", vm, "--machinereadable").Output(); err != nil {
-		switch err := err.(type) {
-		case *exec.Error:
-			if err.Err == exec.ErrNotFound {
-				return vmVBMNotFound
-			}
+		if ee, ok := err.(*exec.Error); ok && ee == exec.ErrNotFound {
+			return vmVBMNotFound
 		}
 		return vmUnknown
 	}
