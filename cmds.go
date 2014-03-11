@@ -179,6 +179,14 @@ func cmdInit() int {
 		return 1
 	}
 
+	if err := vbm("modifyvm", B2D.VM,
+    "--natpf1", fmt.Sprintf("hostonly_docker,tcp,%s,%d,,%d", B2D.HostIP, B2D.DockerPort, B2D.DockerPort),
+	); err != nil {
+		logf("Failed to add port forwarding to hostonly interface %q: %s", B2D.VM, err)
+		return 1
+	}
+	logf("Port forwarding [hostonly_docker]: host tcp://%s:%d --> guest tcp://0.0.0.0:%d", B2D.HostIP, B2D.DockerPort, B2D.DockerPort)
+
 	logf("Setting VM storage...")
 	if err := vbm("storagectl", B2D.VM,
 		"--name", "SATA",
