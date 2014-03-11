@@ -68,8 +68,8 @@ func getCfgDir(name string) (string, error) {
 }
 
 // Read configuration from both profile and flags. Flags override profile.
-func config() (err error) {
-
+func config() error {
+	var err error
 	if B2D.Dir, err = getCfgDir(".boot2docker"); err != nil {
 		return fmt.Errorf("failed to get current directory: %s", err)
 	}
@@ -147,7 +147,7 @@ func config() (err error) {
 	if vm := flag.Arg(1); vm != "" {
 		B2D.VM = vm
 	}
-	return
+	return nil
 }
 
 // boot2docker configuration profile.
