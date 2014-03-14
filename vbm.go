@@ -57,24 +57,26 @@ func getHostOnlyNetworkInterface() (string, error) {
 			if err != nil {
 				return "", err
 			}
-			//WARNING: this relies on the order the virtualbox gives not changing
 			dhcp := regexp.MustCompile(`(?m)^(NetworkName|IP|NetworkMask|lowerIPAddress|upperIPAddress|Enabled):\s+(.+?)\r?$`).FindAllSubmatch(out, -1)
 			i := 0
 
 			for ifname == "" && len(dhcp) > i {
-				if string(dhcp[i][2]) == string(lists[index+2][2]) &&
-					string(dhcp[i+1][2]) == B2D.DHCPIP &&
-					string(dhcp[i+2][2]) == B2D.NetworkMask &&
-					string(dhcp[i+3][2]) == B2D.LowerIPAddress &&
-					string(dhcp[i+4][2]) == B2D.UpperIPAddress &&
-					string(dhcp[i+5][2]) == B2D.DHCPEnabled {
+				info := map[string]string{}
+				for id := 0; id < 6; id++ {
+					info[string(dhcp[i][1])] = string(dhcp[i][2])
+					i++
+				}
+
+				if info["NetworkName"] == string(lists[index+2][2]) &&
+					info["IP"] == B2D.DHCPIP &&
+					info["NetworkMask"] == B2D.NetworkMask &&
+					info["lowerIPAddress"] == B2D.LowerIPAddress &&
+					info["upperIPAddress"] == B2D.UpperIPAddress &&
+					info["Enabled"] == B2D.DHCPEnabled {
 					ifname = string(lists[index][2])
 					logf("Reusing hostonly network interface %s", ifname)
 				}
-
-				i = i + 5
 			}
-
 		}
 		index = index + 3
 	}
@@ -82,12 +84,11 @@ func getHostOnlyNetworkInterface() (string, error) {
 	if ifname == "" {
 		//create it all fresh
 		logf("Creating a new hostonly network interface")
-		args = []string{"hostonlyif", "create"}
-		out, err := vbmOut(args...)
+		out, err = exec.Command(B2D.VBM, "hostonlyif", "create").Output()
 		if err != nil {
 			return "", err
 		}
-		groups := regexp.MustCompile(`(?m)^Interface '(\w+)' was successfully created`).FindSubmatch(out)
+		groups := regexp.MustCompile(`(?m)^Interface '(.+)' was successfully created`).FindSubmatch(out)
 		if len(groups) < 2 {
 			return "", err
 		}
@@ -124,7 +125,7 @@ func status(vm string) vmState {
 	args := []string{"list", "vms"}
 	out, err := vbmOut(args...)
 	if err != nil {
-		if err.(*exec.Error).Err == exec.ErrNotFound {
+		if ee, ok := err.(*exec.Error); ok && ee == exec.ErrNotFound {
 			return vmVBMNotFound
 		}
 		return vmUnknown
@@ -137,10 +138,8 @@ func status(vm string) vmState {
 		return vmUnregistered
 	}
 
-	args = []string{"showvminfo", vm, "--machinereadable"}
-	out, err = vbmOut(args...)
-	if err != nil {
-		if err.(*exec.Error).Err == exec.ErrNotFound {
+	if out, err = exec.Command(B2D.VBM, "showvminfo", vm, "--machinereadable").Output(); err != nil {
+		if ee, ok := err.(*exec.Error); ok && ee == exec.ErrNotFound {
 			return vmVBMNotFound
 		}
 		return vmUnknown
@@ -217,10 +216,11 @@ func makeDiskImage(dest string, size uint) error {
 }
 
 // Write n zero bytes into w.
-func zeroFill(w io.Writer, n int64) (err error) {
+func zeroFill(w io.Writer, n int64) error {
 	const blocksize = 32 * 1024
 	zeros := make([]byte, blocksize)
 	var k int
+	var err error
 	for n > 0 {
 		if n > blocksize {
 			k, err = w.Write(zeros)
@@ -228,9 +228,9 @@ func zeroFill(w io.Writer, n int64) (err error) {
 			k, err = w.Write(zeros[:n])
 		}
 		if err != nil {
-			return
+			return err
 		}
 		n -= int64(k)
 	}
-	return
+	return nil
 }

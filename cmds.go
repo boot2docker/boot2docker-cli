@@ -112,6 +112,12 @@ func cmdInit() int {
 		return 1
 	}
 
+	logf("Apply interim patch to VM %s (https://www.virtualbox.org/ticket/12748)", B2D.VM)
+	if err := vbm("setextradata", B2D.VM, "VBoxInternal/CPUM/EnableHVP", "1"); err != nil {
+		logf("Failed to patch vm: %s", err)
+		return 1
+	}
+
 	if err := vbm("modifyvm", B2D.VM,
 		"--ostype", "Linux26_64",
 		"--cpus", fmt.Sprintf("%d", runtime.NumCPU()),
@@ -439,6 +445,7 @@ func cmdDelete() int {
 		return 2
 	case vmUnregistered:
 		logf("VM %q is not registered.", B2D.VM)
+		return 1
 	case vmRunning, vmPaused:
 		if exitcode := cmdPoweroff(); exitcode != 0 {
 			return exitcode
@@ -480,7 +487,7 @@ func cmdStatus() int {
 		logf("VM %q does not exist", B2D.VM)
 		return 1
 	default:
-		fmt.Println(state)
+		logf(string(state))
 		return 0
 	}
 }
