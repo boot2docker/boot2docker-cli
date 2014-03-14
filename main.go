@@ -10,9 +10,8 @@ import (
 
 // The following vars will be injected during the build process.
 var (
-	Version     string
-	GitSHA      string
-	verboseFlag = flag.Bool("v", false, "verbose flag to show commands as they execute.")
+	Version string
+	GitSHA  string
 )
 
 func main() {
