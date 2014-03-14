@@ -11,16 +11,19 @@ import (
 	"path/filepath"
 )
 
-func logf(fmt string, v ...interface{}) {
-	log.Printf(fmt, v...)
+// fmt.Printf to stdout. Convention is to outf info intended for scripting.
+func outf(f string, v ...interface{}) {
+	fmt.Printf(f, v...)
 }
 
-// Return the value of an ENV var, or the fallback value if the ENV var is empty/undefined.
-func getenv(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return fallback
+// fmt.Printf to stderr. Convention is to errf info intended for human.
+func errf(f string, v ...interface{}) {
+	fmt.Fprintf(os.Stderr, f, v...)
+}
+
+// Verbose output for debugging.
+func logf(fmt string, v ...interface{}) {
+	log.Printf(fmt, v...)
 }
 
 // Check if the connection to tcp://addr is readable.
