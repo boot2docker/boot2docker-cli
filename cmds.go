@@ -70,7 +70,7 @@ func cmdInit() int {
 	}
 
 	logf("Setting VM networking...")
-	if err := m.SetNIC(1, vbx.NIC{Network: "nat", Hardware: "virtio"}); err != nil {
+	if err := m.SetNIC(1, vbx.NIC{Network: vbx.NICNetNAT, Hardware: vbx.VirtIO}); err != nil {
 		logf("Failed to add network interface to VM %q: %s", B2D.VM, err)
 		return 1
 	}
@@ -96,7 +96,7 @@ func cmdInit() int {
 	}
 
 	logf("Adding host-only networking interface %q", hostIFName)
-	if err := m.SetNIC(2, vbx.NIC{Network: "hostonly", Hardware: "virtio", HostonlyAdapter: hostIFName}); err != nil {
+	if err := m.SetNIC(2, vbx.NIC{Network: vbx.NICNetHostonly, Hardware: vbx.VirtIO, HostonlyAdapter: hostIFName}); err != nil {
 		logf("Failed to add network interface to VM %q: %s", B2D.VM, err)
 		return 1
 	}
