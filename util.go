@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 )
 
@@ -99,4 +100,14 @@ func getLatestReleaseName(url string) (string, error) {
 		return "", fmt.Errorf("no releases found")
 	}
 	return t[0].TagName, nil
+}
+
+// Convenient function to exec a command.
+func cmd(name string, args ...string) error {
+	cmd := exec.Command(name, args...)
+	if verbose {
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+	}
+	return cmd.Run()
 }

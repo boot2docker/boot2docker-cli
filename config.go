@@ -7,9 +7,12 @@ import (
 	"runtime"
 	"strconv"
 
-	// keep 3rd-party imports separate from stdlib with an empty line
 	flag "github.com/ogier/pflag"
 	ini "github.com/vaughan0/go-ini"
+)
+
+var (
+	verbose bool
 )
 
 // boot2docker config.
@@ -146,6 +149,7 @@ func config() error {
 	flag.StringVar(&B2D.LowerIPAddress, "lowerip", B2D.LowerIPAddress, "VirtualBox host-only network DHCP lower bound")
 	flag.StringVar(&B2D.UpperIPAddress, "upperip", B2D.UpperIPAddress, "VirtualBox host-only network DHCP upper bound")
 
+	flag.BoolVarP(&verbose, "verbose", "v", false, "Verbose mode")
 	flag.Parse()
 
 	// Name of VM is the second argument.
