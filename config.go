@@ -114,23 +114,14 @@ func config() error {
 	flag.Var(newIPValue(net.ParseIP("192.168.59.254"), &B2D.UpperIPAddress), "upperip", "VirtualBox host-only network DHCP upper bound.")
 	flag.StringVar(&B2D.VM, "vm", "boot2docker-vm", "virtual machine name.")
 
-	// The following options need special handling after parsing.
-	flag.StringVarP(&B2D.Dir, "dir", "d", "", "boot2docker config directory.")
-	flag.StringVar(&B2D.ISO, "iso", "", "path to boot2docker ISO image.")
+	flag.StringVarP(&B2D.Dir, "dir", "d", dir, "boot2docker config directory.")
+	flag.StringVar(&B2D.ISO, "iso", filepath.Join(dir, "boot2docker.iso"), "path to boot2docker ISO image.")
 
 	osArgs := os.Args // save original os.Args
 	// Insert profile args before command-line args so that command-line overrides profile.
 	os.Args = append([]string{os.Args[0]}, append(profileArgs, os.Args[1:]...)...)
 	flag.Parse()
 	os.Args = osArgs // restore original os.Args
-
-	if B2D.Dir == "" {
-		B2D.Dir = dir
-	}
-
-	if B2D.ISO == "" {
-		B2D.ISO = filepath.Join(B2D.Dir, "boot2docker.iso")
-	}
 
 	// Name of VM is the second argument. Override the value set in flag.
 	if vm := flag.Arg(1); vm != "" {
