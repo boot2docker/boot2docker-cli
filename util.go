@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 // fmt.Printf to stdout. Convention is to outf info intended for scripting.
@@ -106,6 +107,7 @@ func getLatestReleaseName(url string) (string, error) {
 func cmd(name string, args ...string) error {
 	cmd := exec.Command(name, args...)
 	if *verbose {
+		logf("executing: %v %v", name, strings.Join(args, " "))
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 	}
