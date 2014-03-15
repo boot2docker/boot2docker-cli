@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"net"
 	"os"
 	"path/filepath"
 
@@ -32,11 +31,11 @@ func getHostOnlyNetworkInterface() (string, error) {
 
 	for _, n := range nets {
 		if dhcp, ok := dhcps[n.NetworkName]; ok {
-			if dhcp.IPv4.IP.String() == B2D.DHCPIP &&
-				net.IP(dhcp.IPv4.Mask).String() == B2D.NetworkMask &&
-				dhcp.LowerIP.String() == B2D.LowerIPAddress &&
-				dhcp.UpperIP.String() == B2D.UpperIPAddress &&
-				dhcp.Enabled == (B2D.DHCPEnabled == "Yes") {
+			if dhcp.IPv4.IP.Equal(B2D.DHCPIP) &&
+				dhcp.IPv4.Mask.String() == B2D.NetworkMask.String() &&
+				dhcp.LowerIP.Equal(B2D.LowerIPAddress) &&
+				dhcp.UpperIP.Equal(B2D.UpperIPAddress) &&
+				dhcp.Enabled == B2D.DHCPEnabled {
 				logf("Reusing hostonly network interface %q", n.Name)
 				return n.Name, nil
 			}
@@ -50,18 +49,18 @@ func getHostOnlyNetworkInterface() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	hostonlyNet.IPv4.IP = net.ParseIP(B2D.HostIP)
-	hostonlyNet.IPv4.Mask = vbx.ParseIPv4Mask(B2D.NetworkMask)
+	hostonlyNet.IPv4.IP = B2D.HostIP
+	hostonlyNet.IPv4.Mask = B2D.NetworkMask
 	if err := hostonlyNet.Config(); err != nil {
 		return "", err
 	}
 
 	// Create and add a DHCP server to the host-only network
 	dhcp := vbx.DHCP{}
-	dhcp.IPv4.IP = net.ParseIP(B2D.DHCPIP)
-	dhcp.IPv4.Mask = vbx.ParseIPv4Mask(B2D.NetworkMask)
-	dhcp.LowerIP = net.ParseIP(B2D.LowerIPAddress)
-	dhcp.UpperIP = net.ParseIP(B2D.UpperIPAddress)
+	dhcp.IPv4.IP = B2D.DHCPIP
+	dhcp.IPv4.Mask = B2D.NetworkMask
+	dhcp.LowerIP = B2D.LowerIPAddress
+	dhcp.UpperIP = B2D.UpperIPAddress
 	dhcp.Enabled = true
 	if err := vbx.AddHostonlyDHCP(hostonlyNet.Name, dhcp); err != nil {
 		return "", err

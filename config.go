@@ -1,14 +1,17 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 
 	flag "github.com/ogier/pflag"
-	ini "github.com/vaughan0/go-ini"
+	vbx "github.com/riobard/go-virtualbox"
 )
 
 // boot2docker config.
@@ -17,7 +20,6 @@ var B2D struct {
 	// indentation all the time.
 
 	// basic config
-	VBM      string // VirtualBox management utility
 	SSH      string // SSH client executable
 	VM       string // virtual machine name
 	Dir      string // boot2docker directory
@@ -30,18 +32,22 @@ var B2D struct {
 	DockerPort uint16 // host Docker port (forward to port 4243 in VM)
 
 	// host-only network
-	HostIP         string
-	DHCPIP         string
-	NetworkMask    string
-	LowerIPAddress string
-	UpperIPAddress string
-	DHCPEnabled    string
+	HostIP         net.IP
+	DHCPIP         net.IP
+	NetworkMask    net.IPMask
+	LowerIPAddress net.IP
+	UpperIPAddress net.IP
+	DHCPEnabled    bool
 }
 
 // General flags.
 var (
-	verbose = flag.BoolP("verbose", "v", false, "display verbose command invocations.")
-	vbm     = flag.String("vbm", "VBoxManage", "path to VirtualBox management utility.")
+	verbose = new(bool)   // verbose mode
+	vbm     = new(string) // path to VBoxManage utility
+)
+
+var (
+	reFlagLine = regexp.MustCompile(`(\w+)=(.+)`)
 )
 
 func getCfgDir(name string) (string, error) {
@@ -74,101 +80,88 @@ func getCfgDir(name string) (string, error) {
 
 // Read configuration from both profile and flags. Flags override profile.
 func config() error {
-	var err error
-	if B2D.Dir, err = getCfgDir(".boot2docker"); err != nil {
-		return fmt.Errorf("failed to get current directory: %s", err)
+	dir, err := getCfgDir(".boot2docker")
+	if err != nil {
+		return fmt.Errorf("failed to get boot2docker directory: %s", err)
 	}
 
 	filename := os.Getenv("BOOT2DOCKER_PROFILE")
 	if filename == "" {
-		filename = filepath.Join(B2D.Dir, "profile")
+		filename = filepath.Join(dir, "profile")
 	}
-	profile, err := getProfile(filename)
+
+	profileArgs, err := readProfile(filename)
 	if err != nil && !os.IsNotExist(err) { // undefined/empty profile works
 		return err
 	}
 
 	if p := os.Getenv("VBOX_INSTALL_PATH"); p != "" && runtime.GOOS == "windows" {
-		*vbm = profile.Get("", "vbm", filepath.Join(p, "VBoxManage.exe"))
+		flag.StringVar(vbm, "vbm", filepath.Join(p, "VBoxManage.exe"), "path to VBoxManage utility")
 	} else {
-		*vbm = profile.Get("", "vbm", "VBoxManage")
+		flag.StringVar(vbm, "vbm", "VBoxManage", "path to VirtualBox management utility.")
 	}
+	flag.BoolVarP(verbose, "verbose", "v", false, "display verbose command invocations.")
+	flag.StringVar(&B2D.SSH, "ssh", "ssh", "path to SSH client utility.")
+	flag.UintVarP(&B2D.DiskSize, "disksize", "s", 20000, "boot2docker disk image size (in MB).")
+	flag.UintVarP(&B2D.Memory, "memory", "m", 1024, "virtual machine memory size (in MB).")
+	flag.Var(newUint16Value(2022, &B2D.SSHPort), "sshport", "host SSH port (forward to port 22 in VM).")
+	flag.Var(newUint16Value(4243, &B2D.DockerPort), "dockerport", "host Docker port (forward to port 4243 in VM).")
+	flag.Var(newIPValue(net.ParseIP("192.168.59.3"), &B2D.HostIP), "hostip", "VirtualBox host-only network IP address.")
+	flag.Var(newIPMaskValue(vbx.ParseIPv4Mask("255.255.255.0"), &B2D.NetworkMask), "netmask", "VirtualBox host-only network mask.")
+	flag.BoolVar(&B2D.DHCPEnabled, "dhcp", true, "enable VirtualBox host-only network DHCP.")
+	flag.Var(newIPValue(net.ParseIP("192.168.59.99"), &B2D.DHCPIP), "dhcpip", "VirtualBox host-only network DHCP server address.")
+	flag.Var(newIPValue(net.ParseIP("192.168.59.103"), &B2D.LowerIPAddress), "lowerip", "VirtualBox host-only network DHCP lower bound.")
+	flag.Var(newIPValue(net.ParseIP("192.168.59.254"), &B2D.UpperIPAddress), "upperip", "VirtualBox host-only network DHCP upper bound.")
+	flag.StringVar(&B2D.VM, "vm", "boot2docker-vm", "virtual machine name.")
 
-	B2D.SSH = profile.Get("", "ssh", "ssh")
-	B2D.VM = profile.Get("", "vm", "boot2docker-vm")
-	B2D.ISO = profile.Get("", "iso", filepath.Join(B2D.Dir, "boot2docker.iso"))
+	// The following options need special handling after parsing.
+	flag.StringVarP(&B2D.Dir, "dir", "d", "", "boot2docker config directory.")
+	flag.StringVar(&B2D.ISO, "iso", "", "path to boot2docker ISO image.")
 
-	if diskSize, err := strconv.ParseUint(profile.Get("", "disksize", "20000"), 10, 32); err != nil {
-		return fmt.Errorf("invalid disk image size: %s", err)
-	} else {
-		B2D.DiskSize = uint(diskSize)
-	}
-
-	if memory, err := strconv.ParseUint(profile.Get("", "memory", "1024"), 10, 32); err != nil {
-		return fmt.Errorf("invalid memory size: %s", err)
-	} else {
-		B2D.Memory = uint(memory)
-	}
-
-	if sshPort, err := strconv.ParseUint(profile.Get("", "sshport", "2022"), 10, 16); err != nil {
-		return fmt.Errorf("invalid SSH port: %s", err)
-	} else {
-		B2D.SSHPort = uint16(sshPort)
-	}
-
-	if dockerPort, err := strconv.ParseUint(profile.Get("", "dockerport", "4243"), 10, 16); err != nil {
-		return fmt.Errorf("invalid DockerPort: %s", err)
-	} else {
-		B2D.DockerPort = uint16(dockerPort)
-	}
-
-	// Host only networking settings
-	B2D.HostIP = profile.Get("", "hostiP", "192.168.59.3")
-	B2D.DHCPIP = profile.Get("", "dhcpip", "192.168.59.99")
-	B2D.NetworkMask = profile.Get("", "netmask", "255.255.255.0")
-	B2D.LowerIPAddress = profile.Get("", "lowerip", "192.168.59.103")
-	B2D.UpperIPAddress = profile.Get("", "upperip", "192.168.59.254")
-	B2D.DHCPEnabled = profile.Get("", "dhcp", "Yes")
-
-	// Commandline flags override profile settings.
-	flag.StringVar(&B2D.SSH, "ssh", B2D.SSH, "path to SSH client utility.")
-	flag.StringVarP(&B2D.Dir, "dir", "d", B2D.Dir, "boot2docker config directory.")
-	flag.StringVar(&B2D.ISO, "iso", B2D.ISO, "path to boot2docker ISO image.")
-	flag.UintVarP(&B2D.DiskSize, "disksize", "s", B2D.DiskSize, "boot2docker disk image size (in MB).")
-	flag.UintVarP(&B2D.Memory, "memory", "m", B2D.Memory, "virtual machine memory size (in MB).")
-	flag.Var(newUint16Value(B2D.SSHPort, &B2D.SSHPort), "sshport", "host SSH port (forward to port 22 in VM).")
-	flag.Var(newUint16Value(B2D.DockerPort, &B2D.DockerPort), "dockerport", "host Docker port (forward to port 4243 in VM).")
-	flag.StringVar(&B2D.HostIP, "hostip", B2D.HostIP, "VirtualBox host-only network IP address.")
-	flag.StringVar(&B2D.NetworkMask, "netmask", B2D.NetworkMask, "VirtualBox host-only network mask.")
-	flag.StringVar(&B2D.DHCPEnabled, "dhcp", B2D.DHCPEnabled, "enable VirtualBox host-only network DHCP.")
-	flag.StringVar(&B2D.DHCPIP, "dhcpip", B2D.DHCPIP, "VirtualBox host-only network DHCP server address.")
-	flag.StringVar(&B2D.LowerIPAddress, "lowerip", B2D.LowerIPAddress, "VirtualBox host-only network DHCP lower bound.")
-	flag.StringVar(&B2D.UpperIPAddress, "upperip", B2D.UpperIPAddress, "VirtualBox host-only network DHCP upper bound.")
-
+	osArgs := os.Args // save original os.Args
+	// Insert profile args before command-line args so that command-line overrides profile.
+	os.Args = append([]string{os.Args[0]}, append(profileArgs, os.Args[1:]...)...)
 	flag.Parse()
+	os.Args = osArgs // restore original os.Args
 
-	// Name of VM is the second argument.
+	if B2D.Dir == "" {
+		B2D.Dir = dir
+	}
+
+	if B2D.ISO == "" {
+		B2D.ISO = filepath.Join(B2D.Dir, "boot2docker.iso")
+	}
+
+	// Name of VM is the second argument. Override the value set in flag.
 	if vm := flag.Arg(1); vm != "" {
 		B2D.VM = vm
 	}
 	return nil
 }
 
-// boot2docker configuration profile.
-type Profile struct {
-	ini.File
-}
-
-func getProfile(filename string) (*Profile, error) {
-	f, err := ini.LoadFile(filename)
-	return &Profile{f}, err
-}
-
-func (f *Profile) Get(section, key, fallback string) string {
-	if val, ok := f.File.Get(section, key); ok {
-		return os.ExpandEnv(val)
+// Read boot2docker configuration profile into string slice. Expanding
+// $ENVVARS in the values field.
+func readProfile(filename string) ([]string, error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, err
 	}
-	return fallback
+	defer f.Close()
+
+	args := []string{}
+	s := bufio.NewScanner(f)
+	for s.Scan() {
+		res := reFlagLine.FindStringSubmatch(string(s.Text()))
+		if res == nil {
+			continue
+		}
+		args = append(args, fmt.Sprintf("--%v=%v", res[1], os.ExpandEnv(res[2])))
+	}
+
+	if err := s.Err(); err != nil {
+		return nil, err
+	}
+	return args, nil
 }
 
 // The missing flag.Uint16Var value type.
@@ -186,4 +179,44 @@ func (i *uint16Value) Set(s string) error {
 }
 func (i *uint16Value) Get() interface{} {
 	return uint16(*i)
+}
+
+type ipValue net.IP
+
+func newIPValue(val net.IP, p *net.IP) *ipValue {
+	*p = val
+	return (*ipValue)(p)
+}
+
+func (i *ipValue) String() string { return net.IP(*i).String() }
+func (i *ipValue) Set(s string) error {
+	ip := net.ParseIP(s)
+	if ip == nil {
+		return fmt.Errorf("failed to parse IP: %q", s)
+	}
+	*i = ipValue(ip)
+	return nil
+}
+func (i *ipValue) Get() interface{} {
+	return net.IP(*i)
+}
+
+type ipMaskValue net.IPMask
+
+func newIPMaskValue(val net.IPMask, p *net.IPMask) *ipMaskValue {
+	*p = val
+	return (*ipMaskValue)(p)
+}
+
+func (i *ipMaskValue) String() string { return net.IP(*i).String() }
+func (i *ipMaskValue) Set(s string) error {
+	ip := vbx.ParseIPv4Mask(s)
+	if ip == nil {
+		return fmt.Errorf("failed to parse IP mask: %q", s)
+	}
+	*i = ipMaskValue(ip)
+	return nil
+}
+func (i *ipMaskValue) Get() interface{} {
+	return net.IPMask(*i)
 }
