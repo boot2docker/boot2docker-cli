@@ -32,12 +32,12 @@ var B2D struct {
 	DockerPort uint16 // host Docker port (forward to port 4243 in VM)
 
 	// host-only network
-	HostIP         net.IP
-	DHCPIP         net.IP
-	NetworkMask    net.IPMask
-	LowerIPAddress net.IP
-	UpperIPAddress net.IP
-	DHCPEnabled    bool
+	HostIP      net.IP
+	DHCPIP      net.IP
+	NetMask     net.IPMask
+	LowerIP     net.IP
+	UpperIP     net.IP
+	DHCPEnabled bool
 }
 
 // General flags.
@@ -107,11 +107,11 @@ func config() error {
 	flag.Var(newUint16Value(2022, &B2D.SSHPort), "sshport", "host SSH port (forward to port 22 in VM).")
 	flag.Var(newUint16Value(4243, &B2D.DockerPort), "dockerport", "host Docker port (forward to port 4243 in VM).")
 	flag.Var(newIPValue(net.ParseIP("192.168.59.3"), &B2D.HostIP), "hostip", "VirtualBox host-only network IP address.")
-	flag.Var(newIPMaskValue(vbx.ParseIPv4Mask("255.255.255.0"), &B2D.NetworkMask), "netmask", "VirtualBox host-only network mask.")
+	flag.Var(newIPMaskValue(vbx.ParseIPv4Mask("255.255.255.0"), &B2D.NetMask), "netmask", "VirtualBox host-only network mask.")
 	flag.BoolVar(&B2D.DHCPEnabled, "dhcp", true, "enable VirtualBox host-only network DHCP.")
 	flag.Var(newIPValue(net.ParseIP("192.168.59.99"), &B2D.DHCPIP), "dhcpip", "VirtualBox host-only network DHCP server address.")
-	flag.Var(newIPValue(net.ParseIP("192.168.59.103"), &B2D.LowerIPAddress), "lowerip", "VirtualBox host-only network DHCP lower bound.")
-	flag.Var(newIPValue(net.ParseIP("192.168.59.254"), &B2D.UpperIPAddress), "upperip", "VirtualBox host-only network DHCP upper bound.")
+	flag.Var(newIPValue(net.ParseIP("192.168.59.103"), &B2D.LowerIP), "lowerip", "VirtualBox host-only network DHCP lower bound.")
+	flag.Var(newIPValue(net.ParseIP("192.168.59.254"), &B2D.UpperIP), "upperip", "VirtualBox host-only network DHCP upper bound.")
 	flag.StringVar(&B2D.VM, "vm", "boot2docker-vm", "virtual machine name.")
 
 	flag.StringVarP(&B2D.Dir, "dir", "d", dir, "boot2docker config directory.")
