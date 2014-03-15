@@ -105,7 +105,7 @@ func getLatestReleaseName(url string) (string, error) {
 // Convenient function to exec a command.
 func cmd(name string, args ...string) error {
 	cmd := exec.Command(name, args...)
-	if verbose {
+	if *verboseFlag {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 	}

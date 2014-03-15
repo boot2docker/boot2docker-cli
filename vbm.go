@@ -4,19 +4,10 @@ import (
 	"bytes"
 	"net"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 
 	vbx "github.com/riobard/go-virtualbox"
 )
-
-func vbmOut(args ...string) ([]byte, error) {
-	if *verboseFlag {
-		logf("executing: %v %v", B2D.VBM, strings.Join(args, " "))
-	}
-	return exec.Command(B2D.VBM, args...).Output()
-}
 
 // TODO: delete the hostonlyif and dhcpserver when we delete the vm! (need to
 // reference count to make sure there are no other vms relying on them)

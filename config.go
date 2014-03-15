@@ -11,10 +11,6 @@ import (
 	ini "github.com/vaughan0/go-ini"
 )
 
-var (
-	verbose bool
-)
-
 // boot2docker config.
 var B2D struct {
 	// NOTE: separate sections with blank lines so gofmt doesn't change
@@ -134,22 +130,21 @@ func config() error {
 	B2D.DHCPEnabled = profile.Get("", "dhcp", "Yes")
 
 	// Commandline flags override profile settings.
-	flag.StringVar(&B2D.VBM, "vbm", B2D.VBM, "Path to VirtualBox management utility")
-	flag.StringVar(&B2D.SSH, "ssh", B2D.SSH, "Path to SSH client utility")
-	flag.StringVarP(&B2D.Dir, "dir", "d", B2D.Dir, "boot2docker config directory")
-	flag.StringVar(&B2D.ISO, "iso", B2D.ISO, "Path to boot2docker ISO image")
-	flag.UintVarP(&B2D.DiskSize, "disksize", "s", B2D.DiskSize, "boot2docker disk image size (in MB)")
-	flag.UintVarP(&B2D.Memory, "memory", "m", B2D.Memory, "Virtual machine memory size (in MB)")
-	flag.Var(newUint16Value(B2D.SSHPort, &B2D.SSHPort), "sshport", "Host SSH port (forward to port 22 in VM)")
-	flag.Var(newUint16Value(B2D.DockerPort, &B2D.DockerPort), "dockerport", "Host Docker port (forward to port 4243 in VM)")
-	flag.StringVar(&B2D.HostIP, "hostip", B2D.HostIP, "VirtualBox host-only network IP address")
-	flag.StringVar(&B2D.NetworkMask, "netmask", B2D.NetworkMask, "VirtualBox host-only network mask")
-	flag.StringVar(&B2D.DHCPEnabled, "dhcp", B2D.DHCPEnabled, "Enable VirtualBox host-only network DHCP")
-	flag.StringVar(&B2D.DHCPIP, "dhcpip", B2D.DHCPIP, "VirtualBox host-only network DHCP server address")
-	flag.StringVar(&B2D.LowerIPAddress, "lowerip", B2D.LowerIPAddress, "VirtualBox host-only network DHCP lower bound")
-	flag.StringVar(&B2D.UpperIPAddress, "upperip", B2D.UpperIPAddress, "VirtualBox host-only network DHCP upper bound")
+	flag.StringVar(&B2D.VBM, "vbm", B2D.VBM, "path to VirtualBox management utility.")
+	flag.StringVar(&B2D.SSH, "ssh", B2D.SSH, "path to SSH client utility.")
+	flag.StringVarP(&B2D.Dir, "dir", "d", B2D.Dir, "boot2docker config directory.")
+	flag.StringVar(&B2D.ISO, "iso", B2D.ISO, "path to boot2docker ISO image.")
+	flag.UintVarP(&B2D.DiskSize, "disksize", "s", B2D.DiskSize, "boot2docker disk image size (in MB).")
+	flag.UintVarP(&B2D.Memory, "memory", "m", B2D.Memory, "virtual machine memory size (in MB).")
+	flag.Var(newUint16Value(B2D.SSHPort, &B2D.SSHPort), "sshport", "host SSH port (forward to port 22 in VM).")
+	flag.Var(newUint16Value(B2D.DockerPort, &B2D.DockerPort), "dockerport", "host Docker port (forward to port 4243 in VM).")
+	flag.StringVar(&B2D.HostIP, "hostip", B2D.HostIP, "VirtualBox host-only network IP address.")
+	flag.StringVar(&B2D.NetworkMask, "netmask", B2D.NetworkMask, "VirtualBox host-only network mask.")
+	flag.StringVar(&B2D.DHCPEnabled, "dhcp", B2D.DHCPEnabled, "enable VirtualBox host-only network DHCP.")
+	flag.StringVar(&B2D.DHCPIP, "dhcpip", B2D.DHCPIP, "VirtualBox host-only network DHCP server address.")
+	flag.StringVar(&B2D.LowerIPAddress, "lowerip", B2D.LowerIPAddress, "VirtualBox host-only network DHCP lower bound.")
+	flag.StringVar(&B2D.UpperIPAddress, "upperip", B2D.UpperIPAddress, "VirtualBox host-only network DHCP upper bound.")
 
-	flag.BoolVarP(&verbose, "verbose", "v", false, "Verbose mode")
 	flag.Parse()
 
 	// Name of VM is the second argument.
