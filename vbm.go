@@ -48,7 +48,6 @@ func getHostOnlyNetworkInterface() (string, error) {
 
 	hostonlyNet, err := vbx.CreateHostonlyNet()
 	if err != nil {
-		logf("!!! err %s", err)
 		return "", err
 	}
 	hostonlyNet.IPv4.IP = net.ParseIP(B2D.HostIP)

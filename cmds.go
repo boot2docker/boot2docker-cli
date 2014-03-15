@@ -53,7 +53,7 @@ func cmdInit() int {
 	m.Memory = B2D.Memory
 
 	m.Flag |= vbx.F_pae
-	m.Flag |= vbx.F_longmode // IMPORTATN: use x86-64 processor
+	m.Flag |= vbx.F_longmode // important: use x86-64 processor
 	m.Flag |= vbx.F_rtcuseutc
 	m.Flag |= vbx.F_acpi
 	m.Flag |= vbx.F_ioapic
@@ -70,17 +70,17 @@ func cmdInit() int {
 	}
 
 	logf("Setting VM networking...")
-	if err := m.SetNIC(1, vbx.NIC{Type: "nat", HwType: "virtio"}); err != nil {
+	if err := m.SetNIC(1, vbx.NIC{Network: "nat", Hardware: "virtio"}); err != nil {
 		logf("Failed to add network interface to VM %q: %s", B2D.VM, err)
 		return 1
 	}
 
-	pfrules := map[string]vbx.PFRule{
+	pfRules := map[string]vbx.PFRule{
 		"ssh":    vbx.PFRule{Proto: "tcp", HostIP: "127.0.0.1", HostPort: B2D.SSHPort, GuestPort: 22},
 		"docker": vbx.PFRule{Proto: "tcp", HostIP: "127.0.0.1", HostPort: B2D.DockerPort, GuestPort: 4243},
 	}
 
-	for name, rule := range pfrules {
+	for name, rule := range pfRules {
 		if err := m.AddNATPF(1, name, rule); err != nil {
 			logf("Failed to add port forwarding to VM %q: %s", B2D.VM, err)
 			return 1
@@ -89,14 +89,14 @@ func cmdInit() int {
 	}
 
 	logf("Setting VM host-only networking")
-	hostifname, err := getHostOnlyNetworkInterface()
+	hostIFName, err := getHostOnlyNetworkInterface()
 	if err != nil {
 		logf("Failed to create host-only network interface: %s", err)
 		return 1
 	}
 
-	logf("Adding host-only networking interface %q", hostifname)
-	if err := m.SetNIC(2, vbx.NIC{Type: "hostonly", HwType: "virtio", HostonlyAdapter: hostifname}); err != nil {
+	logf("Adding host-only networking interface %q", hostIFName)
+	if err := m.SetNIC(2, vbx.NIC{Network: "hostonly", Hardware: "virtio", HostonlyAdapter: hostIFName}); err != nil {
 		logf("Failed to add network interface to VM %q: %s", B2D.VM, err)
 		return 1
 	}
