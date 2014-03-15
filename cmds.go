@@ -195,7 +195,6 @@ func cmdStop() int {
 		logf("Failed to stop machine %q: %s", B2D.VM, err)
 		return 1
 	}
-	// TODO wait for machine to stop
 	return 0
 }
 
