@@ -9,6 +9,11 @@ import (
 	vbx "github.com/riobard/go-virtualbox"
 )
 
+func init() {
+	vbx.Verbose = verbose
+	vbx.VBM = vbm
+}
+
 // TODO: delete the hostonlyif and dhcpserver when we delete the vm! (need to
 // reference count to make sure there are no other vms relying on them)
 

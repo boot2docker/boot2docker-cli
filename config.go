@@ -40,7 +40,8 @@ var B2D struct {
 
 // General flags.
 var (
-	verboseFlag = flag.BoolP("verbose", "v", false, "display verbose command invocations.")
+	verbose = flag.BoolP("verbose", "v", false, "display verbose command invocations.")
+	vbm     = flag.String("vbm", "VBoxManage", "path to VirtualBox management utility.")
 )
 
 func getCfgDir(name string) (string, error) {
@@ -88,9 +89,9 @@ func config() error {
 	}
 
 	if p := os.Getenv("VBOX_INSTALL_PATH"); p != "" && runtime.GOOS == "windows" {
-		B2D.VBM = profile.Get("", "vbm", filepath.Join(p, "VBoxManage.exe"))
+		*vbm = profile.Get("", "vbm", filepath.Join(p, "VBoxManage.exe"))
 	} else {
-		B2D.VBM = profile.Get("", "vbm", "VBoxManage")
+		*vbm = profile.Get("", "vbm", "VBoxManage")
 	}
 
 	B2D.SSH = profile.Get("", "ssh", "ssh")
@@ -130,7 +131,6 @@ func config() error {
 	B2D.DHCPEnabled = profile.Get("", "dhcp", "Yes")
 
 	// Commandline flags override profile settings.
-	flag.StringVar(&B2D.VBM, "vbm", B2D.VBM, "path to VirtualBox management utility.")
 	flag.StringVar(&B2D.SSH, "ssh", B2D.SSH, "path to SSH client utility.")
 	flag.StringVarP(&B2D.Dir, "dir", "d", B2D.Dir, "boot2docker config directory.")
 	flag.StringVar(&B2D.ISO, "iso", B2D.ISO, "path to boot2docker ISO image.")
