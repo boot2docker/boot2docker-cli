@@ -36,15 +36,18 @@ func getHostOnlyNetworkInterface() (string, error) {
 				dhcp.LowerIP.Equal(B2D.LowerIP) &&
 				dhcp.UpperIP.Equal(B2D.UpperIP) &&
 				dhcp.Enabled == B2D.DHCPEnabled {
-				logf("Reusing hostonly network interface %q", n.Name)
+				if *verbose {
+					logf("Reusing existing host-only network interface %q", n.Name)
+				}
 				return n.Name, nil
 			}
 		}
 	}
 
 	// No existing host-only interface found. Create a new one.
-	logf("Creating a new host-only network interface")
-
+	if *verbose {
+		logf("Creating a new host-only network interface...")
+	}
 	hostonlyNet, err := vbx.CreateHostonlyNet()
 	if err != nil {
 		return "", err

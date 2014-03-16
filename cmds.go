@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -69,15 +70,15 @@ func cmdInit() int {
 		return 1
 	}
 
-	logf("Setting VM networking...")
+	logf("Setting NIC #1 to use NAT network...")
 	if err := m.SetNIC(1, vbx.NIC{Network: vbx.NICNetNAT, Hardware: vbx.VirtIO}); err != nil {
 		logf("Failed to add network interface to VM %q: %s", B2D.VM, err)
 		return 1
 	}
 
 	pfRules := map[string]vbx.PFRule{
-		"ssh":    vbx.PFRule{Proto: "tcp", HostIP: "127.0.0.1", HostPort: B2D.SSHPort, GuestPort: 22},
-		"docker": vbx.PFRule{Proto: "tcp", HostIP: "127.0.0.1", HostPort: B2D.DockerPort, GuestPort: 4243},
+		"ssh":    vbx.PFRule{Proto: vbx.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: B2D.SSHPort, GuestPort: 22},
+		"docker": vbx.PFRule{Proto: vbx.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: B2D.DockerPort, GuestPort: 4243},
 	}
 
 	for name, rule := range pfRules {
@@ -88,14 +89,13 @@ func cmdInit() int {
 		logf("Port forwarding [%s] %s", name, rule)
 	}
 
-	logf("Setting VM host-only networking")
 	hostIFName, err := getHostOnlyNetworkInterface()
 	if err != nil {
 		logf("Failed to create host-only network interface: %s", err)
 		return 1
 	}
 
-	logf("Adding host-only networking interface %q", hostIFName)
+	logf("Setting NIC #2 to use host-only network %q...", hostIFName)
 	if err := m.SetNIC(2, vbx.NIC{Network: vbx.NICNetHostonly, Hardware: vbx.VirtIO, HostonlyAdapter: hostIFName}); err != nil {
 		logf("Failed to add network interface to VM %q: %s", B2D.VM, err)
 		return 1
