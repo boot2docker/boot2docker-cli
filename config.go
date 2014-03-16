@@ -8,10 +8,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
-	"strconv"
-
-	flag "github.com/ogier/pflag"
-	vbx "github.com/riobard/go-virtualbox"
+	flag "github.com/riobard/pflag"
 )
 
 // boot2docker config.
@@ -104,14 +101,14 @@ func config() error {
 	flag.StringVar(&B2D.SSH, "ssh", "ssh", "path to SSH client utility.")
 	flag.UintVarP(&B2D.DiskSize, "disksize", "s", 20000, "boot2docker disk image size (in MB).")
 	flag.UintVarP(&B2D.Memory, "memory", "m", 1024, "virtual machine memory size (in MB).")
-	flag.Var(newUint16Value(2022, &B2D.SSHPort), "sshport", "host SSH port (forward to port 22 in VM).")
-	flag.Var(newUint16Value(4243, &B2D.DockerPort), "dockerport", "host Docker port (forward to port 4243 in VM).")
-	flag.Var(newIPValue(net.ParseIP("192.168.59.3"), &B2D.HostIP), "hostip", "VirtualBox host-only network IP address.")
-	flag.Var(newIPMaskValue(vbx.ParseIPv4Mask("255.255.255.0"), &B2D.NetMask), "netmask", "VirtualBox host-only network mask.")
+	flag.Uint16Var(&B2D.SSHPort, "sshport", 2022, "host SSH port (forward to port 22 in VM).")
+	flag.Uint16Var(&B2D.DockerPort, "dockerport", 4243, "host Docker port (forward to port 4243 in VM).")
+	flag.IPVar(&B2D.HostIP, "hostip", net.ParseIP("192.168.59.3"), "VirtualBox host-only network IP address.")
+	flag.IPMaskVar(&B2D.NetMask, "netmask", flag.ParseIPv4Mask("255.255.255.0"), "VirtualBox host-only network mask.")
 	flag.BoolVar(&B2D.DHCPEnabled, "dhcp", true, "enable VirtualBox host-only network DHCP.")
-	flag.Var(newIPValue(net.ParseIP("192.168.59.99"), &B2D.DHCPIP), "dhcpip", "VirtualBox host-only network DHCP server address.")
-	flag.Var(newIPValue(net.ParseIP("192.168.59.103"), &B2D.LowerIP), "lowerip", "VirtualBox host-only network DHCP lower bound.")
-	flag.Var(newIPValue(net.ParseIP("192.168.59.254"), &B2D.UpperIP), "upperip", "VirtualBox host-only network DHCP upper bound.")
+	flag.IPVar(&B2D.DHCPIP, "dhcpip", net.ParseIP("192.168.59.99"), "VirtualBox host-only network DHCP server address.")
+	flag.IPVar(&B2D.LowerIP, "lowerip", net.ParseIP("192.168.59.103"), "VirtualBox host-only network DHCP lower bound.")
+	flag.IPVar(&B2D.UpperIP, "upperip", net.ParseIP("192.168.59.254"), "VirtualBox host-only network DHCP upper bound.")
 	flag.StringVar(&B2D.VM, "vm", "boot2docker-vm", "virtual machine name.")
 
 	flag.StringVarP(&B2D.Dir, "dir", "d", dir, "boot2docker config directory.")
@@ -153,61 +150,4 @@ func readProfile(filename string) ([]string, error) {
 		return nil, err
 	}
 	return args, nil
-}
-
-// The missing flag.Uint16Var value type.
-type uint16Value uint16
-
-func newUint16Value(val uint16, p *uint16) *uint16Value {
-	*p = val
-	return (*uint16Value)(p)
-}
-func (i *uint16Value) String() string { return fmt.Sprintf("%d", *i) }
-func (i *uint16Value) Set(s string) error {
-	v, err := strconv.ParseUint(s, 10, 16)
-	*i = uint16Value(v)
-	return err
-}
-func (i *uint16Value) Get() interface{} {
-	return uint16(*i)
-}
-
-type ipValue net.IP
-
-func newIPValue(val net.IP, p *net.IP) *ipValue {
-	*p = val
-	return (*ipValue)(p)
-}
-
-func (i *ipValue) String() string { return net.IP(*i).String() }
-func (i *ipValue) Set(s string) error {
-	ip := net.ParseIP(s)
-	if ip == nil {
-		return fmt.Errorf("failed to parse IP: %q", s)
-	}
-	*i = ipValue(ip)
-	return nil
-}
-func (i *ipValue) Get() interface{} {
-	return net.IP(*i)
-}
-
-type ipMaskValue net.IPMask
-
-func newIPMaskValue(val net.IPMask, p *net.IPMask) *ipMaskValue {
-	*p = val
-	return (*ipMaskValue)(p)
-}
-
-func (i *ipMaskValue) String() string { return net.IP(*i).String() }
-func (i *ipMaskValue) Set(s string) error {
-	ip := vbx.ParseIPv4Mask(s)
-	if ip == nil {
-		return fmt.Errorf("failed to parse IP mask: %q", s)
-	}
-	*i = ipMaskValue(ip)
-	return nil
-}
-func (i *ipMaskValue) Get() interface{} {
-	return net.IPMask(*i)
 }
