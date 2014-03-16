@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // fmt.Printf to stdout. Convention is to outf info intended for scripting.
@@ -28,17 +29,29 @@ func logf(fmt string, v ...interface{}) {
 	log.Printf(fmt, v...)
 }
 
-// Check if the connection to tcp://addr is readable.
-func read(addr string) error {
-	conn, err := net.Dial("tcp", addr)
-	if err != nil {
-		return err
+// Try if addr tcp://addr is readable for n times at wait interval.
+func read(addr string, n int, wait time.Duration) error {
+	var lastErr error
+	for i := 0; i < n; i++ {
+		if *verbose {
+			logf("Connecting to tcp://%v (attempt #%d)", addr, i)
+		}
+		conn, err := net.DialTimeout("tcp", addr, 1*time.Second)
+		if err != nil {
+			lastErr = err
+			time.Sleep(wait)
+			continue
+		}
+		defer conn.Close()
+		conn.SetDeadline(time.Now().Add(1 * time.Second))
+		if _, err = conn.Read(make([]byte, 1)); err != nil {
+			lastErr = err
+			time.Sleep(wait)
+			continue
+		}
+		return nil
 	}
-	defer conn.Close()
-	if _, err = conn.Read(make([]byte, 1)); err != nil {
-		return err
-	}
-	return nil
+	return lastErr
 }
 
 // Check if an addr can be successfully connected.

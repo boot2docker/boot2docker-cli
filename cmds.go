@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"time"
 
 	vbx "github.com/riobard/go-virtualbox"
 )
@@ -149,10 +150,13 @@ func cmdUp() int {
 
 	logf("Waiting for SSH server to start...")
 	addr := fmt.Sprintf("localhost:%d", B2D.SSHPort)
-	if err := read(addr); err != nil {
-		logf("Failed to connect to SSH port at %s: %s", addr, err)
+	const n = 10
+	// Try to connect to the SSH 10 times at 3 sec interval before giving up.
+	if err := read(addr, n, 3*time.Second); err != nil {
+		logf("Failed to connect to SSH port at %s after %d attempts. Last error: %v", addr, n, err)
 		return 1
 	}
+
 	logf("Started.")
 
 	switch runtime.GOOS {
