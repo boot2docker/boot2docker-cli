@@ -5,7 +5,7 @@ import (
 	"os"
 
 	// keep 3rd-party imports separate from stdlib with an empty line
-	flag "github.com/ogier/pflag"
+	flag "github.com/riobard/pflag"
 )
 
 // The following vars will be injected during the build process.
