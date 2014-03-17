@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	vbx "github.com/riobard/go-virtualbox"
+	vbx "github.com/boot2docker/boot2docker-cli/virtualbox"
 )
 
 func init() {

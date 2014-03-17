@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"time"
 
-	vbx "github.com/riobard/go-virtualbox"
+	vbx "github.com/boot2docker/boot2docker-cli/virtualbox"
 )
 
 // Initialize the boot2docker VM from scratch.
