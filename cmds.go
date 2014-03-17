@@ -103,12 +103,12 @@ func cmdInit() int {
 	}
 
 	logf("Setting VM storage...")
-	if err := m.AddStorageCtl("SATA", vbx.StorageController{SysBus: "sata", HostIOCache: true, Bootable: true}); err != nil {
+	if err := m.AddStorageCtl("SATA", vbx.StorageController{SysBus: vbx.SysBusSATA, HostIOCache: true, Bootable: true}); err != nil {
 		logf("Failed to add storage controller to VM %q: %s", B2D.VM, err)
 		return 1
 	}
 
-	if err := m.AttachStorage("SATA", vbx.StorageMedium{Port: 0, Device: 0, DriveType: "dvddrive", Medium: B2D.ISO}); err != nil {
+	if err := m.AttachStorage("SATA", vbx.StorageMedium{Port: 0, Device: 0, DriveType: vbx.DriveDVD, Medium: B2D.ISO}); err != nil {
 		logf("Failed to attach ISO image %q: %s", B2D.ISO, err)
 		return 1
 	}
@@ -127,7 +127,7 @@ func cmdInit() int {
 		}
 	}
 
-	if err := m.AttachStorage("SATA", vbx.StorageMedium{Port: 1, Device: 0, DriveType: "hdd", Medium: diskImg}); err != nil {
+	if err := m.AttachStorage("SATA", vbx.StorageMedium{Port: 1, Device: 0, DriveType: vbx.DriveHDD, Medium: diskImg}); err != nil {
 		logf("Failed to attach disk image %q: %s", diskImg, err)
 		return 1
 	}

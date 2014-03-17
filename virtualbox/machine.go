@@ -411,13 +411,13 @@ func (m *Machine) SetNIC(n int, nic NIC) error {
 func (m *Machine) AddStorageCtl(name string, ctl StorageController) error {
 	args := []string{"storagectl", m.Name, "--name", name}
 	if ctl.SysBus != "" {
-		args = append(args, "--add", ctl.SysBus)
+		args = append(args, "--add", string(ctl.SysBus))
 	}
 	if ctl.Ports > 0 {
 		args = append(args, "--portcount", fmt.Sprintf("%d", ctl.Ports))
 	}
 	if ctl.Chipset != "" {
-		args = append(args, "--controller", ctl.Chipset)
+		args = append(args, "--controller", string(ctl.Chipset))
 	}
 	args = append(args, "--hostiocache", bool2string(ctl.HostIOCache))
 	args = append(args, "--bootable", bool2string(ctl.Bootable))
@@ -434,7 +434,7 @@ func (m *Machine) AttachStorage(ctlName string, medium StorageMedium) error {
 	return vbm("storageattach", m.Name, "--storagectl", ctlName,
 		"--port", fmt.Sprintf("%d", medium.Port),
 		"--device", fmt.Sprintf("%d", medium.Device),
-		"--type", medium.DriveType,
+		"--type", string(medium.DriveType),
 		"--medium", medium.Medium,
 	)
 }
