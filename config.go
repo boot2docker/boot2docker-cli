@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strings"
 
 	flag "github.com/ogier/pflag"
 )
@@ -45,7 +46,7 @@ var (
 )
 
 var (
-	reFlagLine = regexp.MustCompile(`(\w+)=(.+)`)
+	reFlagLine = regexp.MustCompile(`(\w+)\s*=\s*(.+)`)
 )
 
 func getCfgDir(name string) (string, error) {
@@ -139,10 +140,17 @@ func readProfile(filename string) ([]string, error) {
 
 	args := []string{}
 	s := bufio.NewScanner(f)
+	ln := 0
 	for s.Scan() {
-		res := reFlagLine.FindStringSubmatch(string(s.Text()))
-		if res == nil {
+		ln++
+		line := strings.TrimSpace((s.Text()))
+		if strings.HasPrefix(line, "#") || strings.HasPrefix(line, ";") {
+			// Ignore comment lines starting with # or ;
 			continue
+		}
+		res := reFlagLine.FindStringSubmatch(line)
+		if res == nil {
+			return nil, fmt.Errorf("failed to parse profile line %d: %q", ln, line)
 		}
 		args = append(args, fmt.Sprintf("--%v=%v", res[1], os.ExpandEnv(res[2])))
 	}
