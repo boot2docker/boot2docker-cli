@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"runtime"
 
-	flag "github.com/riobard/pflag"
+	flag "github.com/ogier/pflag"
 )
 
 // boot2docker config.
