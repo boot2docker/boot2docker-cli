@@ -9,53 +9,14 @@ import (
 	"time"
 )
 
-/*
-VirtualBox Machine State Transition
-
-A VirtualBox machine can be in one of the following states:
-
-- poweroff: The VM is powered off and no previous running state saved.
-- running: The VM is running.
-- paused: The VM is paused, but its state is not saved to disk. If you quit
-	      VirtualBox, the state will be lost.
-- saved: The VM is powered off, and the previous state is saved on disk.
-- aborted: The VM process crashed. This should happen very rarely.
-
-VBoxManage supports the following transitions between states:
-
-- startvm <VM>: poweroff|saved --> running
-- controlvm <VM> pause: running --> paused
-- controlvm <VM> resume: paused --> running
-- controlvm <VM> savestate: running -> saved
-- controlvm <VM> acpipowerbutton: running --> poweroff
-- controlvm <VM> poweroff: running --> poweroff (unsafe)
-- controlvm <VM> reset: running --> poweroff --> running (unsafe)
-
-Poweroff and reset are unsafe because they will lose state and might corrupt
-disk image.
-
-To make things simpler, the following transitions are used instead:
-
-- start: poweroff|saved|paused|aborted --> running
-- stop: [paused|saved -->] running --> poweroff
-- save: [paused -->] running --> saved
-- restart: [paused|saved -->] running --> poweroff --> running
-- poweroff: [paused|saved -->] running --> poweroff (unsafe)
-- reset: [paused|saved -->] running --> poweroff --> running (unsafe)
-
-The takeaway is we try our best to transit the virtual machine into the state
-you want it to be, and you only need to watch out for the potentially unsafe
-poweroff and reset.
-*/
-
 type MachineState string
 
 const (
 	Poweroff MachineState = "poweroff"
-	Running               = "running"
-	Paused                = "paused"
-	Saved                 = "saved"
-	Aborted               = "aborted"
+	Running  MachineState = "running"
+	Paused   MachineState = "paused"
+	Saved    MachineState = "saved"
+	Aborted  MachineState = "aborted"
 )
 
 type Flag int
@@ -177,7 +138,7 @@ func (m *Machine) Stop() error {
 	return nil
 }
 
-// Poweroff forcefully stops the machine. State is lost and might corrupt disk.
+// Poweroff forcefully stops the machine. State is lost and might corrupt the disk image.
 func (m *Machine) Poweroff() error {
 	switch m.State {
 	case Poweroff, Aborted, Saved:
@@ -186,7 +147,7 @@ func (m *Machine) Poweroff() error {
 	return vbm("controlvm", m.Name, "poweroff")
 }
 
-// Restart gracefully restart the machine.
+// Restart gracefully restarts the machine.
 func (m *Machine) Restart() error {
 	switch m.State {
 	case Paused, Saved:
@@ -200,7 +161,7 @@ func (m *Machine) Restart() error {
 	return m.Start()
 }
 
-// Reset forcefully restarts the machine. State is lost and might corrupt disk.
+// Reset forcefully restarts the machine. State is lost and might corrupt the disk image.
 func (m *Machine) Reset() error {
 	switch m.State {
 	case Paused, Saved:
@@ -286,7 +247,7 @@ func ListMachines() ([]*Machine, error) {
 	if err != nil {
 		return nil, err
 	}
-	var ms []*Machine
+	ms := []*Machine{}
 	s := bufio.NewScanner(bytes.NewReader(b))
 	for s.Scan() {
 		res := reVMNameUUID.FindStringSubmatch(s.Text())
@@ -372,7 +333,7 @@ func (m *Machine) Modify() error {
 
 	for i, dev := range m.BootOrder {
 		if i > 3 {
-			break
+			break // Only four slots `--boot{1,2,3,4}`. Ignore the rest.
 		}
 		args = append(args, fmt.Sprintf("--boot%d", i+1), dev)
 	}

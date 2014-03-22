@@ -19,7 +19,7 @@ type PFProto string
 
 const (
 	PFTCP PFProto = "tcp"
-	PFUDP         = "udp"
+	PFUDP PFProto = "udp"
 )
 
 // String returns a human-friendly representation of the port forwarding rule.

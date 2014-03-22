@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-// NAT network.
+// A NATNet defines a NAT network.
 type NATNet struct {
 	Name    string
 	IPv4    net.IPNet
@@ -30,6 +30,7 @@ func NATNets() (map[string]NATNet, error) {
 		if line == "" {
 			m[n.Name] = n
 			n = NATNet{}
+			continue
 		}
 		res := reColonLine.FindStringSubmatch(line)
 		if res == nil {
@@ -56,13 +57,9 @@ func NATNets() (map[string]NATNet, error) {
 			}
 			n.IPv6.Mask = net.CIDRMask(int(l), net.IPv6len*8)
 		case "DHCP Enabled":
-			if val == "Yes" {
-				n.DHCP = true
-			}
+			n.DHCP = (val == "Yes")
 		case "Enabled":
-			if val == "Yes" {
-				n.Enabled = true
-			}
+			n.Enabled = (val == "Yes")
 		}
 	}
 	if err := s.Err(); err != nil {

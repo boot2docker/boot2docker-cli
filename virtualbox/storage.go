@@ -14,9 +14,9 @@ type SystemBus string
 
 const (
 	SysBusIDE    SystemBus = "ide"
-	SysBusSATA             = "sata"
-	SysBusSCSI             = "scsi"
-	SysBusFloppy           = "floppy"
+	SysBusSATA   SystemBus = "sata"
+	SysBusSCSI   SystemBus = "scsi"
+	SysBusFloppy SystemBus = "floppy"
 )
 
 // StorageControllerChipset represents the hardware of a storage controller.
@@ -24,13 +24,13 @@ type StorageControllerChipset string
 
 const (
 	CtrlLSILogic    StorageControllerChipset = "LSILogic"
-	CtrlLSILogicSAS                          = "LSILogicSAS"
-	CtrlBusLogic                             = "BusLogic"
-	CtrlIntelAHCI                            = "IntelAHCI"
-	CtrlPIIX3                                = "PIIX3"
-	CtrlPIIX4                                = "PIIX4"
-	CtrlICH6                                 = "ICH6"
-	CtrlI82078                               = "I82078"
+	CtrlLSILogicSAS StorageControllerChipset = "LSILogicSAS"
+	CtrlBusLogic    StorageControllerChipset = "BusLogic"
+	CtrlIntelAHCI   StorageControllerChipset = "IntelAHCI"
+	CtrlPIIX3       StorageControllerChipset = "PIIX3"
+	CtrlPIIX4       StorageControllerChipset = "PIIX4"
+	CtrlICH6        StorageControllerChipset = "ICH6"
+	CtrlI82078      StorageControllerChipset = "I82078"
 )
 
 // StorageMedium represents the storage medium attached to a storage controller.
@@ -46,6 +46,6 @@ type DriveType string
 
 const (
 	DriveDVD DriveType = "dvddrive"
-	DriveHDD           = "hdd"
-	DriveFDD           = "fdd"
+	DriveHDD DriveType = "hdd"
+	DriveFDD DriveType = "fdd"
 )

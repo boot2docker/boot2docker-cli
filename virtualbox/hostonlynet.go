@@ -60,9 +60,7 @@ func (n *HostonlyNet) Config() error {
 	}
 
 	if n.DHCP {
-		if err := vbm("hostonlyif", "ipconfig", n.Name, "--dhcp"); err != nil {
-			return nil // not implemented as in VirtualBox 4.3
-		}
+		vbm("hostonlyif", "ipconfig", n.Name, "--dhcp") // not implemented as of VirtualBox 4.3
 	}
 
 	return nil
@@ -82,6 +80,7 @@ func HostonlyNets() (map[string]*HostonlyNet, error) {
 		if line == "" {
 			m[n.NetworkName] = n
 			n = &HostonlyNet{}
+			continue
 		}
 		res := reColonLine.FindStringSubmatch(line)
 		if res == nil {
@@ -93,9 +92,7 @@ func HostonlyNets() (map[string]*HostonlyNet, error) {
 		case "GUID":
 			n.GUID = val
 		case "DHCP":
-			if val != "Disabled" {
-				n.DHCP = true
-			}
+			n.DHCP = (val != "Disabled")
 		case "IPAddress":
 			n.IPv4.IP = net.ParseIP(val)
 		case "NetworkMask":

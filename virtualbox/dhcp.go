@@ -55,6 +55,7 @@ func DHCPs() (map[string]*DHCP, error) {
 		if line == "" {
 			m[dhcp.NetworkName] = dhcp
 			dhcp = &DHCP{}
+			continue
 		}
 		res := reColonLine.FindStringSubmatch(line)
 		if res == nil {
