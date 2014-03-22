@@ -31,17 +31,17 @@ func addDHCP(kind, name string, d DHCP) error {
 	return vbm(args...)
 }
 
-// Add the DHCP server to an internal network
+// AddInternalDHCP adds a DHCP server to an internal network.
 func AddInternalDHCP(netname string, d DHCP) error {
 	return addDHCP("--netname", netname, d)
 }
 
-// Add the DHCP server to a host-only network
+// AddHostonlyDHCP adds a DHCP server to a host-only network.
 func AddHostonlyDHCP(ifname string, d DHCP) error {
 	return addDHCP("--ifname", ifname, d)
 }
 
-// Get all DHCP server settings. Map is keyed by DHCP.NetworkName.
+// DHCPs gets all DHCP server settings in a map keyed by DHCP.NetworkName.
 func DHCPs() (map[string]*DHCP, error) {
 	b, err := vbmOut("list", "dhcpservers")
 	if err != nil {
@@ -72,9 +72,7 @@ func DHCPs() (map[string]*DHCP, error) {
 		case "NetworkMask":
 			dhcp.IPv4.Mask = ParseIPv4Mask(val)
 		case "Enabled":
-			if val == "Yes" {
-				dhcp.Enabled = true
-			}
+			dhcp.Enabled = (val == "Yes")
 		}
 	}
 	if err := s.Err(); err != nil {

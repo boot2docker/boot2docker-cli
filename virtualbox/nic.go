@@ -1,12 +1,13 @@
 package virtualbox
 
-// Network interface card.
+// NIC represents a virtualized network interface card.
 type NIC struct {
 	Network         NICNetwork
 	Hardware        NICHardware
 	HostonlyAdapter string
 }
 
+// NICNetwork represents the type of NIC networks.
 type NICNetwork string
 
 const (
@@ -19,6 +20,7 @@ const (
 	NICNetGeneric                 = "generic"
 )
 
+// NICHardware represents the type of NIC hardware.
 type NICHardware string
 
 const (

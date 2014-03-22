@@ -16,7 +16,7 @@ type NATNet struct {
 	Enabled bool
 }
 
-// Get all NAT networks. Map is keyed by NATNet.Name.
+// NATNets gets all NAT networks in a  map keyed by NATNet.Name.
 func NATNets() (map[string]NATNet, error) {
 	b, err := vbmOut("list", "natnets")
 	if err != nil {

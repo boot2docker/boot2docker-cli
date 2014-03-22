@@ -31,20 +31,20 @@ type HostonlyNet struct {
 	NetworkName string // referenced in DHCP.NetworkName
 }
 
-// Create a new host-only network.
+// CreateHostonlyNet creates a new host-only network.
 func CreateHostonlyNet() (*HostonlyNet, error) {
 	out, err := vbmOut("hostonlyif", "create")
 	if err != nil {
 		return nil, err
 	}
-	res := reHostonlyInterfaceCreated.FindSubmatch(out)
+	res := reHostonlyInterfaceCreated.FindStringSubmatch(string(out))
 	if res == nil {
 		return nil, ErrHostonlyInterfaceCreation
 	}
-	return &HostonlyNet{Name: string(res[1])}, nil
+	return &HostonlyNet{Name: res[1]}, nil
 }
 
-// Config the host-only network.
+// Config changes the configuration of the host-only network.
 func (n *HostonlyNet) Config() error {
 	if n.IPv4.IP != nil && n.IPv4.Mask != nil {
 		if err := vbm("hostonlyif", "ipconfig", n.Name, "--ip", n.IPv4.IP.String(), "--netmask", net.IP(n.IPv4.Mask).String()); err != nil {
@@ -68,7 +68,7 @@ func (n *HostonlyNet) Config() error {
 	return nil
 }
 
-// Get all host-only networks. Map is keyed by HostonlyNet.NetworkName.
+// HostonlyNets gets all host-only networks in a  map keyed by HostonlyNet.NetworkName.
 func HostonlyNets() (map[string]*HostonlyNet, error) {
 	b, err := vbmOut("list", "hostonlyifs")
 	if err != nil {

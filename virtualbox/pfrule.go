@@ -5,7 +5,7 @@ import (
 	"net"
 )
 
-// Port forwarding rule.
+// PFRule represents a port forwarding rule.
 type PFRule struct {
 	Proto     PFProto
 	HostIP    net.IP // can be nil to match any host interface
@@ -14,6 +14,7 @@ type PFRule struct {
 	GuestPort uint16
 }
 
+// PFProto represents the protocol of a port forwarding rule.
 type PFProto string
 
 const (
@@ -21,6 +22,7 @@ const (
 	PFUDP         = "udp"
 )
 
+// String returns a human-friendly representation of the port forwarding rule.
 func (r PFRule) String() string {
 	hostip := ""
 	if r.HostIP != nil {
@@ -35,7 +37,7 @@ func (r PFRule) String() string {
 		guestip, r.GuestPort)
 }
 
-// Format the rule as command-line argument
+// Format returns the string needed as a command-line argument to VBoxManage.
 func (r PFRule) Format() string {
 	hostip := ""
 	if r.HostIP != nil {

@@ -107,7 +107,7 @@ type Machine struct {
 	BootOrder  []string // max 4 slots, each in {none|floppy|dvd|disk|net}
 }
 
-// Refresh the machine information.
+// Refresh reloads the machine information.
 func (m *Machine) Refresh() error {
 	id := m.Name
 	if id == "" {
@@ -121,7 +121,7 @@ func (m *Machine) Refresh() error {
 	return nil
 }
 
-// Start the machine.
+// Start starts the machine.
 func (m *Machine) Start() error {
 	switch m.State {
 	case Paused:
@@ -132,7 +132,7 @@ func (m *Machine) Start() error {
 	return nil
 }
 
-// Suspend the machine and save its state to disk.
+// Suspend suspends the machine and saves its state to disk.
 func (m *Machine) Save() error {
 	switch m.State {
 	case Paused:
@@ -145,7 +145,7 @@ func (m *Machine) Save() error {
 	return vbm("controlvm", m.Name, "savestate")
 }
 
-// Pause the execution of the machine.
+// Pause pauses the execution of the machine.
 func (m *Machine) Pause() error {
 	switch m.State {
 	case Paused, Poweroff, Aborted, Saved:
@@ -154,7 +154,7 @@ func (m *Machine) Pause() error {
 	return vbm("controlvm", m.Name, "pause")
 }
 
-// Gracefully stop the machine.
+// Stop gracefully stops the machine.
 func (m *Machine) Stop() error {
 	switch m.State {
 	case Poweroff, Aborted, Saved:
@@ -177,7 +177,7 @@ func (m *Machine) Stop() error {
 	return nil
 }
 
-// Forcefully stop the machine. State is lost and might corrupt disk.
+// Poweroff forcefully stops the machine. State is lost and might corrupt disk.
 func (m *Machine) Poweroff() error {
 	switch m.State {
 	case Poweroff, Aborted, Saved:
@@ -186,7 +186,7 @@ func (m *Machine) Poweroff() error {
 	return vbm("controlvm", m.Name, "poweroff")
 }
 
-// Gracefully restart the machine.
+// Restart gracefully restart the machine.
 func (m *Machine) Restart() error {
 	switch m.State {
 	case Paused, Saved:
@@ -200,7 +200,7 @@ func (m *Machine) Restart() error {
 	return m.Start()
 }
 
-// Forcefully restart the machine. State is lost and might corrupt disk.
+// Reset forcefully restarts the machine. State is lost and might corrupt disk.
 func (m *Machine) Reset() error {
 	switch m.State {
 	case Paused, Saved:
@@ -211,7 +211,7 @@ func (m *Machine) Reset() error {
 	return vbm("controlvm", m.Name, "reset")
 }
 
-// Delete the machine and associated disk images.
+// Delete deletes the machine and associated disk images.
 func (m *Machine) Delete() error {
 	if err := m.Poweroff(); err != nil {
 		return err
@@ -219,7 +219,7 @@ func (m *Machine) Delete() error {
 	return vbm("unregistervm", m.Name, "--delete")
 }
 
-// Get a machine by name or by UUID.
+// GetMachine finds a machine by its name or UUID.
 func GetMachine(id string) (*Machine, error) {
 	stdout, stderr, err := vbmOutErr("showvminfo", id, "--machinereadable")
 	if err != nil {
@@ -280,7 +280,7 @@ func GetMachine(id string) (*Machine, error) {
 	return m, nil
 }
 
-// List all machines.
+// ListMachines lists all registered machines.
 func ListMachines() ([]*Machine, error) {
 	b, err := vbmOut("list", "vms")
 	if err != nil {
@@ -305,7 +305,7 @@ func ListMachines() ([]*Machine, error) {
 	return ms, nil
 }
 
-// Create a new machine. If basefolder is empty, use default.
+// CreateMachine creates a new machine. If basefolder is empty, use default.
 func CreateMachine(name, basefolder string) (*Machine, error) {
 	if name == "" {
 		return nil, fmt.Errorf("machine name is empty")
@@ -339,7 +339,7 @@ func CreateMachine(name, basefolder string) (*Machine, error) {
 	return m, nil
 }
 
-// Modify the settings of the machine.
+// Modify changes the settings of the machine.
 func (m *Machine) Modify() error {
 	args := []string{"modifyvm", m.Name,
 		"--firmware", "bios",
@@ -382,18 +382,18 @@ func (m *Machine) Modify() error {
 	return m.Refresh()
 }
 
-// Add a named NAT port forarding rule to NIC number #n.
+// AddNATPF adds a NAT port forarding rule to the n-th NIC with the given name.
 func (m *Machine) AddNATPF(n int, name string, rule PFRule) error {
 	return vbm("controlvm", m.Name, fmt.Sprintf("natpf%d", n),
 		fmt.Sprintf("%s,%s", name, rule.Format()))
 }
 
-// Delete the named NAT port forwarding rule from NIC number #n.
+// DelNATPF deletes the NAT port forwarding rule with the given name from the n-th NIC.
 func (m *Machine) DelNATPF(n int, name string) error {
 	return vbm("controlvm", m.Name, fmt.Sprintf("natpf%d", n), "delete", name)
 }
 
-// Set the NIC number #n.
+// SetNIC set the n-th NIC.
 func (m *Machine) SetNIC(n int, nic NIC) error {
 	args := []string{"modifyvm", m.Name,
 		fmt.Sprintf("--nic%d", n), string(nic.Network),
@@ -407,7 +407,7 @@ func (m *Machine) SetNIC(n int, nic NIC) error {
 	return vbm(args...)
 }
 
-// Add a named storage controller.
+// AddStorageCtl adds a storage controller with the given name.
 func (m *Machine) AddStorageCtl(name string, ctl StorageController) error {
 	args := []string{"storagectl", m.Name, "--name", name}
 	if ctl.SysBus != "" {
@@ -424,12 +424,12 @@ func (m *Machine) AddStorageCtl(name string, ctl StorageController) error {
 	return vbm(args...)
 }
 
-// Delete the naed storage controller.
+// DelStorageCtl deletes the storage controller with the given name.
 func (m *Machine) DelStorageCtl(name string) error {
 	return vbm("storagectl", m.Name, "--name", name, "--remove")
 }
 
-// Attach a storage medium to the named storage controller.
+// AttachStorage attaches a storage medium to the named storage controller.
 func (m *Machine) AttachStorage(ctlName string, medium StorageMedium) error {
 	return vbm("storageattach", m.Name, "--storagectl", ctlName,
 		"--port", fmt.Sprintf("%d", medium.Port),
