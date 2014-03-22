@@ -45,7 +45,8 @@ var B2D struct {
 }
 
 var (
-	reFlagLine = regexp.MustCompile(`(\w+)\s*=\s*(.+)`) // Parse a key=value line in config profile.
+	// Pattern to parse a key=value line in config profile.
+	reFlagLine = regexp.MustCompile(`(\w+)\s*=\s*(.+)`)
 )
 
 func getCfgDir(name string) (string, error) {
@@ -77,10 +78,10 @@ func getCfgDir(name string) (string, error) {
 }
 
 // Read configuration from both profile and flags. Flags override profile.
-func config() error {
+func config() (*flag.FlagSet, error) {
 	dir, err := getCfgDir(".boot2docker")
 	if err != nil {
-		return fmt.Errorf("failed to get boot2docker directory: %s", err)
+		return nil, fmt.Errorf("failed to get boot2docker directory: %s", err)
 	}
 
 	filename := os.Getenv("BOOT2DOCKER_PROFILE")
@@ -90,46 +91,47 @@ func config() error {
 
 	profileArgs, err := readProfile(filename)
 	if err != nil && !os.IsNotExist(err) { // undefined/empty profile works
-		return err
+		return nil, err
 	}
+
+	flags := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+	flags.Usage = func() { usageLong(flags) }
 
 	if p := os.Getenv("VBOX_INSTALL_PATH"); p != "" && runtime.GOOS == "windows" {
-		flag.StringVar(&B2D.VBM, "vbm", filepath.Join(p, "VBoxManage.exe"), "path to VBoxManage utility")
+		flags.StringVar(&B2D.VBM, "vbm", filepath.Join(p, "VBoxManage.exe"), "path to VBoxManage utility")
 	} else {
-		flag.StringVar(&B2D.VBM, "vbm", "VBoxManage", "path to VirtualBox management utility.")
+		flags.StringVar(&B2D.VBM, "vbm", "VBoxManage", "path to VirtualBox management utility.")
 	}
-	flag.BoolVarP(&B2D.Verbose, "verbose", "v", false, "display verbose command invocations.")
-	flag.StringVar(&B2D.SSH, "ssh", "ssh", "path to SSH client utility.")
-	flag.UintVarP(&B2D.DiskSize, "disksize", "s", 20000, "boot2docker disk image size (in MB).")
-	flag.UintVarP(&B2D.Memory, "memory", "m", 1024, "virtual machine memory size (in MB).")
-	flag.Uint16Var(&B2D.SSHPort, "sshport", 2022, "host SSH port (forward to port 22 in VM).")
-	flag.Uint16Var(&B2D.DockerPort, "dockerport", 4243, "host Docker port (forward to port 4243 in VM).")
-	flag.IPVar(&B2D.HostIP, "hostip", net.ParseIP("192.168.59.3"), "VirtualBox host-only network IP address.")
-	flag.IPMaskVar(&B2D.NetMask, "netmask", flag.ParseIPv4Mask("255.255.255.0"), "VirtualBox host-only network mask.")
-	flag.BoolVar(&B2D.DHCPEnabled, "dhcp", true, "enable VirtualBox host-only network DHCP.")
-	flag.IPVar(&B2D.DHCPIP, "dhcpip", net.ParseIP("192.168.59.99"), "VirtualBox host-only network DHCP server address.")
-	flag.IPVar(&B2D.LowerIP, "lowerip", net.ParseIP("192.168.59.103"), "VirtualBox host-only network DHCP lower bound.")
-	flag.IPVar(&B2D.UpperIP, "upperip", net.ParseIP("192.168.59.254"), "VirtualBox host-only network DHCP upper bound.")
-	flag.StringVar(&B2D.VM, "vm", "boot2docker-vm", "virtual machine name.")
+	flags.BoolVarP(&B2D.Verbose, "verbose", "v", false, "display verbose command invocations.")
+	flags.StringVar(&B2D.SSH, "ssh", "ssh", "path to SSH client utility.")
+	flags.UintVarP(&B2D.DiskSize, "disksize", "s", 20000, "boot2docker disk image size (in MB).")
+	flags.UintVarP(&B2D.Memory, "memory", "m", 1024, "virtual machine memory size (in MB).")
+	flags.Uint16Var(&B2D.SSHPort, "sshport", 2022, "host SSH port (forward to port 22 in VM).")
+	flags.Uint16Var(&B2D.DockerPort, "dockerport", 4243, "host Docker port (forward to port 4243 in VM).")
+	flags.IPVar(&B2D.HostIP, "hostip", net.ParseIP("192.168.59.3"), "VirtualBox host-only network IP address.")
+	flags.IPMaskVar(&B2D.NetMask, "netmask", flag.ParseIPv4Mask("255.255.255.0"), "VirtualBox host-only network mask.")
+	flags.BoolVar(&B2D.DHCPEnabled, "dhcp", true, "enable VirtualBox host-only network DHCP.")
+	flags.IPVar(&B2D.DHCPIP, "dhcpip", net.ParseIP("192.168.59.99"), "VirtualBox host-only network DHCP server address.")
+	flags.IPVar(&B2D.LowerIP, "lowerip", net.ParseIP("192.168.59.103"), "VirtualBox host-only network DHCP lower bound.")
+	flags.IPVar(&B2D.UpperIP, "upperip", net.ParseIP("192.168.59.254"), "VirtualBox host-only network DHCP upper bound.")
+	flags.StringVar(&B2D.VM, "vm", "boot2docker-vm", "virtual machine name.")
 
-	flag.StringVarP(&B2D.Dir, "dir", "d", dir, "boot2docker config directory.")
-	flag.StringVar(&B2D.ISO, "iso", filepath.Join(dir, "boot2docker.iso"), "path to boot2docker ISO image.")
+	flags.StringVarP(&B2D.Dir, "dir", "d", dir, "boot2docker config directory.")
+	flags.StringVar(&B2D.ISO, "iso", filepath.Join(dir, "boot2docker.iso"), "path to boot2docker ISO image.")
 
-	osArgs := os.Args // save original os.Args
-	// Insert profile args before command-line args so that command-line overrides profile.
-	os.Args = append([]string{os.Args[0]}, append(profileArgs, os.Args[1:]...)...)
-	flag.Parse()
-	os.Args = osArgs // restore original os.Args
+	// Command-line overrides profile config.
+	if err := flags.Parse(append(profileArgs, os.Args[1:]...)); err != nil {
+		return nil, err
+	}
 
 	// Name of VM is the second argument. Override the value set in flag.
-	if vm := flag.Arg(1); vm != "" {
+	if vm := flags.Arg(1); vm != "" {
 		B2D.VM = vm
 	}
 
 	vbx.Verbose = B2D.Verbose
 	vbx.VBM = B2D.VBM
-
-	return nil
+	return flags, nil
 }
 
 // Read boot2docker configuration profile into string slice. Expanding
@@ -162,4 +164,35 @@ func readProfile(filename string) ([]string, error) {
 		return nil, err
 	}
 	return args, nil
+}
+
+func usageShort() {
+	errf("Usage: %s [<options>] {help|init|up|ssh|save|down|poweroff|reset|restart|status|info|delete|download|version} [<args>]\n", os.Args[0])
+
+}
+
+func usageLong(flags *flag.FlagSet) {
+	// NOTE: the help message uses spaces, not tabs for indentation!
+	errf(`Usage: %s [<options>] <command> [<args>]
+
+boot2docker management utility.
+
+Commands:
+    init [<vm>]             Create a new boot2docker VM.
+    up|start|boot [<vm>]    Start VM from any states.
+    ssh                     Login to VM via SSH.
+    save|suspend [<vm>]     Suspend VM and save state to disk.
+    down|stop|halt [<vm>]   Gracefully shutdown the VM.
+    restart [<vm>]          Gracefully reboot the VM.
+    poweroff [<vm>]         Forcefully power off the VM (might corrupt disk image).
+    reset [<vm>]            Forcefully power cycle the VM (might corrupt disk image).
+    delete [<vm>]           Delete boot2docker VM and its disk image.
+    info [<vm>]             Display detailed information of VM.
+    status [<vm>]           Display current state of VM.
+    download                Download boot2docker ISO image.
+    version                 Display version information.
+
+Options:
+`, os.Args[0])
+	flags.PrintDefaults()
 }
