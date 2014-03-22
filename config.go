@@ -143,7 +143,7 @@ func readProfile(filename string) ([]string, error) {
 	ln := 0
 	for s.Scan() {
 		ln++
-		line := strings.TrimSpace((s.Text()))
+		line := strings.TrimSpace(s.Text())
 		if strings.HasPrefix(line, "#") || strings.HasPrefix(line, ";") {
 			// Ignore comment lines starting with # or ;
 			continue
