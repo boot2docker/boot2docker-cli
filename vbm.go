@@ -8,11 +8,6 @@ import (
 	vbx "github.com/boot2docker/boot2docker-cli/virtualbox"
 )
 
-func init() {
-	vbx.Verbose = verbose
-	vbx.VBM = vbm
-}
-
 // TODO: delete the hostonlyif and dhcpserver when we delete the vm! (need to
 // reference count to make sure there are no other vms relying on them)
 
@@ -36,7 +31,7 @@ func getHostOnlyNetworkInterface() (string, error) {
 				dhcp.LowerIP.Equal(B2D.LowerIP) &&
 				dhcp.UpperIP.Equal(B2D.UpperIP) &&
 				dhcp.Enabled == B2D.DHCPEnabled {
-				if *verbose {
+				if B2D.Verbose {
 					logf("Reusing existing host-only network interface %q", n.Name)
 				}
 				return n.Name, nil
@@ -45,7 +40,7 @@ func getHostOnlyNetworkInterface() (string, error) {
 	}
 
 	// No existing host-only interface found. Create a new one.
-	if *verbose {
+	if B2D.Verbose {
 		logf("Creating a new host-only network interface...")
 	}
 	hostonlyNet, err := vbx.CreateHostonlyNet()

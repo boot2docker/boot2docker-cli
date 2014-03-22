@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"strings"
 
+	vbx "github.com/boot2docker/boot2docker-cli/virtualbox"
 	flag "github.com/ogier/pflag"
 )
 
@@ -17,6 +18,10 @@ import (
 var B2D struct {
 	// NOTE: separate sections with blank lines so gofmt doesn't change
 	// indentation all the time.
+
+	// Gereral flags.
+	Verbose bool
+	VBM     string
 
 	// basic config
 	SSH      string // SSH client executable
@@ -39,14 +44,8 @@ var B2D struct {
 	DHCPEnabled bool
 }
 
-// General flags.
 var (
-	verbose = new(bool)   // verbose mode
-	vbm     = new(string) // path to VBoxManage utility
-)
-
-var (
-	reFlagLine = regexp.MustCompile(`(\w+)\s*=\s*(.+)`)
+	reFlagLine = regexp.MustCompile(`(\w+)\s*=\s*(.+)`) // Parse a key=value line in config profile.
 )
 
 func getCfgDir(name string) (string, error) {
@@ -95,11 +94,11 @@ func config() error {
 	}
 
 	if p := os.Getenv("VBOX_INSTALL_PATH"); p != "" && runtime.GOOS == "windows" {
-		flag.StringVar(vbm, "vbm", filepath.Join(p, "VBoxManage.exe"), "path to VBoxManage utility")
+		flag.StringVar(&B2D.VBM, "vbm", filepath.Join(p, "VBoxManage.exe"), "path to VBoxManage utility")
 	} else {
-		flag.StringVar(vbm, "vbm", "VBoxManage", "path to VirtualBox management utility.")
+		flag.StringVar(&B2D.VBM, "vbm", "VBoxManage", "path to VirtualBox management utility.")
 	}
-	flag.BoolVarP(verbose, "verbose", "v", false, "display verbose command invocations.")
+	flag.BoolVarP(&B2D.Verbose, "verbose", "v", false, "display verbose command invocations.")
 	flag.StringVar(&B2D.SSH, "ssh", "ssh", "path to SSH client utility.")
 	flag.UintVarP(&B2D.DiskSize, "disksize", "s", 20000, "boot2docker disk image size (in MB).")
 	flag.UintVarP(&B2D.Memory, "memory", "m", 1024, "virtual machine memory size (in MB).")
@@ -126,6 +125,10 @@ func config() error {
 	if vm := flag.Arg(1); vm != "" {
 		B2D.VM = vm
 	}
+
+	vbx.Verbose = B2D.Verbose
+	vbx.VBM = B2D.VBM
+
 	return nil
 }
 

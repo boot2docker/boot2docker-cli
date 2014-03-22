@@ -33,7 +33,7 @@ func logf(fmt string, v ...interface{}) {
 func read(addr string, n int, wait time.Duration) error {
 	var lastErr error
 	for i := 0; i < n; i++ {
-		if *verbose {
+		if B2D.Verbose {
 			logf("Connecting to tcp://%v (attempt #%d)", addr, i)
 		}
 		conn, err := net.DialTimeout("tcp", addr, 1*time.Second)
@@ -119,7 +119,7 @@ func getLatestReleaseName(url string) (string, error) {
 // Convenient function to exec a command.
 func cmd(name string, args ...string) error {
 	cmd := exec.Command(name, args...)
-	if *verbose {
+	if B2D.Verbose {
 		logf("executing: %v %v", name, strings.Join(args, " "))
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
