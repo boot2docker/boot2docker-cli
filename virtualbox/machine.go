@@ -184,12 +184,12 @@ func (m *Machine) Delete() error {
 func GetMachine(id string) (*Machine, error) {
 	stdout, stderr, err := vbmOutErr("showvminfo", id, "--machinereadable")
 	if err != nil {
-		if reMachineNotFound.Find(stderr) != nil {
+		if reMachineNotFound.FindString(stderr) != "" {
 			return nil, ErrMachineNotExist
 		}
 		return nil, err
 	}
-	s := bufio.NewScanner(bytes.NewReader(stdout))
+	s := bufio.NewScanner(bytes.NewReader([]byte(stdout)))
 	m := &Machine{}
 	for s.Scan() {
 		res := reVMInfoLine.FindStringSubmatch(s.Text())
@@ -243,12 +243,12 @@ func GetMachine(id string) (*Machine, error) {
 
 // ListMachines lists all registered machines.
 func ListMachines() ([]*Machine, error) {
-	b, err := vbmOut("list", "vms")
+	out, err := vbmOut("list", "vms")
 	if err != nil {
 		return nil, err
 	}
 	ms := []*Machine{}
-	s := bufio.NewScanner(bytes.NewReader(b))
+	s := bufio.NewScanner(bytes.NewReader([]byte(out)))
 	for s.Scan() {
 		res := reVMNameUUID.FindStringSubmatch(s.Text())
 		if res == nil {

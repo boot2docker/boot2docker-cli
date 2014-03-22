@@ -18,11 +18,11 @@ type NATNet struct {
 
 // NATNets gets all NAT networks in a  map keyed by NATNet.Name.
 func NATNets() (map[string]NATNet, error) {
-	b, err := vbmOut("list", "natnets")
+	out, err := vbmOut("list", "natnets")
 	if err != nil {
 		return nil, err
 	}
-	s := bufio.NewScanner(bytes.NewReader(b))
+	s := bufio.NewScanner(bytes.NewReader([]byte(out)))
 	m := map[string]NATNet{}
 	n := NATNet{}
 	for s.Scan() {

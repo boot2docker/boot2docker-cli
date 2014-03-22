@@ -53,7 +53,7 @@ func vbm(args ...string) error {
 	return nil
 }
 
-func vbmOut(args ...string) ([]byte, error) {
+func vbmOut(args ...string) (string, error) {
 	cmd := exec.Command(VBM, args...)
 	if Verbose {
 		cmd.Stderr = os.Stderr
@@ -66,10 +66,10 @@ func vbmOut(args ...string) ([]byte, error) {
 			err = ErrVBMNotFound
 		}
 	}
-	return b, err
+	return string(b), err
 }
 
-func vbmOutErr(args ...string) ([]byte, []byte, error) {
+func vbmOutErr(args ...string) (string, string, error) {
 	cmd := exec.Command(VBM, args...)
 	if Verbose {
 		log.Printf("executing: %v %v", VBM, strings.Join(args, " "))
@@ -84,5 +84,5 @@ func vbmOutErr(args ...string) ([]byte, []byte, error) {
 			err = ErrVBMNotFound
 		}
 	}
-	return stdout.Bytes(), stderr.Bytes(), err
+	return stdout.String(), stderr.String(), err
 }

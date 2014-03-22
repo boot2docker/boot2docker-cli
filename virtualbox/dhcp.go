@@ -43,11 +43,11 @@ func AddHostonlyDHCP(ifname string, d DHCP) error {
 
 // DHCPs gets all DHCP server settings in a map keyed by DHCP.NetworkName.
 func DHCPs() (map[string]*DHCP, error) {
-	b, err := vbmOut("list", "dhcpservers")
+	out, err := vbmOut("list", "dhcpservers")
 	if err != nil {
 		return nil, err
 	}
-	s := bufio.NewScanner(bytes.NewReader(b))
+	s := bufio.NewScanner(bytes.NewReader([]byte(out)))
 	m := map[string]*DHCP{}
 	dhcp := &DHCP{}
 	for s.Scan() {

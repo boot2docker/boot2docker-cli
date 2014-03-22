@@ -68,11 +68,11 @@ func (n *HostonlyNet) Config() error {
 
 // HostonlyNets gets all host-only networks in a  map keyed by HostonlyNet.NetworkName.
 func HostonlyNets() (map[string]*HostonlyNet, error) {
-	b, err := vbmOut("list", "hostonlyifs")
+	out, err := vbmOut("list", "hostonlyifs")
 	if err != nil {
 		return nil, err
 	}
-	s := bufio.NewScanner(bytes.NewReader(b))
+	s := bufio.NewScanner(bytes.NewReader([]byte(out)))
 	m := map[string]*HostonlyNet{}
 	n := &HostonlyNet{}
 	for s.Scan() {
