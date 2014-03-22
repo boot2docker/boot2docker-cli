@@ -48,7 +48,7 @@ func DHCPs() (map[string]*DHCP, error) {
 		return nil, err
 	}
 	s := bufio.NewScanner(bytes.NewReader(b))
-	m := make(map[string]*DHCP)
+	m := map[string]*DHCP{}
 	dhcp := &DHCP{}
 	for s.Scan() {
 		line := s.Text()
