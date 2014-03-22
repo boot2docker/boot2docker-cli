@@ -12,11 +12,11 @@ import (
 type MachineState string
 
 const (
-	Poweroff MachineState = "poweroff"
-	Running  MachineState = "running"
-	Paused   MachineState = "paused"
-	Saved    MachineState = "saved"
-	Aborted  MachineState = "aborted"
+	Poweroff = MachineState("poweroff")
+	Running  = MachineState("running")
+	Paused   = MachineState("paused")
+	Saved    = MachineState("saved")
+	Aborted  = MachineState("aborted")
 )
 
 type Flag int

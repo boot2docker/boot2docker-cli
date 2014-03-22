@@ -13,24 +13,24 @@ type StorageController struct {
 type SystemBus string
 
 const (
-	SysBusIDE    SystemBus = "ide"
-	SysBusSATA   SystemBus = "sata"
-	SysBusSCSI   SystemBus = "scsi"
-	SysBusFloppy SystemBus = "floppy"
+	SysBusIDE    = SystemBus("ide")
+	SysBusSATA   = SystemBus("sata")
+	SysBusSCSI   = SystemBus("scsi")
+	SysBusFloppy = SystemBus("floppy")
 )
 
 // StorageControllerChipset represents the hardware of a storage controller.
 type StorageControllerChipset string
 
 const (
-	CtrlLSILogic    StorageControllerChipset = "LSILogic"
-	CtrlLSILogicSAS StorageControllerChipset = "LSILogicSAS"
-	CtrlBusLogic    StorageControllerChipset = "BusLogic"
-	CtrlIntelAHCI   StorageControllerChipset = "IntelAHCI"
-	CtrlPIIX3       StorageControllerChipset = "PIIX3"
-	CtrlPIIX4       StorageControllerChipset = "PIIX4"
-	CtrlICH6        StorageControllerChipset = "ICH6"
-	CtrlI82078      StorageControllerChipset = "I82078"
+	CtrlLSILogic    = StorageControllerChipset("LSILogic")
+	CtrlLSILogicSAS = StorageControllerChipset("LSILogicSAS")
+	CtrlBusLogic    = StorageControllerChipset("BusLogic")
+	CtrlIntelAHCI   = StorageControllerChipset("IntelAHCI")
+	CtrlPIIX3       = StorageControllerChipset("PIIX3")
+	CtrlPIIX4       = StorageControllerChipset("PIIX4")
+	CtrlICH6        = StorageControllerChipset("ICH6")
+	CtrlI82078      = StorageControllerChipset("I82078")
 )
 
 // StorageMedium represents the storage medium attached to a storage controller.
@@ -45,7 +45,7 @@ type StorageMedium struct {
 type DriveType string
 
 const (
-	DriveDVD DriveType = "dvddrive"
-	DriveHDD DriveType = "hdd"
-	DriveFDD DriveType = "fdd"
+	DriveDVD = DriveType("dvddrive")
+	DriveHDD = DriveType("hdd")
+	DriveFDD = DriveType("fdd")
 )

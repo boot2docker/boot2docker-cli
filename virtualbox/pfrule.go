@@ -18,8 +18,8 @@ type PFRule struct {
 type PFProto string
 
 const (
-	PFTCP PFProto = "tcp"
-	PFUDP PFProto = "udp"
+	PFTCP = PFProto("tcp")
+	PFUDP = PFProto("udp")
 )
 
 // String returns a human-friendly representation of the port forwarding rule.
