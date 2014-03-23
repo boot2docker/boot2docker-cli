@@ -97,6 +97,9 @@ func config() (*flag.FlagSet, error) {
 	flags := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	flags.Usage = func() { usageLong(flags) }
 
+	flags.StringVar(&B2D.VM, "vm", "boot2docker-vm", "virtual machine name.")
+	flags.StringVarP(&B2D.Dir, "dir", "d", dir, "boot2docker config directory.")
+	flags.StringVar(&B2D.ISO, "iso", filepath.Join(dir, "boot2docker.iso"), "path to boot2docker ISO image.")
 	vbm := "VBoxManage"
 	if p := os.Getenv("VBOX_INSTALL_PATH"); p != "" && runtime.GOOS == "windows" {
 		vbm = filepath.Join(p, "VBoxManage.exe")
@@ -114,10 +117,6 @@ func config() (*flag.FlagSet, error) {
 	flags.IPVar(&B2D.DHCPIP, "dhcpip", net.ParseIP("192.168.59.99"), "VirtualBox host-only network DHCP server address.")
 	flags.IPVar(&B2D.LowerIP, "lowerip", net.ParseIP("192.168.59.103"), "VirtualBox host-only network DHCP lower bound.")
 	flags.IPVar(&B2D.UpperIP, "upperip", net.ParseIP("192.168.59.254"), "VirtualBox host-only network DHCP upper bound.")
-	flags.StringVar(&B2D.VM, "vm", "boot2docker-vm", "virtual machine name.")
-
-	flags.StringVarP(&B2D.Dir, "dir", "d", dir, "boot2docker config directory.")
-	flags.StringVar(&B2D.ISO, "iso", filepath.Join(dir, "boot2docker.iso"), "path to boot2docker ISO image.")
 
 	// Command-line overrides profile config.
 	if err := flags.Parse(append(profileArgs, os.Args[1:]...)); err != nil {

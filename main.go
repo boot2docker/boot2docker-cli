@@ -16,7 +16,8 @@ func main() {
 	// any deferred cleanup statements. It might cause unintended effects. To
 	// be safe, we wrap the program in run() and only os.Exit() outside the
 	// wrapper. Be careful not to indirectly trigger os.Exit() in the program,
-	// notably via log.Fatal().
+	// notably via log.Fatal() and on flag.Parse() where the default behavior
+	// is ExitOnError.
 	os.Exit(run())
 }
 
