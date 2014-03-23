@@ -46,7 +46,7 @@ var B2D struct {
 
 var (
 	// Pattern to parse a key=value line in config profile.
-	reFlagLine = regexp.MustCompile(`(\w+)\s*=\s*(.+)`)
+	reFlagLine = regexp.MustCompile(`^\s*(\w+)\s*=\s*([^#;]+)`)
 )
 
 func getCfgDir(name string) (string, error) {
@@ -97,11 +97,11 @@ func config() (*flag.FlagSet, error) {
 	flags := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	flags.Usage = func() { usageLong(flags) }
 
+	vbm := "VBoxManage"
 	if p := os.Getenv("VBOX_INSTALL_PATH"); p != "" && runtime.GOOS == "windows" {
-		flags.StringVar(&B2D.VBM, "vbm", filepath.Join(p, "VBoxManage.exe"), "path to VBoxManage utility")
-	} else {
-		flags.StringVar(&B2D.VBM, "vbm", "VBoxManage", "path to VirtualBox management utility.")
+		vbm = filepath.Join(p, "VBoxManage.exe")
 	}
+	flags.StringVar(&B2D.VBM, "vbm", vbm, "path to VirtualBox management utility.")
 	flags.BoolVarP(&B2D.Verbose, "verbose", "v", false, "display verbose command invocations.")
 	flags.StringVar(&B2D.SSH, "ssh", "ssh", "path to SSH client utility.")
 	flags.UintVarP(&B2D.DiskSize, "disksize", "s", 20000, "boot2docker disk image size (in MB).")
