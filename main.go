@@ -1,9 +1,6 @@
-// This is the boot2docker management utilty.
 package main
 
 import "os"
-
-// keep 3rd-party imports separate from stdlib with an empty line
 
 // The following vars will be injected during the build process.
 var (
