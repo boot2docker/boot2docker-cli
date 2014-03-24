@@ -8,10 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
-	"time"
 )
 
 // fmt.Printf to stdout. Convention is to outf info intended for scripting.
@@ -29,29 +26,17 @@ func logf(fmt string, v ...interface{}) {
 	log.Printf(fmt, v...)
 }
 
-// Try if addr tcp://addr is readable for n times at wait interval.
-func read(addr string, n int, wait time.Duration) error {
-	var lastErr error
-	for i := 0; i < n; i++ {
-		if B2D.Verbose {
-			logf("Connecting to tcp://%v (attempt #%d)", addr, i)
-		}
-		conn, err := net.DialTimeout("tcp", addr, 1*time.Second)
-		if err != nil {
-			lastErr = err
-			time.Sleep(wait)
-			continue
-		}
-		defer conn.Close()
-		conn.SetDeadline(time.Now().Add(1 * time.Second))
-		if _, err = conn.Read(make([]byte, 1)); err != nil {
-			lastErr = err
-			time.Sleep(wait)
-			continue
-		}
-		return nil
+// Check if the connection to tcp://addr is readable.
+func read(addr string) error {
+	conn, err := net.Dial("tcp", addr)
+	if err != nil {
+		return err
 	}
-	return lastErr
+	defer conn.Close()
+	if _, err = conn.Read(make([]byte, 1)); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Check if an addr can be successfully connected.
@@ -114,15 +99,4 @@ func getLatestReleaseName(url string) (string, error) {
 		return "", fmt.Errorf("no releases found")
 	}
 	return t[0].TagName, nil
-}
-
-// Convenient function to exec a command.
-func cmd(name string, args ...string) error {
-	cmd := exec.Command(name, args...)
-	if B2D.Verbose {
-		logf("executing: %v %v", name, strings.Join(args, " "))
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-	}
-	return cmd.Run()
 }

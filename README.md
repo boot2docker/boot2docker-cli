@@ -96,16 +96,15 @@ the following options (undefined options take default values):
     hostip=192.168.59.3             # host-only network host IP
     netmask=255.255.255.0           # host only network network mask
     dhcpip=192.168.59.99            # host-only network DHCP server IP
-    dhcp=true                       # host-only network DHCP server enabled
+    dhcp=Yes                        # host-only network DHCP server enabled
     lowerip=192.168.59.103          # host-only network IP range lower bound
     upperip=192.168.59.254          # host-only network IP range upper bound
 
 Environment variables of the form `$ENVVAR` in the profile will be expanded,
 even on Windows.
 
-You can override the configurations using command-line flags. Type
-`boot2docker-cli -h` for more information. The configuration file options are
-the same as the command-line flags with long names.
+You can override the configurations using command line flags. Type
+`boot2docker-cli -h` for more information. 
 
 
 
