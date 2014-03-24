@@ -75,7 +75,7 @@ func getCfgDir(name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(cwd, name), nil
+	return cwd, nil
 }
 
 // Read configuration from both profile and flags. Flags override profile.
