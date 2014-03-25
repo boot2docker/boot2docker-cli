@@ -50,7 +50,7 @@ func cmdInit() int {
 		return 1
 	}
 
-	m.OSType = "Linux26_64"
+	m.OSType = "Linux26_64" // so VirtualBox shows a nice icon to the VM
 	m.CPUs = uint(runtime.NumCPU())
 	m.Memory = B2D.Memory
 
