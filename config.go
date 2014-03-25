@@ -51,7 +51,10 @@ func getCfgDir(name string) (string, error) {
 
 	// *nix
 	if home := os.Getenv("HOME"); home != "" {
-		return filepath.Join(home, name), nil
+		dir := filepath.Join(home, name)
+		if _, err := os.Stat(dir); err == nil {
+			return dir, nil
+		}
 	}
 
 	// Windows
@@ -61,7 +64,10 @@ func getCfgDir(name string) (string, error) {
 		"USERPROFILE",
 	} {
 		if val := os.Getenv(env); val != "" {
-			return filepath.Join(val, "boot2docker"), nil
+			dir := filepath.Join(val, "boot2docker")
+			if _, err := os.Stat(dir); err == nil {
+				return dir, nil
+			}
 		}
 	}
 	// Fallback to current working directory as a last resort
@@ -69,7 +75,7 @@ func getCfgDir(name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(cwd, name), nil
+	return cwd, nil
 }
 
 // Read configuration from both profile and flags. Flags override profile.
