@@ -2,9 +2,9 @@ package virtualbox
 
 import (
 	"bufio"
-	"bytes"
 	"net"
 	"strconv"
+	"strings"
 )
 
 // A NATNet defines a NAT network.
@@ -22,7 +22,7 @@ func NATNets() (map[string]NATNet, error) {
 	if err != nil {
 		return nil, err
 	}
-	s := bufio.NewScanner(bytes.NewReader([]byte(out)))
+	s := bufio.NewScanner(strings.NewReader(out))
 	m := map[string]NATNet{}
 	n := NATNet{}
 	for s.Scan() {

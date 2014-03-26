@@ -2,10 +2,10 @@ package virtualbox
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -189,7 +189,7 @@ func GetMachine(id string) (*Machine, error) {
 		}
 		return nil, err
 	}
-	s := bufio.NewScanner(bytes.NewReader([]byte(stdout)))
+	s := bufio.NewScanner(strings.NewReader(stdout))
 	m := &Machine{}
 	for s.Scan() {
 		res := reVMInfoLine.FindStringSubmatch(s.Text())
@@ -248,7 +248,7 @@ func ListMachines() ([]*Machine, error) {
 		return nil, err
 	}
 	ms := []*Machine{}
-	s := bufio.NewScanner(bytes.NewReader([]byte(out)))
+	s := bufio.NewScanner(strings.NewReader(out))
 	for s.Scan() {
 		res := reVMNameUUID.FindStringSubmatch(s.Text())
 		if res == nil {

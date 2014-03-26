@@ -2,8 +2,8 @@ package virtualbox
 
 import (
 	"bufio"
-	"bytes"
 	"net"
+	"strings"
 )
 
 // DHCP server info.
@@ -47,7 +47,7 @@ func DHCPs() (map[string]*DHCP, error) {
 	if err != nil {
 		return nil, err
 	}
-	s := bufio.NewScanner(bytes.NewReader([]byte(out)))
+	s := bufio.NewScanner(strings.NewReader(out))
 	m := map[string]*DHCP{}
 	dhcp := &DHCP{}
 	for s.Scan() {

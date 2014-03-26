@@ -2,12 +2,12 @@ package virtualbox
 
 import (
 	"bufio"
-	"bytes"
 	"errors"
 	"fmt"
 	"net"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -72,7 +72,7 @@ func HostonlyNets() (map[string]*HostonlyNet, error) {
 	if err != nil {
 		return nil, err
 	}
-	s := bufio.NewScanner(bytes.NewReader([]byte(out)))
+	s := bufio.NewScanner(strings.NewReader(out))
 	m := map[string]*HostonlyNet{}
 	n := &HostonlyNet{}
 	for s.Scan() {
