@@ -209,9 +209,17 @@ func cmdInit() int {
 			return 1
 		}
 
-		if err := makeDiskImage(diskImg, B2D.DiskSize); err != nil {
-			logf("Failed to create disk image %q: %s", diskImg, err)
-			return 1
+		if len(B2D.VMDK) > 0 {
+			logf("Using %v as base disk image", B2D.VMDK)
+			if err := copyDiskImage(diskImg, B2D.VMDK); err != nil {
+				logf("Failed to copy disk image %v from %v: %s", diskImg, B2D.VMDK, err)
+				return 1
+			}
+		} else {
+			if err := makeDiskImage(diskImg, B2D.DiskSize); err != nil {
+				logf("Failed to create disk image %q: %s", diskImg, err)
+				return 1
+			}
 		}
 	}
 
