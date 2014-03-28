@@ -209,7 +209,7 @@ func cmdInit() int {
 			return 1
 		}
 
-		if len(B2D.VMDK) > 0 {
+		if B2D.VMDK != "" {
 			logf("Using %v as base disk image", B2D.VMDK)
 			if err := copyDiskImage(diskImg, B2D.VMDK); err != nil {
 				logf("Failed to copy disk image %v from %v: %s", diskImg, B2D.VMDK, err)

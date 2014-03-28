@@ -172,7 +172,7 @@ func basefolder(vm string) string {
 }
 
 // Copy given disk image to destination from source
-func copyDiskImage(dest, source string) error {
+func copyDiskImage(dst, src string) error {
 	buf, err := ioutil.ReadFile(source)
 	if err != nil {
 		return err
