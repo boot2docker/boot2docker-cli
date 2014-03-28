@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -168,6 +169,18 @@ func basefolder(vm string) string {
 		return ""
 	}
 	return filepath.Dir(string(groups[1]))
+}
+
+// Copy given disk image to destination from source
+func copyDiskImage(dest, source string) error {
+	buf, err := ioutil.ReadFile(source)
+	if err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile(dest, buf, 0600); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Make a boot2docker VM disk image with the given size (in MB).
