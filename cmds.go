@@ -121,10 +121,18 @@ func cmdInit() int {
 			return 1
 		}
 
-		if err := makeDiskImage(diskImg, B2D.DiskSize); err != nil {
-			logf("Failed to create disk image %q: %s", diskImg, err)
-			return 1
-		}
+    if B2D.VMDK != "" {
+      logf("Using %v as base VMDK", B2D.VMDK)
+      if err := copyDiskImage(diskImg, B2D.VMDK); err != nil {
+        logf("Failed to copy disk image %v from %v: %s", diskImg, B2D.VMDK, err)
+        return 1
+      }
+    } else {
+      if err := makeDiskImage(diskImg, B2D.DiskSize); err != nil {
+        logf("Failed to create disk image %q: %s", diskImg, err)
+        return 1
+      }
+    }
 	}
 
 	if err := m.AttachStorage("SATA", vbx.StorageMedium{Port: 1, Device: 0, DriveType: vbx.DriveHDD, Medium: diskImg}); err != nil {
