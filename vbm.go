@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -171,14 +170,45 @@ func basefolder(vm string) string {
 	return filepath.Dir(string(groups[1]))
 }
 
-// Copy given disk image to destination from source
+// Copy disk image from given source path to destination
 func copyDiskImage(dst, src string) error {
-	buf, err := ioutil.ReadFile(source)
+	// Open source disk image
+	srcImg, err := os.Open(src)
 	if err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(dest, buf, 0600); err != nil {
+	defer func() error {
+		if err := srcImg.Close(); err != nil {
+			return err
+		}
+		return nil
+	}()
+	// Create and open destination
+	dstImg, err := os.Create(dst)
+	if err != nil {
 		return err
+	}
+	defer func() error {
+		if err := dstImg.Close(); err != nil {
+			return err
+		}
+		return nil
+	}()
+	// Buffer for chunks that've been read
+	buf := make([]byte, 1024)
+	for {
+		// Read a chunk
+		bytesRead, err := srcImg.Read(buf)
+		if err != nil && err != io.EOF {
+			return err
+		}
+		if bytesRead == 0 {
+			break
+		}
+		// Write a chunk
+		if _, err := dstImg.Write(buf[:bytesRead]); err != nil {
+			return err
+		}
 	}
 	return nil
 }
