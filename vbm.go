@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"os"
+  "io"
 	"path/filepath"
 
 	vbx "github.com/boot2docker/boot2docker-cli/virtualbox"
@@ -64,6 +65,35 @@ func getHostOnlyNetworkInterface() (string, error) {
 		return "", err
 	}
 	return hostonlyNet.Name, nil
+}
+
+// Copy disk image from given source path to destination
+func copyDiskImage(dst, src string) error {
+  // Open source disk image
+  srcImg, err := os.Open(src)
+  if err != nil {
+    return err
+  }
+  closeSrcImg := func() error {
+    if err := srcImg.Close(); err != nil {
+      return err
+    }
+    return err
+  }
+  defer closeSrcImg()
+  dstImg, err := os.Create(dst)
+  if err != nil {
+    return err
+  }
+  closeDstImg := func () error {
+    if err := dstImg.Close(); err != nil {
+      return err
+    }
+    return err
+  }
+  defer closeDstImg()
+  _, err = io.Copy(dstImg, srcImg)
+  return err
 }
 
 // Make a boot2docker VM disk image with the given size (in MB).
