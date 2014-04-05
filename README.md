@@ -84,21 +84,50 @@ The `boot2docker-cli` binary reads configuration from `$BOOT2DOCKER_PROFILE`, or
 if not found, from `$BOOT2DOCKER_DIR/profile`. Currently you can configure
 the following options (undefined options take default values):
 
-    vbm=VBoxManage                  # path to VirtualBox management utility
-    ssh=ssh                         # path to SSH client utility
-    vm=boot2docker-vm               # name of boot2docker virtual machine
-    dir=$HOME/.boot2docker          # path to boot2docker config directory
-    iso=$BOOT2DOCKER_DIR/boot2docker.iso    # path to boot2docker ISO image
-    disksize=20000                  # VM disk image size in MB
-    memory=1024                     # VM memory size in MB
-    sshport=2022                    # host port forwarding to port 22 in the VM
-    dockerport=4243                 # host port forwarding to port 4243 in the VM
-    hostip=192.168.59.3             # host-only network host IP
-    netmask=255.255.255.0           # host only network network mask
-    dhcpip=192.168.59.99            # host-only network DHCP server IP
-    dhcp=true                       # host-only network DHCP server enabled
-    lowerip=192.168.59.103          # host-only network IP range lower bound
-    upperip=192.168.59.254          # host-only network IP range upper bound
+    # path to VirtualBox management utility
+    vbm=VBoxManage
+
+    # path to SSH client utility
+    ssh=ssh
+
+    # name of boot2docker virtual machine
+    vm=boot2docker-vm
+
+    # path to boot2docker config directory
+    dir=$HOME/.boot2docker
+
+    # path to boot2docker ISO image
+    iso=$BOOT2DOCKER_DIR/boot2docker.iso
+
+    # VM disk image size in MB
+    disksize=20000
+
+    # VM memory size in MB
+    memory=1024
+
+    # host port forwarding to port 22 in the VM
+    sshport=2022
+
+    # host port forwarding to port 4243 in the VM
+    dockerport=4243
+
+    # host-only network host IP
+    hostip=192.168.59.3
+
+    # host only network network mask
+    netmask=255.255.255.0
+
+    # host-only network DHCP server IP
+    dhcpip=192.168.59.99
+
+    # host-only network DHCP server enabled
+    dhcp=true
+
+    # host-only network IP range lower bound
+    lowerip=192.168.59.103
+
+    # host-only network IP range upper bound
+    upperip=192.168.59.254
 
 Environment variables of the form `$ENVVAR` in the profile will be expanded,
 even on Windows.
@@ -121,4 +150,4 @@ Guide](https://code.google.com/p/go-wiki/wiki/Style). In particular, you MUST
 run `gofmt` before committing. We suggest you run `go tool vet -all .` as well.
 
 Please rebase the upstream in your fork in order to keep the commit history
-tidy. 
+tidy.
