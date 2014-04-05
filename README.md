@@ -84,50 +84,54 @@ The `boot2docker-cli` binary reads configuration from `$BOOT2DOCKER_PROFILE`, or
 if not found, from `$BOOT2DOCKER_DIR/profile`. Currently you can configure
 the following options (undefined options take default values):
 
-    # path to VirtualBox management utility
-    vbm=VBoxManage
+```ini
+# Comments must be on their own lines; inline comments are not supported.
 
-    # path to SSH client utility
-    ssh=ssh
+# path to VirtualBox management utility
+vbm=VBoxManage
 
-    # name of boot2docker virtual machine
-    vm=boot2docker-vm
+# path to SSH client utility
+ssh=ssh
 
-    # path to boot2docker config directory
-    dir=$HOME/.boot2docker
+# name of boot2docker virtual machine
+vm=boot2docker-vm
 
-    # path to boot2docker ISO image
-    iso=$BOOT2DOCKER_DIR/boot2docker.iso
+# path to boot2docker config directory
+dir=$HOME/.boot2docker
 
-    # VM disk image size in MB
-    disksize=20000
+# path to boot2docker ISO image
+iso=$BOOT2DOCKER_DIR/boot2docker.iso
 
-    # VM memory size in MB
-    memory=1024
+# VM disk image size in MB
+disksize=20000
 
-    # host port forwarding to port 22 in the VM
-    sshport=2022
+# VM memory size in MB
+memory=1024
 
-    # host port forwarding to port 4243 in the VM
-    dockerport=4243
+# host port forwarding to port 22 in the VM
+sshport=2022
 
-    # host-only network host IP
-    hostip=192.168.59.3
+# host port forwarding to port 4243 in the VM
+dockerport=4243
 
-    # host only network network mask
-    netmask=255.255.255.0
+# host-only network host IP
+hostip=192.168.59.3
 
-    # host-only network DHCP server IP
-    dhcpip=192.168.59.99
+# host only network network mask
+netmask=255.255.255.0
 
-    # host-only network DHCP server enabled
-    dhcp=true
+# host-only network DHCP server IP
+dhcpip=192.168.59.99
 
-    # host-only network IP range lower bound
-    lowerip=192.168.59.103
+# host-only network DHCP server enabled
+dhcp=true
 
-    # host-only network IP range upper bound
-    upperip=192.168.59.254
+# host-only network IP range lower bound
+lowerip=192.168.59.103
+
+# host-only network IP range upper bound
+upperip=192.168.59.254
+```
 
 Environment variables of the form `$ENVVAR` in the profile will be expanded,
 even on Windows.
