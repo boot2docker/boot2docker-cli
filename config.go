@@ -154,8 +154,8 @@ func readProfile(filename string) ([]string, error) {
 	for s.Scan() {
 		ln++
 		line := strings.TrimSpace(s.Text())
-		if strings.HasPrefix(line, "#") || strings.HasPrefix(line, ";") {
-			// Ignore comment lines starting with # or ;
+		if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, ";") {
+			// Ignore empty lines and comment lines starting with # or ;
 			continue
 		}
 		res := reFlagLine.FindStringSubmatch(line)
