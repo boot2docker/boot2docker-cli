@@ -1,24 +1,15 @@
-version=`cat VERSION`
-gitSha=`git rev-parse --short HEAD`
+VERSION=$(shell cat VERSION)
 GOARCH=amd64
-GOBUILD=GOARCH=$(GOARCH) go build -ldflags "-X main.Version $(version) -X main.GitSHA $(gitSha)"
 PREFIX=boot2docker-cli
 
-.PHONY: default all darwin linux windows clean
-
 default:
-	@$(GOBUILD) -o $(PREFIX)-$(version)
+	@./build.sh -o $(PREFIX)-$(VERSION)
 
 all: darwin linux windows
+	@true # stop "all" from matching "%" later
 
-darwin:
-	@GOOS=$@ $(GOBUILD) -o $(PREFIX)-$(version)-$@-$(GOARCH)
-
-linux:
-	@GOOS=$@ $(GOBUILD) -o $(PREFIX)-$(version)-$@-$(GOARCH)
-
-windows:
-	@GOOS=$@ $(GOBUILD) -o $(PREFIX)-$(version)-$@-$(GOARCH).exe
+%:
+	@GOOS=$@ GOARCH=$(GOARCH) ./build.sh -o $(PREFIX)-$(VERSION)-$@-$(GOARCH)$(if $(filter windows, $@),.exe)
 
 clean:
 	rm $(PREFIX)*
