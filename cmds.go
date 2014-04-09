@@ -302,7 +302,7 @@ func cmdSSH() int {
 	}
 
 	// TODO What SSH client is used on Windows? Does it support the options?
-	if err := cmd(B2D.SSH,
+	if err := cmdInteractive(B2D.SSH,
 		"-o", "StrictHostKeyChecking=no",
 		"-o", "UserKnownHostsFile=/dev/null",
 		"-p", fmt.Sprintf("%d", B2D.SSHPort),

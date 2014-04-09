@@ -131,3 +131,15 @@ func cmd(name string, args ...string) error {
 	}
 	return cmd.Run()
 }
+
+// Convenient function to exec a command.
+func cmdInteractive(name string, args ...string) error {
+	cmd := exec.Command(name, args...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if B2D.Verbose {
+		logf("executing: %v %v", name, strings.Join(args, " "))
+	}
+	return cmd.Run()
+}
