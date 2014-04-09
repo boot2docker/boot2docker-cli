@@ -90,6 +90,14 @@ func download(dest, url string) error {
 	if err := f.Close(); err != nil {
 		return err
 	}
+
+	if _, err := os.Stat(dest); err == nil {
+		backup_dest := dest + ".bak"
+		os.Remove(backup_dest)
+		if err := os.Rename(dest, backup_dest); err != nil {
+			return err
+		}
+	}
 	if err := os.Rename(f.Name(), dest); err != nil {
 		return err
 	}
