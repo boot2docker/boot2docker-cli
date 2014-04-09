@@ -1,16 +1,24 @@
 version=`cat VERSION`
 gitSha=`git rev-parse --short HEAD`
+GOARCH=amd64
+GOBUILD=GOARCH=$(GOARCH) go build -ldflags "-X main.Version $(version) -X main.GitSHA $(gitSha)"
+PREFIX=boot2docker-cli
+
+.PHONY: default all darwin linux windows clean
 
 default:
-	@go build -ldflags "-X main.Version $(version) -X main.GitSHA $(gitSha)" -o boot2docker-cli-$(version)
+	@$(GOBUILD) -o $(PREFIX)-$(version)
 
 all: darwin linux windows
 
 darwin:
-	@GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.Version $(version) -X main.GitSHA $(gitSha)" -o boot2docker-cli-$(version)-darwin-amd64
+	@GOOS=$@ $(GOBUILD) -o $(PREFIX)-$(version)-$@-$(GOARCH)
 
 linux:
-	@GOOS=linux GOARCH=amd64 go build -ldflags "-X main.Version $(version) -X main.GitSHA $(gitSha)" -o boot2docker-cli-$(version)-linux-amd64
+	@GOOS=$@ $(GOBUILD) -o $(PREFIX)-$(version)-$@-$(GOARCH)
 
 windows:
-	@GOOS=windows GOARCH=amd64 go build -ldflags "-X main.Version $(version) -X main.GitSHA $(gitSha)" -o boot2docker-cli-$(version)-windows-amd64.exe
+	@GOOS=$@ $(GOBUILD) -o $(PREFIX)-$(version)-$@-$(GOARCH).exe
+
+clean:
+	rm $(PREFIX)*
