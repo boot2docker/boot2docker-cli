@@ -22,6 +22,7 @@ func main() {
 func run() int {
 	flags, err := config()
 	if err != nil {
+		errf("config error: %v\n", err)
 		return 1
 	}
 
