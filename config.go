@@ -28,6 +28,7 @@ var B2D struct {
 	VM       string // virtual machine name
 	Dir      string // boot2docker directory
 	ISO      string // boot2docker ISO image path
+	VMDK     string // base VMDK to use as persistent disk
 	DiskSize uint   // VM disk image size (MB)
 	Memory   uint   // VM memory size (MB)
 
@@ -106,6 +107,7 @@ func config() (*flag.FlagSet, error) {
 	flags.StringVar(&B2D.VM, "vm", "boot2docker-vm", "virtual machine name.")
 	flags.StringVarP(&B2D.Dir, "dir", "d", dir, "boot2docker config directory.")
 	flags.StringVar(&B2D.ISO, "iso", filepath.Join(dir, "boot2docker.iso"), "path to boot2docker ISO image.")
+	flags.StringVar(&B2D.VMDK, "basevmdk", "", "Path to VMDK to use as base for persistent partition")
 	vbm := "VBoxManage"
 	if p := os.Getenv("VBOX_INSTALL_PATH"); p != "" && runtime.GOOS == "windows" {
 		vbm = filepath.Join(p, "VBoxManage.exe")

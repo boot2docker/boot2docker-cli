@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -64,6 +65,33 @@ func getHostOnlyNetworkInterface() (string, error) {
 		return "", err
 	}
 	return hostonlyNet.Name, nil
+}
+
+// Copy disk image from given source path to destination
+func copyDiskImage(dst, src string) (err error) {
+	// Open source disk image
+	srcImg, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	closeSrcImg := func() {
+		if ee := srcImg.Close(); ee != nil {
+			err = ee
+		}
+	}
+	defer closeSrcImg()
+	dstImg, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	closeDstImg := func() {
+		if ee := dstImg.Close(); ee != nil {
+			err = ee
+		}
+	}
+	defer closeDstImg()
+	_, err = io.Copy(dstImg, srcImg)
+	return err
 }
 
 // Make a boot2docker VM disk image with the given size (in MB).
