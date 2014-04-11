@@ -1,40 +1,24 @@
-# Dockerfile for go cross compile boot2docker-cli
-#
-# docker build -t golang .
-# 
-# change GOOS and GOARCH to your target plattform
-# docker run -e GOOS=darwin -e GOARCH=amd64 --name boot2docker-cli golang
-# docker cp boot2docker-cli:/data/boot2docker boot2docker/boot2docker
-# docker rm boot2docker-cli
+# Dockerfile to cross compile boot2docker-cli
 
- 
 FROM ubuntu:13.10
-MAINTAINER Andreas Heissenberger <andreas@heissenberger.at> (@aheissenberger)
+MAINTAINER Riobard Zhan <me@riobard.com> (@riobard)
 
 # Packaged dependencies
-RUN	apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -yq \
-	automake \
-	build-essential \
-	ca-certificates \
-	curl \
-	git \
-	mercurial \
-	--no-install-recommends
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
+    build-essential ca-certificates curl git
 
-# Install Go
-RUN	curl -s https://go.googlecode.com/files/go1.2.src.tar.gz | tar -v -C /usr/local -xz
-ENV	PATH	/usr/local/go/bin:$PATH
-RUN	cd /usr/local/go/src && ./make.bash --no-clean 2>&1
+# Install Go from binary release
+RUN curl -s https://go.googlecode.com/files/go1.2.1.linux-amd64.tar.gz | tar -v -C /usr/local -xz
+ENV PATH /usr/local/go/bin:$PATH
 
-# Compile Go for cross compilation
-ENV	DOCKER_CROSSPLATFORMS	linux/386 linux/arm darwin/amd64 darwin/386 windows/386 windows/amd64
-# (set an explicit GOARM of 5 for maximum compatibility)
-ENV	GOARM	5
-RUN	cd /usr/local/go/src && bash -xc 'for platform in $DOCKER_CROSSPLATFORMS; do GOOS=${platform%/*} GOARCH=${platform##*/} ./make.bash --no-clean 2>&1; done'
+# Bootstrap Go for cross compilation (we have linux/amd64 by default)
+ENV DOCKER_CROSSPLATFORMS darwin/amd64 windows/amd64
+RUN cd /usr/local/go/src && bash -xc 'for platform in $DOCKER_CROSSPLATFORMS; do GOOS=${platform%/*} GOARCH=${platform##*/} ./make.bash --no-clean 2>&1; done'
 
-ENV	GOPATH	/go
-ADD	. /go/src/github.com/boot2docker/boot2docker-cli
-WORKDIR	/go/src/github.com/boot2docker/boot2docker-cli
+ENV GOPATH  /go
+ADD . /go/src/github.com/boot2docker/boot2docker-cli
+WORKDIR /go/src/github.com/boot2docker/boot2docker-cli
 
-RUN	go get -d
-CMD	["./build.sh"]
+# Download (but not install) dependencies
+RUN go get -d
+CMD ["make", "all"]
