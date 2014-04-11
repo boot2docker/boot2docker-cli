@@ -27,8 +27,8 @@ You can dowload binary releases at https://github.com/boot2docker/boot2docker-cl
 
 ### Install from source
 
-You need to have [Go compiler](http://golang.org) installed, and setup `$GOPATH` [properly
-setup](http://golang.org/doc/code.html#GOPATH) correctly. Then run
+You need to have [Go compiler](http://golang.org) installed, and `$GOPATH`
+[properly setup](http://golang.org/doc/code.html#GOPATH). Then run
 
     go get github.com/boot2docker/boot2docker-cli
 
