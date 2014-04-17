@@ -33,15 +33,15 @@ You need to have [Go compiler](http://golang.org) installed, and `$GOPATH`
     go get github.com/boot2docker/boot2docker-cli
 
 The binary will be available at `$GOPATH/bin/boot2docker-cli`. However the
-binary built this way will have missing information when you run
+binary built this way will have missing version information when you run
 
     boot2docker-cli version
 
-You can solve the issue by using `make install`
+You can solve the issue by using `make goinstall`
 
 ```sh
 cd $GOPATH/src/github.com/boot2docker/boot2docker-cli
-make install
+make goinstall
 ```
 
 ### Cross compiling
@@ -53,7 +53,6 @@ platforms](http://stackoverflow.com/questions/12168873/cross-compile-go-on-osx).
 We provide a Makefile to make the process a bit easier.
 
 ```sh
-make            # build for current platform by default
 make darwin     # build for OS X/amd64
 make linux      # build for Linux/amd64
 make windows    # build for Windows/amd64
