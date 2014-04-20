@@ -1,50 +1,88 @@
 # boot2docker-cli
 
-This is the Go port of the boot2docker (https://github.com/boot2docker/boot2docker)
-management script. It is intended to replace the shell script eventually. It is
-currently usable but since it is under active development, frequent changes and
-bugs are expected. USE AT YOUR OWN RISK.
+This is the Go port of the
+[boot2docker](https://github.com/boot2docker/boot2docker) [management
+script](https://github.com/boot2docker/boot2docker/blob/master/boot2docker). It
+is intended to replace the shell script eventually. Currently the Go port is
+usable but since it is under active development, frequent changes and bugs are
+to be expected. USE AT YOUR OWN RISK.
 
-The Go port will produce a single binary without extra dependencies for the
-following platforms:
+## What it does
 
-- Linux/386
-- Linux/amd64
-- OS X (Darwin)/386
-- OS X (Darwin)/amd64
-- Windows/386
-- Windows/amd64
+This tool downloads the boot2docker ISO image, creates a VirtualBox virtual
+machine, sets up two networks for that virtual machine (one NAT to allow the VM
+and containers to access the internet, the other host-only to allow container
+port mapping to work securely), and then provides the user a simple way to
+login via SSH.
+
+On Windows, [MSYS SSH](http://www.mingw.org/) provides a first class way to
+connect to the boot2docker VM using `boot2docker-cli.exe ssh`.
 
 
 ## Installation
 
-Once you have your `$GOPATH` [properly
-setup](http://golang.org/doc/code.html#GOPATH), run
+### Pre-compiled binaries
+
+You can dowload binary releases at https://github.com/boot2docker/boot2docker-cli/releases
+
+### Install from source
+
+You need to have [Go compiler](http://golang.org) installed, and `$GOPATH`
+[properly setup](http://golang.org/doc/code.html#GOPATH). Then run
 
     go get github.com/boot2docker/boot2docker-cli
 
+The binary will be available at `$GOPATH/bin/boot2docker-cli`. However the
+binary built this way will have missing version information when you run
 
-The binary will be available at `$GOPATH/bin/boot2docker-cli`.
+    boot2docker-cli version
 
-If you don't want to install golang, you can use the `Dockerfile` to create the
-binary for any supported target platform.
+You can solve the issue by using `make goinstall`
 
-1. Build the image with the Go toolchain: `docker build -t boot2docker-golang .`
-2. Choose the right settings for your plattform:
-  * Windows: `GOOS=windows GOARCH=amd64`
-  * OS X: `GOOS=darwin GOARCH=amd64`
-  * Linux: `GOOS=linux GOARCH=amd64`
-3. Build the binaries: (if building for Windows, don't forget to add `.exe` to
-   the end of the binary name in the arguments to the `docker cp` line below)
 ```sh
-docker run -e GOOS=darwin -e GOARCH=amd64 --name boot2docker-buildcli boot2docker-golang
-docker cp boot2docker-buildcli:/go/src/github.com/boot2docker/boot2docker-cli/boot2docker-cli .
-docker rm boot2docker-buildcli
-# and test it:
-./boot2docker-cli version
+cd $GOPATH/src/github.com/boot2docker/boot2docker-cli
+make goinstall
 ```
 
-The binary `boot2docker-cli` will be in your current folder.
+### Cross compiling
+
+You can cross compile to OS X, Windows, and Linux. For that you need to first
+[make your Go compiler ready for cross compiling to the target
+platforms](http://stackoverflow.com/questions/12168873/cross-compile-go-on-osx).
+
+We provide a Makefile to make the process a bit easier.
+
+```sh
+make darwin     # build for OS X/amd64
+make linux      # build for Linux/amd64
+make windows    # build for Windows/amd64
+make all        # build for all three above
+make clean      # clean up the built binaries
+```
+
+Built binaries will be available in the current directory.
+
+
+### Docker build
+
+You can also build in a Docker container.
+
+```sh
+make dockerbuild
+```
+
+Built binaries will be available in the current directory.
+
+
+### Caveats
+
+Currently the binary cross-compiled from Windows/Linux to OS X has a [TLS
+issue](https://github.com/boot2docker/boot2docker-cli/issues/11), and as a
+result
+
+    boot2docker-cli download
+
+will fail. You need to do a native OS X build to avoid this problem.
 
 
 ## Usage
@@ -67,16 +105,6 @@ And finally if you don't need the VM anymore, run
 
 to remove it completely.
 
-## What boot2docker-cli does
-
-This tool downloads the boot2docker ISO image, creates a virtual machine, sets
-up two networks for that virtual machine (one NAT to allow the VM and containers
-to access the internet, the other host-only to allow container port mapping to
-work securely), and then provides the user a simple way to connect to the vm
-using an external ssh client.
-
-On Windows, [MSYS SSH](http://www.mingw.org/) provides a first class way to
-connect to the boot2docker vm (using `boot2docker-cli.exe ssh`).
 
 ## Configuration
 
