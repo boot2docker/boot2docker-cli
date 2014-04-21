@@ -109,26 +109,31 @@ to remove it completely.
 ## Configuration
 
 The `boot2docker-cli` binary reads configuration from `$BOOT2DOCKER_PROFILE`, or
-if not found, from `$BOOT2DOCKER_DIR/profile`. Currently you can configure
-the following options (undefined options take default values):
+if not found, from `$BOOT2DOCKER_DIR/profile`. `./boot2docker-cli config` will
+tell you where it is looking for the file, and will also output the settings that 
+are in use, so you can initialise a default file to customise using 
+`boot2docker-cli config > /home/sven/.boot2docker/profile`.
+
+Currently you can configure the following options (undefined options take 
+default values):
 
 ```ini
 # Comments must be on their own lines; inline comments are not supported.
 
 # path to VirtualBox management utility
-vbm=VBoxManage
+vbm="VBoxManage"
 
 # path to SSH client utility
-ssh=ssh
+ssh="ssh"
 
 # name of boot2docker virtual machine
-vm=boot2docker-vm
+vm="boot2docker-vm"
 
 # path to boot2docker config directory
-dir=$HOME/.boot2docker
+dir="$HOME/.boot2docker"
 
 # path to boot2docker ISO image
-iso=$BOOT2DOCKER_DIR/boot2docker.iso
+iso="$BOOT2DOCKER_DIR/boot2docker.iso"
 
 # VM disk image size in MB
 disksize=20000

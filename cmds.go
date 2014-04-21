@@ -182,6 +182,19 @@ func cmdUp() int {
 	return 0
 }
 
+// Tell the user the config (and later let them set it?)
+func cmdConfig() int {
+	dir, err := getCfgDir(".boot2docker")
+	if err != nil {
+		logf("Error working out Profile file location: %s", err)
+		return 1
+	}
+	filename := getCfgFilename(dir)
+	logf("boot2docker profile filename: %s", filename)
+	fmt.Println(printConfig())
+	return 0
+}
+
 // Suspend and save the current state of VM on disk.
 func cmdSave() int {
 	m, err := vbx.GetMachine(B2D.VM)

@@ -1,15 +1,15 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
 	"fmt"
 	"net"
 	"os"
 	"path/filepath"
 	"regexp"
 	"runtime"
-	"strings"
 
+	toml "github.com/BurntSushi/toml"
 	vbx "github.com/boot2docker/boot2docker-cli/virtualbox"
 	flag "github.com/ogier/pflag"
 )
@@ -84,21 +84,31 @@ func getCfgDir(name string) (string, error) {
 	return cwd, nil
 }
 
+func getCfgFilename(dir string) string {
+	filename := os.Getenv("BOOT2DOCKER_PROFILE")
+	if filename == "" {
+		filename = filepath.Join(dir, "profile")
+	}
+	return filename
+}
+
+// Write configuration set by the combination of profile and flags
+//    Should result in a format that can be piped into a profile file
+func printConfig() string {
+	var buf bytes.Buffer
+	e := toml.NewEncoder(&buf)
+	err := e.Encode(B2D)
+	if err != nil {
+		return ""
+	}
+	return buf.String()
+}
+
 // Read configuration from both profile and flags. Flags override profile.
 func config() (*flag.FlagSet, error) {
 	dir, err := getCfgDir(".boot2docker")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get boot2docker directory: %s", err)
-	}
-
-	filename := os.Getenv("BOOT2DOCKER_PROFILE")
-	if filename == "" {
-		filename = filepath.Join(dir, "profile")
-	}
-
-	profileArgs, err := readProfile(filename)
-	if err != nil && !os.IsNotExist(err) { // undefined/empty profile works
-		return nil, err
 	}
 
 	flags := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
@@ -126,8 +136,18 @@ func config() (*flag.FlagSet, error) {
 	flags.IPVar(&B2D.LowerIP, "lowerip", net.ParseIP("192.168.59.103"), "VirtualBox host-only network DHCP lower bound.")
 	flags.IPVar(&B2D.UpperIP, "upperip", net.ParseIP("192.168.59.254"), "VirtualBox host-only network DHCP upper bound.")
 
+	// Set the defaults
+	if err := flags.Parse([]string{}); err != nil {
+		return nil, err
+	}
+	// Over-ride from the profile file
+	// TODO: should we really parse for and expand $ENVVARS before we process..?
+	filename := getCfgFilename(dir)
+	if _, err := toml.DecodeFile(filename, &B2D); err != nil {
+		return nil, err
+	}
 	// Command-line overrides profile config.
-	if err := flags.Parse(append(profileArgs, os.Args[1:]...)); err != nil {
+	if err := flags.Parse(os.Args[1:]); err != nil {
 		return nil, err
 	}
 
@@ -141,40 +161,8 @@ func config() (*flag.FlagSet, error) {
 	return flags, nil
 }
 
-// Read boot2docker configuration profile into string slice. Expanding
-// $ENVVARS in the values field.
-func readProfile(filename string) ([]string, error) {
-	f, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	args := []string{}
-	s := bufio.NewScanner(f)
-	ln := 0
-	for s.Scan() {
-		ln++
-		line := strings.TrimSpace(s.Text())
-		if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, ";") {
-			// Ignore empty lines and comment lines starting with # or ;
-			continue
-		}
-		res := reFlagLine.FindStringSubmatch(line)
-		if res == nil {
-			return nil, fmt.Errorf("failed to parse profile line %d: %q", ln, line)
-		}
-		args = append(args, fmt.Sprintf("--%v=%v", res[1], os.ExpandEnv(res[2])))
-	}
-
-	if err := s.Err(); err != nil {
-		return nil, err
-	}
-	return args, nil
-}
-
 func usageShort() {
-	errf("Usage: %s [<options>] {help|init|up|ssh|save|down|poweroff|reset|restart|status|info|delete|download|version} [<args>]\n", os.Args[0])
+	errf("Usage: %s [<options>] {help|init|up|ssh|save|down|poweroff|reset|restart|config|status|info|delete|download|version} [<args>]\n", os.Args[0])
 
 }
 
@@ -194,6 +182,7 @@ Commands:
     poweroff [<vm>]         Forcefully power off the VM (might corrupt disk image).
     reset [<vm>]            Forcefully power cycle the VM (might corrupt disk image).
     delete [<vm>]           Delete boot2docker VM and its disk image.
+    config|cfg              Show selected profile file settings.
     info [<vm>]             Display detailed information of VM.
     status [<vm>]           Display current state of VM.
     download                Download boot2docker ISO image.
