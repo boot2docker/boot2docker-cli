@@ -25,6 +25,9 @@ var B2D struct {
 
 	// basic config
 	SSH      string // SSH client executable
+	SSHGen   string // SSH keygen executable
+	SSHKey   string // SSH key to send to the vm
+	TAR      string // tar executable
 	VM       string // virtual machine name
 	Dir      string // boot2docker directory
 	ISO      string // boot2docker ISO image path
@@ -115,6 +118,11 @@ func config() (*flag.FlagSet, error) {
 	flags.StringVar(&B2D.VBM, "vbm", vbm, "path to VirtualBox management utility.")
 	flags.BoolVarP(&B2D.Verbose, "verbose", "v", false, "display verbose command invocations.")
 	flags.StringVar(&B2D.SSH, "ssh", "ssh", "path to SSH client utility.")
+	flags.StringVar(&B2D.SSHGen, "ssh-keygen", "ssh-keygen", "path to ssh-keygen utility.")
+
+	sshdir, _ := getCfgDir(".ssh")
+	flags.StringVar(&B2D.SSHKey, "sshkey", filepath.Join(sshdir, "id_boot2docker"), "path to SSH key to use.")
+	flags.StringVar(&B2D.TAR, "tar", "tar", "path to tar utility.")
 	flags.UintVarP(&B2D.DiskSize, "disksize", "s", 20000, "boot2docker disk image size (in MB).")
 	flags.UintVarP(&B2D.Memory, "memory", "m", 1024, "virtual machine memory size (in MB).")
 	flags.Uint16Var(&B2D.SSHPort, "sshport", 2022, "host SSH port (forward to port 22 in VM).")

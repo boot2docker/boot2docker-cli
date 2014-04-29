@@ -3,8 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"time"
@@ -36,6 +38,17 @@ func cmdInit() int {
 			return exitcode
 		}
 	}
+	if _, err := os.Stat(B2D.SSHKey); err != nil {
+		if !os.IsNotExist(err) {
+			logf("Something wrong with SSH Key file %q: %s", B2D.SSHKey, err)
+			return 1
+		}
+		if err := cmd(B2D.SSHGen, "-t", "rsa", "-f", B2D.SSHKey); err != nil {
+			logf("Error generating new SSH Key into %s: %s", B2D.SSHKey, err)
+			return 1
+		}
+	}
+	//TODO: while we're here - make a ~/.ssh/config entry for our b2d connection
 
 	logf("Creating VM %s...", B2D.VM)
 	m, err := vbx.CreateMachine(B2D.VM, "")
@@ -128,7 +141,40 @@ func cmdInit() int {
 				return 1
 			}
 		} else {
-			if err := makeDiskImage(diskImg, B2D.DiskSize); err != nil {
+			magicString := "boot2docker, please format-me"
+			tmpDir, err := ioutil.TempDir("", "boot2docker")
+			if err != nil {
+				logf("Error making TempDir with sshkey %s: %s", B2D.SSHKey, err)
+				return 1
+			}
+			defer func(d string) {
+				if err := os.RemoveAll(d); err != nil {
+					logf("error removing TempDir %v: %v", d, err)
+				}
+			}(tmpDir)
+			sshDir := filepath.Join(tmpDir, ".ssh")
+			if err := os.MkdirAll(sshDir, 0700); err != nil {
+				logf("Error making ssh dir: %s", err)
+				return 1
+			}
+			CopyFile(B2D.SSHKey+".pub", filepath.Join(sshDir, "authorized_keys"))
+			if err := ioutil.WriteFile(filepath.Join(tmpDir, magicString), []byte(magicString), 0644); err != nil {
+				logf("Error making initial files: %s", err)
+				return 1
+			}
+
+			cmd := exec.Command(B2D.TAR,
+				"c",
+				"-C", tmpDir,
+				magicString,
+				".ssh", ".ssh/authorized_keys",
+			)
+			initialBytes, err := cmd.Output()
+			if err != nil {
+				logf("Error making tar file with sshkey %s: %s", B2D.SSHKey, err)
+				return 1
+			}
+			if err := makeDiskImage(diskImg, B2D.DiskSize, initialBytes); err != nil {
 				logf("Failed to create disk image %q: %s", diskImg, err)
 				return 1
 			}
@@ -309,11 +355,11 @@ func cmdSSH() int {
 		return 1
 	}
 
-	// TODO What SSH client is used on Windows? Does it support the options?
 	if err := cmd(B2D.SSH,
 		"-o", "StrictHostKeyChecking=no",
 		"-o", "UserKnownHostsFile=/dev/null",
 		"-p", fmt.Sprintf("%d", B2D.SSHPort),
+		"-i", B2D.SSHKey,
 		"docker@localhost",
 	); err != nil {
 		logf("%s", err)

@@ -132,10 +132,32 @@ func cmd(name string, args ...string) error {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 	}
-	if name == B2D.SSH {
+	// TODO: replace this hardcoded test with something more generic
+	if name == B2D.SSHGen || name == B2D.SSH {
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 	}
 	return cmd.Run()
+}
+
+//swiped from dotcloud/docker/utils/utils.go
+func CopyFile(src, dst string) (int64, error) {
+	if src == dst {
+		return 0, nil
+	}
+	sf, err := os.Open(src)
+	if err != nil {
+		return 0, err
+	}
+	defer sf.Close()
+	if err := os.Remove(dst); err != nil && !os.IsNotExist(err) {
+		return 0, err
+	}
+	df, err := os.Create(dst)
+	if err != nil {
+		return 0, err
+	}
+	defer df.Close()
+	return io.Copy(df, sf)
 }
