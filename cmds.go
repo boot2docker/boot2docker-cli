@@ -1,12 +1,14 @@
 package main
 
 import (
+	"archive/tar"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
-	"os/exec"
+	//"os/exec"
 	"path/filepath"
 	"runtime"
 	"time"
@@ -48,7 +50,7 @@ func cmdInit() int {
 			return 1
 		}
 	}
-	//TODO: while we're here - make a ~/.ssh/config entry for our b2d connection
+	//TODO: print a ~/.ssh/config entry for our b2d connection that the user can c&p
 
 	logf("Creating VM %s...", B2D.VM)
 	m, err := vbx.CreateMachine(B2D.VM, "")
@@ -142,39 +144,46 @@ func cmdInit() int {
 			}
 		} else {
 			magicString := "boot2docker, please format-me"
-			tmpDir, err := ioutil.TempDir("", "boot2docker")
+
+			buf := new(bytes.Buffer)
+			tw := tar.NewWriter(buf)
+
+			// magicString first so the automount script knows to format the disk
+			file := &tar.Header{Name: magicString, Size: int64(len(magicString))}
+			if err := tw.WriteHeader(file); err != nil {
+				logf("Error making tarfile: %s", err)
+				return 1
+			}
+			if _, err := tw.Write([]byte(magicString)); err != nil {
+				logf("Error making tarfile: %s", err)
+				return 1
+			}
+			// .ssh/key.pub => authorized_keys
+			file = &tar.Header{Name: ".ssh", Typeflag: tar.TypeDir, Mode: 0700}
+			if err := tw.WriteHeader(file); err != nil {
+				logf("Error making tarfile: %s", err)
+				return 1
+			}
+			pubKey, err := ioutil.ReadFile(B2D.SSHKey + ".pub")
 			if err != nil {
-				logf("Error making TempDir with sshkey %s: %s", B2D.SSHKey, err)
+				logf("Error making tarfile: %s", err)
 				return 1
 			}
-			defer func(d string) {
-				if err := os.RemoveAll(d); err != nil {
-					logf("error removing TempDir %v: %v", d, err)
-				}
-			}(tmpDir)
-			sshDir := filepath.Join(tmpDir, ".ssh")
-			if err := os.MkdirAll(sshDir, 0700); err != nil {
-				logf("Error making ssh dir: %s", err)
+			file = &tar.Header{Name: ".ssh/authorized_keys", Size: int64(len(pubKey)), Mode: 0644}
+			if err := tw.WriteHeader(file); err != nil {
+				logf("Error making tarfile: %s", err)
 				return 1
 			}
-			CopyFile(B2D.SSHKey+".pub", filepath.Join(sshDir, "authorized_keys"))
-			if err := ioutil.WriteFile(filepath.Join(tmpDir, magicString), []byte(magicString), 0644); err != nil {
-				logf("Error making initial files: %s", err)
+			if _, err := tw.Write([]byte(pubKey)); err != nil {
+				logf("Error making tarfile: %s", err)
+				return 1
+			}
+			if err := tw.Close(); err != nil {
+				logf("Error making tarfile: %s", err)
 				return 1
 			}
 
-			cmd := exec.Command(B2D.TAR,
-				"c",
-				"-C", tmpDir,
-				magicString,
-				".ssh", ".ssh/authorized_keys",
-			)
-			initialBytes, err := cmd.Output()
-			if err != nil {
-				logf("Error making tar file with sshkey %s: %s", B2D.SSHKey, err)
-				return 1
-			}
-			if err := makeDiskImage(diskImg, B2D.DiskSize, initialBytes); err != nil {
+			if err := makeDiskImage(diskImg, B2D.DiskSize, buf.Bytes()); err != nil {
 				logf("Failed to create disk image %q: %s", diskImg, err)
 				return 1
 			}
