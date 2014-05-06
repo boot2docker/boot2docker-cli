@@ -29,6 +29,8 @@ func run() int {
 	switch cmd := flags.Arg(0); cmd {
 	case "download":
 		return cmdDownload()
+	case "config", "cfg":
+		return cmdConfig()
 	case "init":
 		return cmdInit()
 	case "up", "start", "boot", "resume":
