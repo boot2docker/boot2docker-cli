@@ -1,10 +1,14 @@
 package main
 
 import (
+	"archive/tar"
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
+	//"os/exec"
 	"path/filepath"
 	"runtime"
 	"time"
@@ -36,6 +40,17 @@ func cmdInit() int {
 			return exitcode
 		}
 	}
+	if _, err := os.Stat(B2D.SSHKey); err != nil {
+		if !os.IsNotExist(err) {
+			logf("Something wrong with SSH Key file %q: %s", B2D.SSHKey, err)
+			return 1
+		}
+		if err := cmd(B2D.SSHGen, "-t", "rsa", "-f", B2D.SSHKey); err != nil {
+			logf("Error generating new SSH Key into %s: %s", B2D.SSHKey, err)
+			return 1
+		}
+	}
+	//TODO: print a ~/.ssh/config entry for our b2d connection that the user can c&p
 
 	logf("Creating VM %s...", B2D.VM)
 	m, err := vbx.CreateMachine(B2D.VM, "")
@@ -128,7 +143,47 @@ func cmdInit() int {
 				return 1
 			}
 		} else {
-			if err := makeDiskImage(diskImg, B2D.DiskSize); err != nil {
+			magicString := "boot2docker, please format-me"
+
+			buf := new(bytes.Buffer)
+			tw := tar.NewWriter(buf)
+
+			// magicString first so the automount script knows to format the disk
+			file := &tar.Header{Name: magicString, Size: int64(len(magicString))}
+			if err := tw.WriteHeader(file); err != nil {
+				logf("Error making tarfile: %s", err)
+				return 1
+			}
+			if _, err := tw.Write([]byte(magicString)); err != nil {
+				logf("Error making tarfile: %s", err)
+				return 1
+			}
+			// .ssh/key.pub => authorized_keys
+			file = &tar.Header{Name: ".ssh", Typeflag: tar.TypeDir, Mode: 0700}
+			if err := tw.WriteHeader(file); err != nil {
+				logf("Error making tarfile: %s", err)
+				return 1
+			}
+			pubKey, err := ioutil.ReadFile(B2D.SSHKey + ".pub")
+			if err != nil {
+				logf("Error making tarfile: %s", err)
+				return 1
+			}
+			file = &tar.Header{Name: ".ssh/authorized_keys", Size: int64(len(pubKey)), Mode: 0644}
+			if err := tw.WriteHeader(file); err != nil {
+				logf("Error making tarfile: %s", err)
+				return 1
+			}
+			if _, err := tw.Write([]byte(pubKey)); err != nil {
+				logf("Error making tarfile: %s", err)
+				return 1
+			}
+			if err := tw.Close(); err != nil {
+				logf("Error making tarfile: %s", err)
+				return 1
+			}
+
+			if err := makeDiskImage(diskImg, B2D.DiskSize, buf.Bytes()); err != nil {
 				logf("Failed to create disk image %q: %s", diskImg, err)
 				return 1
 			}
@@ -322,11 +377,11 @@ func cmdSSH() int {
 		return 1
 	}
 
-	// TODO What SSH client is used on Windows? Does it support the options?
 	if err := cmd(B2D.SSH,
 		"-o", "StrictHostKeyChecking=no",
 		"-o", "UserKnownHostsFile=/dev/null",
 		"-p", fmt.Sprintf("%d", B2D.SSHPort),
+		"-i", B2D.SSHKey,
 		"docker@localhost",
 	); err != nil {
 		logf("%s", err)
