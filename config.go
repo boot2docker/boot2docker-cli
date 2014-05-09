@@ -152,8 +152,16 @@ func config() (*flag.FlagSet, error) {
 	if _, err := toml.DecodeFile(filename, &B2D); err != nil {
 		return nil, err
 	}
+
+	// for cmd==ssh only:
+	// only pass the params up to and including the `ssh` command - after that,
+	// there might be other -flags that are destined for the ssh cmd
+	i := 1
+	for i < len(os.Args) && os.Args[i-1] != "ssh" {
+		i++
+	}
 	// Command-line overrides profile config.
-	if err := flags.Parse(os.Args[1:]); err != nil {
+	if err := flags.Parse(os.Args[1:i]); err != nil {
 		return nil, err
 	}
 
@@ -176,7 +184,7 @@ boot2docker management utility.
 Commands:
     init                    Create a new boot2docker VM.
     up|start|boot           Start VM from any states.
-    ssh                     Login to VM via SSH.
+    ssh [ssh-command]       Login to VM via SSH.
     save|suspend            Suspend VM and save state to disk.
     down|stop|halt          Gracefully shutdown the VM.
     restart                 Gracefully reboot the VM.
