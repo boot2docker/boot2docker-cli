@@ -166,10 +166,7 @@ lowerip=192.168.59.103
 upperip=192.168.59.254
 ```
 
-Environment variables of the form `$ENVVAR` in the profile will be expanded,
-even on Windows.
-
-You can override the configurations using command-line flags. Type
+You can override the configurations using matching command-line flags. Type
 `boot2docker-cli -h` for more information. The configuration file options are
 the same as the command-line flags with long names.
 
