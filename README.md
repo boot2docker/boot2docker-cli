@@ -35,7 +35,7 @@ You need to have [Go compiler](http://golang.org) installed, and `$GOPATH`
 The binary will be available at `$GOPATH/bin/boot2docker-cli`. However the
 binary built this way will have missing version information when you run
 
-    boot2docker-cli version
+    $ boot2docker-cli version
 
 You can solve the issue by using `make goinstall`
 
@@ -80,7 +80,7 @@ Currently the binary cross-compiled from Windows/Linux to OS X has a [TLS
 issue](https://github.com/boot2docker/boot2docker-cli/issues/11), and as a
 result
 
-    boot2docker-cli download
+    $ boot2docker-cli download
 
 will fail. You need to do a native OS X build to avoid this problem.
 
@@ -89,22 +89,29 @@ will fail. You need to do a native OS X build to avoid this problem.
 
 To initialize a new boot2docker VM, run
 
-    boot2docker-cli init
+    $ boot2docker-cli init
 
 Then you can start the VM by
 
-    boot2docker-cli up
+    $ boot2docker-cli up
 
 To stop the VM, run
 
-    boot2docker-cli down
+    $ boot2docker-cli down
 
 And finally if you don't need the VM anymore, run
 
-    boot2docker-cli delete
+    $ boot2docker-cli delete
 
 to remove it completely.
 
+You can also run commands on the remote boot2docker virtual machine:
+
+    $ boot2docker-cli -m 123 ssh ip addr show eth1 |sed -ne 's/^[ \t]*inet[ \t]*\([0-9.]\+\)\/.*$/\1/p'
+    192.168.59.103
+
+In this case, the command tells you the host only interface IP address of the
+boot2docker vm, which you can then use to access ports you map from your containers.
 
 ## Configuration
 
@@ -166,10 +173,7 @@ lowerip=192.168.59.103
 upperip=192.168.59.254
 ```
 
-Environment variables of the form `$ENVVAR` in the profile will be expanded,
-even on Windows.
-
-You can override the configurations using command-line flags. Type
+You can override the configurations using matching command-line flags. Type
 `boot2docker-cli -h` for more information. The configuration file options are
 the same as the command-line flags with long names.
 

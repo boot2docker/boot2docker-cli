@@ -11,6 +11,7 @@ import (
 	//"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	vbx "github.com/boot2docker/boot2docker-cli/virtualbox"
@@ -377,12 +378,21 @@ func cmdSSH() int {
 		return 1
 	}
 
+	// find the ssh cmd string and then pass any remaining strings to ssh
+	// TODO: it's a shame to repeat the same code as in config.go, but I 
+	//       didn't find a way to share the unsharable without more rework
+	i := 1
+	for i < len(os.Args) && os.Args[i-1] != "ssh" {
+		i++
+	}
+
 	if err := cmd(B2D.SSH,
 		"-o", "StrictHostKeyChecking=no",
 		"-o", "UserKnownHostsFile=/dev/null",
 		"-p", fmt.Sprintf("%d", B2D.SSHPort),
 		"-i", B2D.SSHKey,
 		"docker@localhost",
+		strings.Join(os.Args[i:], " "),
 	); err != nil {
 		logf("%s", err)
 		return 1
