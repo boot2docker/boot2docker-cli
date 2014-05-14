@@ -379,7 +379,7 @@ func cmdSSH() int {
 	}
 
 	// find the ssh cmd string and then pass any remaining strings to ssh
-	// TODO: it's a shame to repeat the same code as in config.go, but I 
+	// TODO: it's a shame to repeat the same code as in config.go, but I
 	//       didn't find a way to share the unsharable without more rework
 	i := 1
 	for i < len(os.Args) && os.Args[i-1] != "ssh" {
