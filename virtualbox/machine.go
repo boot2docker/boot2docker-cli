@@ -242,23 +242,19 @@ func GetMachine(id string) (*Machine, error) {
 }
 
 // ListMachines lists all registered machines.
-func ListMachines() ([]*Machine, error) {
+func ListMachines() ([]string, error) {
 	out, err := vbmOut("list", "vms")
 	if err != nil {
 		return nil, err
 	}
-	ms := []*Machine{}
+	ms := []string{}
 	s := bufio.NewScanner(strings.NewReader(out))
 	for s.Scan() {
 		res := reVMNameUUID.FindStringSubmatch(s.Text())
 		if res == nil {
 			continue
 		}
-		m, err := GetMachine(res[1])
-		if err != nil {
-			return nil, err
-		}
-		ms = append(ms, m)
+		ms = append(ms, res[1])
 	}
 	if err := s.Err(); err != nil {
 		return nil, err
@@ -273,12 +269,12 @@ func CreateMachine(name, basefolder string) (*Machine, error) {
 	}
 
 	// Check if a machine with the given name already exists.
-	ms, err := ListMachines()
+	machineNames, err := ListMachines()
 	if err != nil {
 		return nil, err
 	}
-	for _, m := range ms {
-		if m.Name == name {
+	for _, m := range machineNames {
+		if m == name {
 			return nil, ErrMachineExist
 		}
 	}
