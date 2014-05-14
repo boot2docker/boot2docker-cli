@@ -147,10 +147,11 @@ func config() (*flag.FlagSet, error) {
 		return nil, err
 	}
 	// Over-ride from the profile file
-	// TODO: should we really parse for and expand $ENVVARS before we process..?
 	filename := getCfgFilename(dir)
-	if _, err := toml.DecodeFile(filename, &B2D); err != nil {
-		return nil, err
+	if _, err := os.Lstat(filename); err == nil {
+		if _, err := toml.DecodeFile(filename, &B2D); err != nil {
+			return nil, err
+		}
 	}
 
 	// for cmd==ssh only:
