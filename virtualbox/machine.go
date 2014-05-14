@@ -329,6 +329,8 @@ func (m *Machine) Modify() error {
 		"--vtxvpid", m.Flag.Get(F_vtxvpid),
 		"--vtxux", m.Flag.Get(F_vtxux),
 		"--accelerate3d", m.Flag.Get(F_accelerate3d),
+
+		"--natdnshostresolver1", "on",
 	}
 
 	for i, dev := range m.BootOrder {
