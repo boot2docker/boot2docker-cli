@@ -1,13 +1,4 @@
-# boot2docker-cli
-
-This is the Go port of the
-[boot2docker](https://github.com/boot2docker/boot2docker) [management
-script](https://github.com/boot2docker/boot2docker/blob/master/boot2docker). It
-is intended to replace the shell script eventually. Currently the Go port is
-usable but since it is under active development, frequent changes and bugs are
-to be expected. USE AT YOUR OWN RISK.
-
-## What it does
+# boot2docker command line management tool
 
 This tool downloads the boot2docker ISO image, creates a VirtualBox virtual
 machine, sets up two networks for that virtual machine (one NAT to allow the VM
@@ -16,7 +7,7 @@ port mapping to work securely), and then provides the user a simple way to
 login via SSH.
 
 On Windows, [MSYS SSH](http://www.mingw.org/) provides a first class way to
-connect to the boot2docker VM using `boot2docker-cli.exe ssh`.
+connect to the boot2docker VM using `boot2docker.exe ssh`.
 
 
 ## Installation
@@ -35,7 +26,7 @@ You need to have [Go compiler](http://golang.org) installed, and `$GOPATH`
 The binary will be available at `$GOPATH/bin/boot2docker-cli`. However the
 binary built this way will have missing version information when you run
 
-    $ boot2docker-cli version
+    $ boot2docker version
 
 You can solve the issue by using `make goinstall`
 
@@ -80,7 +71,7 @@ Currently the binary cross-compiled from Windows/Linux to OS X has a [TLS
 issue](https://github.com/boot2docker/boot2docker-cli/issues/11), and as a
 result
 
-    $ boot2docker-cli download
+    $ boot2docker download
 
 will fail. You need to do a native OS X build to avoid this problem.
 
@@ -89,25 +80,25 @@ will fail. You need to do a native OS X build to avoid this problem.
 
 To initialize a new boot2docker VM, run
 
-    $ boot2docker-cli init
+    $ boot2docker init
 
 Then you can start the VM by
 
-    $ boot2docker-cli up
+    $ boot2docker up
 
 To stop the VM, run
 
-    $ boot2docker-cli down
+    $ boot2docker down
 
 And finally if you don't need the VM anymore, run
 
-    $ boot2docker-cli delete
+    $ boot2docker delete
 
 to remove it completely.
 
 You can also run commands on the remote boot2docker virtual machine:
 
-    $ boot2docker-cli -m 123 ssh ip addr show eth1 |sed -ne 's/^[ \t]*inet[ \t]*\([0-9.]\+\)\/.*$/\1/p'
+    $ boot2docker -m 123 ssh ip addr show eth1 |sed -ne 's/^[ \t]*inet[ \t]*\([0-9.]\+\)\/.*$/\1/p'
     192.168.59.103
 
 In this case, the command tells you the host only interface IP address of the
@@ -115,11 +106,11 @@ boot2docker vm, which you can then use to access ports you map from your contain
 
 ## Configuration
 
-The `boot2docker-cli` binary reads configuration from `$BOOT2DOCKER_PROFILE`, or
-if not found, from `$BOOT2DOCKER_DIR/profile`. `./boot2docker-cli config` will
+The `boot2docker` binary reads configuration from `$BOOT2DOCKER_PROFILE`, or
+if not found, from `$BOOT2DOCKER_DIR/profile`. `boot2docker config` will
 tell you where it is looking for the file, and will also output the settings that 
 are in use, so you can initialise a default file to customise using 
-`boot2docker-cli config > /home/sven/.boot2docker/profile`.
+`boot2docker config > /home/sven/.boot2docker/profile`.
 
 Currently you can configure the following options (undefined options take 
 default values):
@@ -174,7 +165,7 @@ upperip=192.168.59.254
 ```
 
 You can override the configurations using matching command-line flags. Type
-`boot2docker-cli -h` for more information. The configuration file options are
+`boot2docker -h` for more information. The configuration file options are
 the same as the command-line flags with long names.
 
 
