@@ -416,5 +416,6 @@ func cmdDownload() int {
 		logf("Failed to download ISO image: %s", err)
 		return 1
 	}
+	logf("Success: downloaded %s\n\tto %s", url, B2D.ISO)
 	return 0
 }
