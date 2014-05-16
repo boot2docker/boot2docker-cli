@@ -106,8 +106,9 @@ boot2docker vm, which you can then use to access ports you map from your contain
 
 ## Configuration
 
-The `boot2docker` binary reads configuration from `$BOOT2DOCKER_PROFILE`, or
-if not found, from `$BOOT2DOCKER_DIR/profile`. `boot2docker config` will
+The `boot2docker` binary reads configuration from `$BOOT2DOCKER_PROFILE` if set, or
+`$BOOT2DOCKER_DIR/profile` or `$HOME/.boot2docker/profile` or (on Windows) 
+`$USERPROFILE/.boot2docker/profile`.  `boot2docker config` will
 tell you where it is looking for the file, and will also output the settings that 
 are in use, so you can initialise a default file to customise using 
 `boot2docker config > /home/sven/.boot2docker/profile`.
@@ -119,49 +120,48 @@ default values):
 # Comments must be on their own lines; inline comments are not supported.
 
 # path to VirtualBox management utility
-vbm="VBoxManage"
+VBM = "VBoxManage"
 
 # path to SSH client utility
-ssh="ssh"
+SSH = "ssh"
+SSHGen = "ssh-keygen"
+SSHKey = "/Users/sven/.ssh/id_boot2docker"
 
 # name of boot2docker virtual machine
-vm="boot2docker-vm"
-
-# path to boot2docker config directory
-dir="$HOME/.boot2docker"
+VM = "boot2docker-vm"
 
 # path to boot2docker ISO image
-iso="$BOOT2DOCKER_DIR/boot2docker.iso"
+ISO = "/Users/sven/.boot2docker/boot2docker.iso"
 
 # VM disk image size in MB
-disksize=20000
+DiskSize = 20000
 
 # VM memory size in MB
-memory=1024
+Memory = 1024
 
 # host port forwarding to port 22 in the VM
-sshport=2022
+SSHPort = 2022
 
 # host port forwarding to port 4243 in the VM
-dockerport=4243
+DockerPort = 4243
 
 # host-only network host IP
-hostip=192.168.59.3
+HostIP = "192.168.59.3"
 
 # host only network network mask
-netmask=255.255.255.0
+NetMask = [255, 255, 255, 0]
 
 # host-only network DHCP server IP
-dhcpip=192.168.59.99
+DHCPIP = "192.168.59.99"
 
 # host-only network DHCP server enabled
-dhcp=true
+DHCPEnabled = true
 
 # host-only network IP range lower bound
-lowerip=192.168.59.103
+LowerIP = "192.168.59.103"
 
 # host-only network IP range upper bound
-upperip=192.168.59.254
+UpperIP = "192.168.59.254"
 ```
 
 You can override the configurations using matching command-line flags. Type
