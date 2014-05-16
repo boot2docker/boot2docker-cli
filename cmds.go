@@ -20,14 +20,19 @@ import (
 // Initialize the boot2docker VM from scratch.
 func cmdInit() int {
 	// TODO(@riobard) break up this command into multiple stages
+	m, err := vbx.GetMachine(B2D.VM)
+	if err == nil {
+		logf("Virtual machine %s already exists", B2D.VM)
+		return 1
+	}
 
 	if ping(fmt.Sprintf("localhost:%d", B2D.DockerPort)) {
-		logf("DOCKER_PORT=%d on localhost is occupied. Please choose another one.", B2D.DockerPort)
+		logf("--dockerport=%d on localhost is occupied. Please choose another one.", B2D.DockerPort)
 		return 1
 	}
 
 	if ping(fmt.Sprintf("localhost:%d", B2D.SSHPort)) {
-		logf("SSH_PORT=%d on localhost is occupied. Please choose another one.", B2D.SSHPort)
+		logf("--sshport=%d on localhost is occupied. Please choose another one.", B2D.SSHPort)
 		return 1
 	}
 
@@ -54,7 +59,7 @@ func cmdInit() int {
 	//TODO: print a ~/.ssh/config entry for our b2d connection that the user can c&p
 
 	logf("Creating VM %s...", B2D.VM)
-	m, err := vbx.CreateMachine(B2D.VM, "")
+	m, err = vbx.CreateMachine(B2D.VM, "")
 	if err != nil {
 		logf("Failed to create VM %q: %s", B2D.VM, err)
 		return 1
