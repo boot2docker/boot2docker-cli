@@ -57,33 +57,21 @@ func getCfgDir(name string) (string, error) {
 		return b2dDir, nil
 	}
 
-	// *nix
-	if home := os.Getenv("HOME"); home != "" {
-		dir := filepath.Join(home, name)
-		if _, err := os.Stat(dir); err == nil {
-			return dir, nil
-		}
-	}
+	dir := ""
 
-	// Windows
-	for _, env := range []string{
-		"APPDATA",
-		"LOCALAPPDATA",
-		"USERPROFILE",
-	} {
-		if val := os.Getenv(env); val != "" {
-			dir := filepath.Join(val, "boot2docker")
-			if _, err := os.Stat(dir); err == nil {
-				return dir, nil
-			}
-		}
+	// *nix and MSYS Windows
+	if dir = os.Getenv("HOME"); dir == "" {
+		// Windows (if not running under MSYS)
+		dir = os.Getenv("USERPROFILE")
 	}
-	// Fallback to current working directory as a last resort
-	cwd, err := os.Getwd()
-	if err != nil {
+	if _, err := os.Stat(dir); err != nil {
 		return "", err
 	}
-	return cwd, nil
+	dir = filepath.Join(dir, name)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return "", err
+	}
+	return dir, nil
 }
 
 func getCfgFilename(dir string) string {
@@ -117,7 +105,9 @@ func config() (*flag.FlagSet, error) {
 	flags.Usage = func() { usageLong(flags) }
 
 	flags.StringVar(&B2D.VM, "vm", "boot2docker-vm", "virtual machine name.")
-	flags.StringVarP(&B2D.Dir, "dir", "d", dir, "boot2docker config directory.")
+	// removed for now, requires re-parsing a new config file which is too messy
+	//flags.StringVarP(&B2D.Dir, "dir", "d", dir, "boot2docker config directory.")
+	B2D.Dir = dir
 	flags.StringVar(&B2D.ISO, "iso", filepath.Join(dir, "boot2docker.iso"), "path to boot2docker ISO image.")
 	flags.StringVar(&B2D.VMDK, "basevmdk", "", "Path to VMDK to use as base for persistent partition")
 	vbm := "VBoxManage"
@@ -147,7 +137,7 @@ func config() (*flag.FlagSet, error) {
 		return nil, err
 	}
 	// Over-ride from the profile file
-	filename := getCfgFilename(dir)
+	filename := getCfgFilename(B2D.Dir)
 	if _, err := os.Lstat(filename); err == nil {
 		if _, err := toml.DecodeFile(filename, &B2D); err != nil {
 			return nil, err
