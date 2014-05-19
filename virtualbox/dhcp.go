@@ -16,7 +16,20 @@ type DHCP struct {
 }
 
 func addDHCP(kind, name string, d DHCP) error {
-	args := []string{"dhcpserver", "add",
+	command := "modify"
+
+	// On some platforms (OSX), creating a hostonlyinterface adds a default dhcpserver
+	// While on others (Windows?) it does not.
+	dhcps, err := DHCPs()
+	if err != nil {
+		return err
+	}
+
+	if _, ok := dhcps[name]; !ok {
+		command = "add"
+	}
+
+	args := []string{"dhcpserver", command,
 		kind, name,
 		"--ip", d.IPv4.IP.String(),
 		"--netmask", net.IP(d.IPv4.Mask).String(),
@@ -38,7 +51,7 @@ func AddInternalDHCP(netname string, d DHCP) error {
 
 // AddHostonlyDHCP adds a DHCP server to a host-only network.
 func AddHostonlyDHCP(ifname string, d DHCP) error {
-	return addDHCP("--ifname", ifname, d)
+	return addDHCP("--netname", "HostInterfaceNetworking-"+ifname, d)
 }
 
 // DHCPs gets all DHCP server settings in a map keyed by DHCP.NetworkName.
