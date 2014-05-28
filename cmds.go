@@ -224,7 +224,7 @@ func cmdUp() int {
 	}
 
 	logf("Waiting for SSH server to start...")
-	addr := fmt.Sprintf("localhost:%d", B2D.SSHPort)
+	addr := fmt.Sprintf("localhost:%d", m.SSHPort)
 	const n = 10
 	// Try to connect to the SSH 10 times at 3 sec interval before giving up.
 	if err := read(addr, n, 3*time.Second); err != nil {
@@ -241,9 +241,9 @@ func cmdUp() int {
 		logf("to SSH into the VM instead.")
 	default:
 		// Check if $DOCKER_HOST ENV var is properly configured.
-		if os.Getenv("DOCKER_HOST") != fmt.Sprintf("tcp://localhost:%d", B2D.DockerPort) {
+		if os.Getenv("DOCKER_HOST") != fmt.Sprintf("tcp://localhost:%d", m.DockerPort) {
 			logf("To connect the Docker client to the Docker daemon, please set:")
-			logf("    export DOCKER_HOST=tcp://localhost:%d", B2D.DockerPort)
+			logf("    export DOCKER_HOST=tcp://localhost:%d", m.DockerPort)
 		}
 	}
 	return 0
@@ -400,7 +400,7 @@ func cmdSSH() int {
 	if err := cmd(B2D.SSH,
 		"-o", "StrictHostKeyChecking=no",
 		"-o", "UserKnownHostsFile=/dev/null",
-		"-p", fmt.Sprintf("%d", B2D.SSHPort),
+		"-p", fmt.Sprintf("%d", m.SSHPort),
 		"-i", B2D.SSHKey,
 		"docker@localhost",
 		strings.Join(os.Args[i:], " "),
