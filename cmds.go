@@ -51,7 +51,7 @@ func cmdInit() int {
 			logf("Something wrong with SSH Key file %q: %s", B2D.SSHKey, err)
 			return 1
 		}
-		if err := cmd(B2D.SSHGen, "-t", "rsa", "-f", B2D.SSHKey); err != nil {
+		if err := cmd(B2D.SSHGen, "-t", "rsa", "-N", "", "-f", B2D.SSHKey); err != nil {
 			logf("Error generating new SSH Key into %s: %s", B2D.SSHKey, err)
 			return 1
 		}
