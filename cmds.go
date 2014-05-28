@@ -61,8 +61,14 @@ func cmdInit() int {
 	logf("Creating VM %s...", B2D.VM)
 	m, err = vbx.CreateMachine(B2D.VM, "")
 	if err != nil {
-		logf("Failed to create VM %q: %s", B2D.VM, err)
-		return 1
+		logf("FIRST: Failed to create VM %q: %s", B2D.VM, err)
+		// double tap. VBox will sometimes (like on initial install, or reboot)
+		// fail to start the service the first time.
+		m, err = vbx.CreateMachine(B2D.VM, "")
+		if err != nil {
+			logf("Failed to create VM %q: %s", B2D.VM, err)
+			return 1
+		}
 	}
 
 	logf("Apply interim patch to VM %s (https://www.virtualbox.org/ticket/12748)", B2D.VM)
