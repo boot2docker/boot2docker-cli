@@ -66,6 +66,8 @@ type Machine struct {
 	OSType     string
 	Flag       Flag
 	BootOrder  []string // max 4 slots, each in {none|floppy|dvd|disk|net}
+	DockerPort uint
+	SSHPort    uint
 }
 
 // Refresh reloads the machine information.
@@ -233,6 +235,22 @@ func GetMachine(id string) (*Machine, error) {
 		case "CfgFile":
 			m.CfgFile = val
 			m.BaseFolder = filepath.Dir(val)
+		case "Forwarding(0)":
+			// Forwarding(0)="docker,tcp,127.0.0.1,5555,,4243"
+			vals := strings.Split(val, ",")
+			n, err := strconv.ParseUint(vals[3], 10, 32)
+			if err != nil {
+				return nil, err
+			}
+			m.DockerPort = uint(n)
+		case "Forwarding(1)":
+			// Forwarding(1)="ssh,tcp,127.0.0.1,2222,,22"
+			vals := strings.Split(val, ",")
+			n, err := strconv.ParseUint(vals[3], 10, 32)
+			if err != nil {
+				return nil, err
+			}
+			m.SSHPort = uint(n)
 		}
 	}
 	if err := s.Err(); err != nil {
