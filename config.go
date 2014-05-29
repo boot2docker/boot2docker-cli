@@ -162,7 +162,7 @@ func config() (*flag.FlagSet, error) {
 }
 
 func usageShort() {
-	errf("Usage: %s [<options>] {help|init|up|ssh|save|down|poweroff|reset|restart|config|status|info|delete|download|version} [<args>]\n", os.Args[0])
+	errf("Usage: %s [<options>] {help|init|up|ssh|save|down|poweroff|reset|restart|config|status|info|ip|delete|download|version} [<args>]\n", os.Args[0])
 
 }
 
@@ -184,6 +184,7 @@ Commands:
     delete                  Delete boot2docker VM and its disk image.
     config|cfg              Show selected profile file settings.
     info                    Display detailed information of VM.
+	ip                      Display the IP address of the VM's Host-only network.
     status                  Display current state of VM.
     download                Download boot2docker ISO image.
     version                 Display version information.

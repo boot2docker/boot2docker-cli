@@ -53,6 +53,8 @@ func run() int {
 		return cmdStatus()
 	case "ssh":
 		return cmdSSH()
+	case "ip":
+		return cmdIP()
 	case "version":
 		outf("Client version: %s\nGit commit: %s\n", Version, GitSHA)
 		return 0

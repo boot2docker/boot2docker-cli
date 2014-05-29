@@ -125,19 +125,25 @@ func getLatestReleaseName(url string) (string, error) {
 }
 
 // Convenient function to exec a command.
-func cmd(name string, args ...string) error {
+func cmd(name string, args ...string) (string, error) {
+	cmd := exec.Command(name, args...)
+	if B2D.Verbose {
+		cmd.Stderr = os.Stderr
+		log.Printf("executing: %v %v", name, strings.Join(args, " "))
+	}
+
+	b, err := cmd.Output()
+	return string(b), err
+}
+
+func cmdInteractive(name string, args ...string) error {
 	cmd := exec.Command(name, args...)
 	if B2D.Verbose {
 		logf("executing: %v %v", name, strings.Join(args, " "))
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
 	}
-	// TODO: replace this hardcoded test with something more generic
-	if name == B2D.SSHGen || name == B2D.SSH {
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-	}
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
