@@ -51,7 +51,7 @@ func cmdInit() int {
 			logf("Something wrong with SSH Key file %q: %s", B2D.SSHKey, err)
 			return 1
 		}
-		if err := cmd(B2D.SSHGen, "-t", "rsa", "-N", "", "-f", B2D.SSHKey); err != nil {
+		if err := cmdInteractive(B2D.SSHGen, "-t", "rsa", "-N", "", "-f", B2D.SSHKey); err != nil {
 			logf("Error generating new SSH Key into %s: %s", B2D.SSHKey, err)
 			return 1
 		}
@@ -182,6 +182,15 @@ func cmdInit() int {
 				return 1
 			}
 			file = &tar.Header{Name: ".ssh/authorized_keys", Size: int64(len(pubKey)), Mode: 0644}
+			if err := tw.WriteHeader(file); err != nil {
+				logf("Error making tarfile: %s", err)
+				return 1
+			}
+			if _, err := tw.Write([]byte(pubKey)); err != nil {
+				logf("Error making tarfile: %s", err)
+				return 1
+			}
+			file = &tar.Header{Name: ".ssh/authorized_keys2", Size: int64(len(pubKey)), Mode: 0644}
 			if err := tw.WriteHeader(file); err != nil {
 				logf("Error making tarfile: %s", err)
 				return 1
@@ -397,7 +406,8 @@ func cmdSSH() int {
 		i++
 	}
 
-	if err := cmd(B2D.SSH,
+	if err := cmdInteractive(B2D.SSH,
+		//"-vvv", //TODO: add if its boot2docker -v
 		"-o", "StrictHostKeyChecking=no",
 		"-o", "UserKnownHostsFile=/dev/null",
 		"-p", fmt.Sprintf("%d", m.SSHPort),
@@ -408,6 +418,48 @@ func cmdSSH() int {
 		logf("%s", err)
 		return 1
 	}
+	return 0
+}
+
+func cmdIP() int {
+	m, err := vbx.GetMachine(B2D.VM)
+	if err != nil {
+		logf("Failed to get machine %q: %s", B2D.VM, err)
+		return 2
+	}
+
+	if m.State != vbx.Running {
+		logf("VM %q is not running.", B2D.VM)
+		return 1
+	}
+
+	out, err := cmd(B2D.SSH,
+		//"-vvv", //TODO: add if its boot2docker -v
+		"-o", "StrictHostKeyChecking=no",
+		"-o", "UserKnownHostsFile=/dev/null",
+		"-p", fmt.Sprintf("%d", m.SSHPort),
+		"-i", B2D.SSHKey,
+		"docker@localhost",
+		"ip addr show dev eth1",
+	)
+	if err != nil {
+		logf("%s", err)
+		return 1
+	}
+	// parse to find: inet 192.168.59.103/24 brd 192.168.59.255 scope global eth1
+	lines := strings.Split(out, "\n")
+	for _, line := range lines {
+		vals := strings.Split(strings.TrimSpace(line), " ")
+		if vals[0] == "inet" {
+			ip := vals[1][:strings.Index(vals[1], "/")]
+			errf("\nThe VM's Host only interface IP address is: ")
+			fmt.Printf("%s", ip)
+			errf("\n\n")
+			return 0
+		}
+	}
+	errf("\nFailed to get VM Host only IP address.\n")
+	errf("\tWas the VM initilized using boot2docker?\n")
 	return 0
 }
 
