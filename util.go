@@ -184,15 +184,17 @@ func RequestIPFromSerialPort(socket string) string {
 	c, err := net.Dial("unix", socket)
 
 	if err != nil {
-		panic(err)
+		return ""
 	}
 	defer c.Close()
-	c.SetDeadline(time.Now().Add(3 * time.Second))
+	c.SetDeadline(time.Now().Add(time.Second))
 
 	line := ""
 	_, err = c.Write([]byte("\r"))
+	_, err = c.Write([]byte("docker\r"))
 
 	IP := ""
+	fullLog := ""
 
 	for IP == "" {
 		_, err := c.Write([]byte("ip addr show dev eth1\r"))
@@ -200,7 +202,7 @@ func RequestIPFromSerialPort(socket string) string {
 			println(err)
 			break
 		}
-		time.Sleep(1e9)
+		time.Sleep(1 * time.Second)
 		buf := make([]byte, 1024)
 		for {
 			n, err := c.Read(buf[:])
@@ -208,15 +210,15 @@ func RequestIPFromSerialPort(socket string) string {
 				return IP
 			}
 			line = line + string(buf[0:n])
+			fullLog += string(buf[0:n])
 			if strings.Contains(line, "\n") {
 				//go looking for the string we want, and chomp line to after the \n
 				if i := strings.IndexAny(line, "\n"); i != -1 {
 					//     inet 10.180.1.3/16 brd 10.180.255.255 scope global wlan0
-					inet := regexp.MustCompile("^[\t ]*inet ([0-9.]*).*$")
+					inet := regexp.MustCompile(`^[\t ]*inet ([0-9.]*).*$`)
 					if ip := inet.FindStringSubmatch(line[:i]); ip != nil {
 						IP = ip[1]
 						// clean up
-						go reader(c)
 						break
 					} else {
 						line = line[i+1:]
@@ -226,6 +228,12 @@ func RequestIPFromSerialPort(socket string) string {
 		}
 
 	}
+	go reader(c)
+	//give us time reader clean up
 	time.Sleep(1)
+	if IP == "" && B2D.Verbose {
+		logf(fullLog)
+	}
+
 	return IP
 }

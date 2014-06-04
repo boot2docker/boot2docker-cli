@@ -93,6 +93,11 @@ func (m *Machine) Start() error {
 	case Poweroff, Saved, Aborted:
 		return vbm("startvm", m.Name, "--type", "headless")
 	}
+	if err := m.Refresh(); err == nil {
+		if m.State != Running {
+			return fmt.Errorf("Failed to start", m.Name)
+		}
+	}
 	return nil
 }
 
@@ -255,7 +260,9 @@ func GetMachine(id string) (*Machine, error) {
 		case "uartmode1":
 			// uartmode1="server,/home/sven/.boot2docker/boot2docker-vm.sock"
 			vals := strings.Split(val, ",")
-			m.SerialFile = vals[1]
+			if len(vals) >= 2 {
+				m.SerialFile = vals[1]
+				}
 		}
 	}
 	if err := s.Err(); err != nil {
@@ -348,9 +355,14 @@ func (m *Machine) Modify() error {
 		"--vtxvpid", m.Flag.Get(F_vtxvpid),
 		"--vtxux", m.Flag.Get(F_vtxux),
 		"--accelerate3d", m.Flag.Get(F_accelerate3d),
+	}
+
+	//if runtime.GOOS != "windows" {
+	args = append(args,
 		"--uart1", "0x3F8", "4",
 		"--uartmode1", "server", m.SerialFile,
-	}
+	)
+	//}
 
 	for i, dev := range m.BootOrder {
 		if i > 3 {
