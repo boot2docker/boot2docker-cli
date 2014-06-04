@@ -8,11 +8,9 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
-	//"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 
 	vbx "github.com/boot2docker/boot2docker-cli/virtualbox"
 )
@@ -80,6 +78,7 @@ func cmdInit() int {
 	m.OSType = "Linux26_64"
 	m.CPUs = uint(runtime.NumCPU())
 	m.Memory = B2D.Memory
+	m.SerialFile = B2D.SerialFile
 
 	m.Flag |= vbx.F_pae
 	m.Flag |= vbx.F_longmode // important: use x86-64 processor
@@ -232,14 +231,15 @@ func cmdUp() int {
 		return 1
 	}
 
-	logf("Waiting for SSH server to start...")
-	addr := fmt.Sprintf("localhost:%d", m.SSHPort)
-	const n = 10
-	// Try to connect to the SSH 10 times at 3 sec interval before giving up.
-	if err := read(addr, n, 3*time.Second); err != nil {
-		logf("Failed to connect to SSH port at %s after %d attempts. Last error: %v", addr, n, err)
-		return 1
+	logf("Waiting for VM to be started...")
+	IP := ""
+	for i := 1; i < 20; i++ {
+		if IP = RequestIPFromSerialPort(m.SerialFile); IP != "" {
+			break
+		}
+		print(".")
 	}
+	print("\n")
 
 	logf("Started.")
 
@@ -252,7 +252,7 @@ func cmdUp() int {
 		// Check if $DOCKER_HOST ENV var is properly configured.
 		if os.Getenv("DOCKER_HOST") != fmt.Sprintf("tcp://localhost:%d", m.DockerPort) {
 			logf("To connect the Docker client to the Docker daemon, please set:")
-			logf("    export DOCKER_HOST=tcp://localhost:%d", m.DockerPort)
+			logf("    export DOCKER_HOST=tcp://%s:%d", IP, m.DockerPort)
 		}
 	}
 	return 0
@@ -433,33 +433,49 @@ func cmdIP() int {
 		return 1
 	}
 
-	out, err := cmd(B2D.SSH,
-		//"-vvv", //TODO: add if its boot2docker -v
-		"-o", "StrictHostKeyChecking=no",
-		"-o", "UserKnownHostsFile=/dev/null",
-		"-p", fmt.Sprintf("%d", m.SSHPort),
-		"-i", B2D.SSHKey,
-		"docker@localhost",
-		"ip addr show dev eth1",
-	)
-	if err != nil {
-		logf("%s", err)
-		return 1
+	IP := ""
+	for i := 1; i < 20; i++ {
+		if IP = RequestIPFromSerialPort(m.SerialFile); IP != "" {
+			break
+		}
+		print(".")
 	}
-	// parse to find: inet 192.168.59.103/24 brd 192.168.59.255 scope global eth1
-	lines := strings.Split(out, "\n")
-	for _, line := range lines {
-		vals := strings.Split(strings.TrimSpace(line), " ")
-		if vals[0] == "inet" {
-			ip := vals[1][:strings.Index(vals[1], "/")]
-			errf("\nThe VM's Host only interface IP address is: ")
-			fmt.Printf("%s", ip)
-			errf("\n\n")
-			return 0
+	print("\n")
+
+	if IP == "" {
+		// fall back to using the NAT port forwarded ssh
+		out, err := cmd(B2D.SSH,
+			//"-vvv", //TODO: add if its boot2docker -v
+			"-o", "StrictHostKeyChecking=no",
+			"-o", "UserKnownHostsFile=/dev/null",
+			"-p", fmt.Sprintf("%d", m.SSHPort),
+			"-i", B2D.SSHKey,
+			"docker@localhost",
+			"ip addr show dev eth1",
+		)
+		if err != nil {
+			logf("%s", err)
+			return 1
+		} else {
+			// parse to find: inet 192.168.59.103/24 brd 192.168.59.255 scope global eth1
+			lines := strings.Split(out, "\n")
+			for _, line := range lines {
+				vals := strings.Split(strings.TrimSpace(line), " ")
+				if vals[0] == "inet" {
+					ip := vals[1][:strings.Index(vals[1], "/")]
+					IP = ip
+				}
+			}
 		}
 	}
-	errf("\nFailed to get VM Host only IP address.\n")
-	errf("\tWas the VM initilized using boot2docker?\n")
+	if IP != "" {
+		errf("\nThe VM's Host only interface IP address is: ")
+		fmt.Printf("%s", IP)
+		errf("\n\n")
+	} else {
+		errf("\nFailed to get VM Host only IP address.\n")
+		errf("\tWas the VM initilized using boot2docker?\n")
+	}
 	return 0
 }
 

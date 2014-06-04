@@ -68,6 +68,7 @@ type Machine struct {
 	BootOrder  []string // max 4 slots, each in {none|floppy|dvd|disk|net}
 	DockerPort uint
 	SSHPort    uint
+	SerialFile string
 }
 
 // Refresh reloads the machine information.
@@ -251,6 +252,10 @@ func GetMachine(id string) (*Machine, error) {
 				return nil, err
 			}
 			m.SSHPort = uint(n)
+		case "uartmode1":
+			// uartmode1="server,/home/sven/.boot2docker/boot2docker-vm.sock"
+			vals := strings.Split(val, ",")
+			m.SerialFile = vals[1]
 		}
 	}
 	if err := s.Err(); err != nil {
@@ -343,6 +348,8 @@ func (m *Machine) Modify() error {
 		"--vtxvpid", m.Flag.Get(F_vtxvpid),
 		"--vtxux", m.Flag.Get(F_vtxux),
 		"--accelerate3d", m.Flag.Get(F_accelerate3d),
+		"--uart1", "0x3F8", "4",
+		"--uartmode1", "server", m.SerialFile,
 	}
 
 	for i, dev := range m.BootOrder {
