@@ -9,6 +9,9 @@ login via SSH.
 On Windows, [MSYS SSH](http://www.mingw.org/) provides a first class way to
 connect to the boot2docker VM using `boot2docker.exe ssh`.
 
+> **Note:** Docker now has an [IANA registered IP Port: 2375]( http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml?search=docker)
+> , so the use of port 4243 is deprecated. This also means that new Boot2Docker
+> ISO releases and management tool are not compatible.
 
 ## Installation
 
@@ -142,8 +145,8 @@ Memory = 1024
 # host port forwarding to port 22 in the VM
 SSHPort = 2022
 
-# host port forwarding to port 4243 in the VM
-DockerPort = 4243
+# host port forwarding to port 2375 in the VM
+DockerPort = 2375
 
 # host-only network host IP
 HostIP = "192.168.59.3"

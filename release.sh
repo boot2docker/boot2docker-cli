@@ -8,7 +8,7 @@ set -e
 TMP=$(mktemp -d /tmp/b2d-cli.XXXXXX)
 echo Building in $TMP
 export GOPATH=$TMP
-export DOCKER_HOST=tcp://localhost:4243
+export DOCKER_HOST=tcp://localhost:2375
 go get github.com/boot2docker/boot2docker-cli
 cd ${TMP}/src/github.com/boot2docker/boot2docker-cli
 

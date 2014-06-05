@@ -236,7 +236,7 @@ func GetMachine(id string) (*Machine, error) {
 			m.CfgFile = val
 			m.BaseFolder = filepath.Dir(val)
 		case "Forwarding(0)":
-			// Forwarding(0)="docker,tcp,127.0.0.1,5555,,4243"
+			// Forwarding(0)="docker,tcp,127.0.0.1,5555,,"
 			vals := strings.Split(val, ",")
 			n, err := strconv.ParseUint(vals[3], 10, 32)
 			if err != nil {
