@@ -111,7 +111,13 @@ func config() (*flag.FlagSet, error) {
 	flags.StringVar(&B2D.ISO, "iso", filepath.Join(dir, "boot2docker.iso"), "path to boot2docker ISO image.")
 	flags.StringVar(&B2D.VMDK, "basevmdk", "", "Path to VMDK to use as base for persistent partition")
 	vbm := "VBoxManage"
-	if p := os.Getenv("VBOX_INSTALL_PATH"); p != "" && runtime.GOOS == "windows" {
+	if runtime.GOOS == "windows" {
+		p := "C:\\Program Files\\Oracle\\VirtualBox"
+		if t := os.Getenv("VBOX_INSTALL_PATH"); t != "" {
+			p = t
+		} else if t = os.Getenv("VBOX_MSI_INSTALL_PATH"); t != "" {
+			p = t
+		}
 		vbm = filepath.Join(p, "VBoxManage.exe")
 	}
 	flags.StringVar(&B2D.VBM, "vbm", vbm, "path to VirtualBox management utility.")
