@@ -452,9 +452,7 @@ func cmdIP() int {
 		vals := strings.Split(strings.TrimSpace(line), " ")
 		if vals[0] == "inet" {
 			ip := vals[1][:strings.Index(vals[1], "/")]
-			errf("\nThe VM's Host only interface IP address is: ")
 			fmt.Printf("%s", ip)
-			errf("\n\n")
 			return 0
 		}
 	}
