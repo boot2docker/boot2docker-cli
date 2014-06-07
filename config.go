@@ -45,6 +45,10 @@ var B2D struct {
 	LowerIP     net.IP
 	UpperIP     net.IP
 	DHCPEnabled bool
+
+	// Serial console pipe/socket
+	Serial     bool
+	SerialFile string
 }
 
 var (
@@ -138,6 +142,14 @@ func config() (*flag.FlagSet, error) {
 	flags.IPVar(&B2D.LowerIP, "lowerip", net.ParseIP("192.168.59.103"), "VirtualBox host-only network DHCP lower bound.")
 	flags.IPVar(&B2D.UpperIP, "upperip", net.ParseIP("192.168.59.254"), "VirtualBox host-only network DHCP upper bound.")
 
+	if runtime.GOOS != "windows" {
+		//SerialFile ~~ filepath.Join(dir, B2D.vm+".sock")
+		flags.StringVar(&B2D.SerialFile, "serialfile", "", "path to the serial socket/pipe.")
+		flags.BoolVar(&B2D.Serial, "serial", false, "try serial console to get IP address (experimental)")
+	} else {
+		B2D.Serial = false
+	}
+
 	// Set the defaults
 	if err := flags.Parse([]string{}); err != nil {
 		return nil, err
@@ -164,6 +176,16 @@ func config() (*flag.FlagSet, error) {
 
 	vbx.Verbose = B2D.Verbose
 	vbx.VBM = B2D.VBM
+
+	if B2D.SerialFile == "" {
+		if runtime.GOOS == "windows" {
+			//SerialFile ~~ filepath.Join(dir, B2D.vm+".sock")
+			B2D.SerialFile = `\\.\pipe\` + B2D.VM
+		} else {
+			B2D.SerialFile = filepath.Join(dir, B2D.VM+".sock")
+		}
+	}
+
 	return flags, nil
 }
 

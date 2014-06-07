@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -166,4 +167,73 @@ func CopyFile(src, dst string) (int64, error) {
 	}
 	defer df.Close()
 	return io.Copy(df, sf)
+}
+
+func reader(r io.Reader) {
+	buf := make([]byte, 1024)
+	for {
+		_, err := io.ReadAtLeast(r, buf[:], 20)
+		if err != nil {
+			return
+		}
+	}
+}
+
+// use the serial port socket to ask what the VM's host only IP is
+func RequestIPFromSerialPort(socket string) string {
+	c, err := net.Dial("unix", socket)
+
+	if err != nil {
+		return ""
+	}
+	defer c.Close()
+	c.SetDeadline(time.Now().Add(time.Second))
+
+	line := ""
+	_, err = c.Write([]byte("\r"))
+	_, err = c.Write([]byte("docker\r"))
+
+	IP := ""
+	fullLog := ""
+
+	for IP == "" {
+		_, err := c.Write([]byte("ip addr show dev eth1\r"))
+		if err != nil {
+			println(err)
+			break
+		}
+		time.Sleep(1 * time.Second)
+		buf := make([]byte, 1024)
+		for {
+			n, err := c.Read(buf[:])
+			if err != nil {
+				return IP
+			}
+			line = line + string(buf[0:n])
+			fullLog += string(buf[0:n])
+			if strings.Contains(line, "\n") {
+				//go looking for the string we want, and chomp line to after the \n
+				if i := strings.IndexAny(line, "\n"); i != -1 {
+					//     inet 10.180.1.3/16 brd 10.180.255.255 scope global wlan0
+					inet := regexp.MustCompile(`^[\t ]*inet ([0-9.]*).*$`)
+					if ip := inet.FindStringSubmatch(line[:i]); ip != nil {
+						IP = ip[1]
+						// clean up
+						break
+					} else {
+						line = line[i+1:]
+					}
+				}
+			}
+		}
+
+	}
+	go reader(c)
+	//give us time reader clean up
+	time.Sleep(1)
+	if IP == "" && B2D.Verbose {
+		logf(fullLog)
+	}
+
+	return IP
 }
