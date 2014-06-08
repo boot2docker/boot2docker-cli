@@ -15,6 +15,14 @@ connect to the boot2docker VM using `boot2docker.exe ssh`.
 
 ## Installation
 
+### Official Installers
+
+Signed installers are available for [Mac OS X](http://github.com/boot2docker/osx-installer/releases) and [Windows](http://github.com/boot2docker/windows-installer/releases).
+
+Refer to the installation instructions for [Windows](http://docs.docker.io/installation/windows/) and [Mac OS X](http://docks.docker.io/mac/).
+
+### Manual Installation
+
 ### Pre-compiled binaries
 
 You can dowload binary releases at https://github.com/boot2docker/boot2docker-cli/releases
