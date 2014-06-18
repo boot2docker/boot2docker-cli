@@ -212,7 +212,7 @@ Commands:
     delete                  Delete boot2docker VM and its disk image.
     config|cfg              Show selected profile file settings.
     info                    Display detailed information of VM.
-	ip                      Display the IP address of the VM's Host-only network.
+    ip                      Display the IP address of the VM's Host-only network.
     status                  Display current state of VM.
     download                Download boot2docker ISO image.
     version                 Display version information.
