@@ -109,7 +109,7 @@ to remove it completely.
 
 You can also run commands on the remote boot2docker virtual machine:
 
-    $ boot2docker -m 123 ssh ip addr show eth1 |sed -ne 's/^[ \t]*inet[ \t]*\([0-9.]\+\)\/.*$/\1/p'
+    $ boot2docker -m 123 ssh ip addr show eth1 |sed -nEe 's/^[ \t]*inet[ \t]*([0-9.]+)\/.*$/\1/p'
     192.168.59.103
 
 In this case, the command tells you the host only interface IP address of the
