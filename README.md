@@ -148,7 +148,7 @@ ISO = "/Users/sven/.boot2docker/boot2docker.iso"
 DiskSize = 20000
 
 # VM memory size in MB
-Memory = 1024
+Memory = 2048
 
 # host port forwarding to port 22 in the VM
 SSHPort = 2022

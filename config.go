@@ -132,7 +132,7 @@ func config() (*flag.FlagSet, error) {
 	sshdir, _ := getCfgDir(".ssh")
 	flags.StringVar(&B2D.SSHKey, "sshkey", filepath.Join(sshdir, "id_boot2docker"), "path to SSH key to use.")
 	flags.UintVarP(&B2D.DiskSize, "disksize", "s", 20000, "boot2docker disk image size (in MB).")
-	flags.UintVarP(&B2D.Memory, "memory", "m", 1024, "virtual machine memory size (in MB).")
+	flags.UintVarP(&B2D.Memory, "memory", "m", 2048, "virtual machine memory size (in MB).")
 	flags.Uint16Var(&B2D.SSHPort, "sshport", 2022, "host SSH port (forward to port 22 in VM).")
 	flags.Uint16Var(&B2D.DockerPort, "dockerport", 2375, "host Docker port (forward to port 2375 in VM).")
 	flags.IPVar(&B2D.HostIP, "hostip", net.ParseIP("192.168.59.3"), "VirtualBox host-only network IP address.")
