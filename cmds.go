@@ -282,6 +282,8 @@ func cmdUp() int {
 		if os.Getenv("DOCKER_HOST") != fmt.Sprintf("tcp://%s:%d", IP, m.DockerPort) {
 			logf("To connect the Docker client to the Docker daemon, please set:")
 			logf("    export DOCKER_HOST=tcp://%s:%d", IP, m.DockerPort)
+		} else {
+			logf("Your DOCKER_HOST env variable is already set correctly.")
 		}
 	}
 	return 0
