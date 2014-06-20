@@ -252,7 +252,7 @@ func cmdUp() int {
 				break
 			}
 		}
-		if err := read(natSSH, 1, 1*time.Second); err == nil {
+		if err := read(natSSH, 1, 2*time.Second); err == nil {
 			IP = RequestIPFromSSH(m)
 			break
 		}
@@ -264,7 +264,13 @@ func cmdUp() int {
 	logf("Started.")
 
 	if IP == "" {
-		logf("Auto detection of the VM's IP address.")
+		// lets try one more time
+		time.Sleep(3)
+
+		IP = RequestIPFromSSH(m)
+		if IP == "" {
+			logf("Auto detection of the VM's IP address failed.")
+		}
 	}
 	switch runtime.GOOS {
 	case "windows":
@@ -484,7 +490,7 @@ func cmdIP() int {
 func RequestIPFromSSH(m *vbx.Machine) string {
 	// fall back to using the NAT port forwarded ssh
 	out, err := cmd(B2D.SSH,
-		//"-vvv", //TODO: add if its boot2docker -v
+		"-v", // please leave in - this seems to improve the chance of success
 		"-o", "StrictHostKeyChecking=no",
 		"-o", "UserKnownHostsFile=/dev/null",
 		"-p", fmt.Sprintf("%d", m.SSHPort),
