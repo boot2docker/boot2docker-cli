@@ -20,6 +20,7 @@ var B2D struct {
 	// indentation all the time.
 
 	// Gereral flags.
+	Quiet   bool
 	Verbose bool
 	VBM     string
 
@@ -138,6 +139,7 @@ func config() (*flag.FlagSet, error) {
 	flags.IPVar(&B2D.HostIP, "hostip", net.ParseIP("192.168.59.3"), "VirtualBox host-only network IP address.")
 	flags.IPMaskVar(&B2D.NetMask, "netmask", flag.ParseIPv4Mask("255.255.255.0"), "VirtualBox host-only network mask.")
 	flags.BoolVar(&B2D.DHCPEnabled, "dhcp", true, "enable VirtualBox host-only network DHCP.")
+	flags.BoolVarP(&B2D.Quiet, "quiet", "q", false, "run the command in quiet mode")
 	flags.IPVar(&B2D.DHCPIP, "dhcpip", net.ParseIP("192.168.59.99"), "VirtualBox host-only network DHCP server address.")
 	flags.IPVar(&B2D.LowerIP, "lowerip", net.ParseIP("192.168.59.103"), "VirtualBox host-only network DHCP lower bound.")
 	flags.IPVar(&B2D.UpperIP, "upperip", net.ParseIP("192.168.59.254"), "VirtualBox host-only network DHCP upper bound.")
