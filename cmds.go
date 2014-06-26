@@ -105,8 +105,8 @@ func cmdInit() int {
 	}
 
 	pfRules := map[string]vbx.PFRule{
-		"ssh":    vbx.PFRule{Proto: vbx.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: B2D.SSHPort, GuestPort: 22},
-		"docker": vbx.PFRule{Proto: vbx.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: B2D.DockerPort, GuestPort: 2375},
+		"ssh":    {Proto: vbx.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: B2D.SSHPort, GuestPort: 22},
+		"docker": {Proto: vbx.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: B2D.DockerPort, GuestPort: 2375},
 	}
 
 	for name, rule := range pfRules {

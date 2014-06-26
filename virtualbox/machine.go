@@ -262,7 +262,7 @@ func GetMachine(id string) (*Machine, error) {
 			vals := strings.Split(val, ",")
 			if len(vals) >= 2 {
 				m.SerialFile = vals[1]
-				}
+			}
 		}
 	}
 	if err := s.Err(); err != nil {
