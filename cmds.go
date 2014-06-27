@@ -437,15 +437,16 @@ func cmdSSH() int {
 		i++
 	}
 
-	if err := cmdInteractive(B2D.SSH,
-		//"-vvv", //TODO: add if its boot2docker -v
+	sshArgs := append([]string{
 		"-o", "StrictHostKeyChecking=no",
 		"-o", "UserKnownHostsFile=/dev/null",
+		"-o", "LogLevel=quiet", // suppress "Warning: Permanently added '[localhost]:2022' (ECDSA) to the list of known hosts."
 		"-p", fmt.Sprintf("%d", m.SSHPort),
 		"-i", B2D.SSHKey,
 		"docker@localhost",
-		strings.Join(os.Args[i:], " "),
-	); err != nil {
+	}, os.Args[i:]...)
+
+	if err := cmdInteractive(B2D.SSH, sshArgs...); err != nil {
 		logf("%s", err)
 		return 1
 	}
