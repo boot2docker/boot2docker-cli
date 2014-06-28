@@ -332,6 +332,7 @@ func (m *Machine) Modify() error {
 		"--firmware", "bios",
 		"--bioslogofadein", "off",
 		"--bioslogofadeout", "off",
+		"--natdnshostresolver1", "on",
 		"--bioslogodisplaytime", "0",
 		"--biosbootmenu", "disabled",
 
