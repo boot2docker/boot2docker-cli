@@ -5,7 +5,7 @@ if [ -z "$VERSION" ]; then
   VERSION="1.0.1"
 fi
 
-echo "Dowloading version ${VERSION}..."
+echo "Downloading version ${VERSION}..."
 
 # OS information (contains e.g. Darwin x86_64)
 UNAME=`uname -a`
