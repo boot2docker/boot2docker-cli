@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 # Set version to latest unless set by user
 if [ -z "$VERSION" ]; then
   VERSION="1.0.1"
