@@ -275,7 +275,7 @@ func cmdUp() int {
 	switch runtime.GOOS {
 	case "windows":
 		logf("Docker client does not run on Windows for now. Please use")
-		logf("    %s ssh", os.Args[0])
+		logf("    \"%s\" ssh", os.Args[0])
 		logf("to SSH into the VM instead.")
 	default:
 		// Check if $DOCKER_HOST ENV var is properly configured.
