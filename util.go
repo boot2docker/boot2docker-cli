@@ -230,7 +230,7 @@ func RequestIPFromSerialPort(socket string) string {
 	}
 	go reader(c)
 	//give us time reader clean up
-	time.Sleep(1)
+	time.Sleep(1 * time.Second)
 	if IP == "" && B2D.Verbose {
 		logf(fullLog)
 	}
