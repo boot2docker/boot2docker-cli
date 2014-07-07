@@ -240,6 +240,35 @@ func RequestIPFromSerialPort(socket string) string {
 	return IP
 }
 
+func RequestIPFromSSH(m *vbx.Machine) string {
+	// fall back to using the NAT port forwarded ssh
+	out, err := cmd(B2D.SSH,
+		"-v", // please leave in - this seems to improve the chance of success
+		"-o", "StrictHostKeyChecking=no",
+		"-o", "UserKnownHostsFile=/dev/null",
+		"-p", fmt.Sprintf("%d", m.SSHPort),
+		"-i", B2D.SSHKey,
+		"docker@localhost",
+		"ip addr show dev eth1",
+	)
+	IP := ""
+	if err != nil {
+		logf("%s", err)
+	} else {
+		// parse to find: inet 192.168.59.103/24 brd 192.168.59.255 scope global eth1
+		lines := strings.Split(out, "\n")
+		for _, line := range lines {
+			vals := strings.Split(strings.TrimSpace(line), " ")
+			if len(vals) >= 2 && vals[0] == "inet" {
+				IP = vals[1][:strings.Index(vals[1], "/")]
+				break
+			}
+		}
+	}
+	return IP
+}
+
+
 // Get the IP for a machine
 func GetIPForMachine(m* vbx.Machine) string {
 	IP := ""
