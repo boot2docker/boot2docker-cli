@@ -6,12 +6,12 @@ import (
 	"testing"
 )
 
-func TestExportCommandWritten(t* testing.T) {
+func TestExportCommandWritten(t *testing.T) {
 	/*
-	The export command is written to the output interface.
+		The export command is written to the output interface.
 	*/
 	var stdout bytes.Buffer
-	m  := GetDummyMachine()
+	m := GetDummyMachine()
 	cmdShellSetup(m, &stdout)
 	result := stdout.String()
 	expected := "export DOCKER_HOST=tcp://alpha:1234\n"
@@ -19,4 +19,3 @@ func TestExportCommandWritten(t* testing.T) {
 		t.Error(fmt.Sprintf("Got %#v, expected %#v", result, expected))
 	}
 }
-

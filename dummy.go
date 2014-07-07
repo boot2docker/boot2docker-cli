@@ -5,7 +5,7 @@ import (
 )
 
 // GetDummyMachine returns a dummy Machine object for tests
-func GetDummyMachine() (*vbx.Machine) {
+func GetDummyMachine() *vbx.Machine {
 	m := &vbx.Machine{}
 	m.Name = "dummy"
 	m.UUID = "dummy"

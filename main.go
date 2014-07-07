@@ -1,8 +1,8 @@
 package main
 
 import (
-	"os"
 	vbx "github.com/boot2docker/boot2docker-cli/virtualbox"
+	"os"
 )
 
 // The following vars will be injected during the build process.
