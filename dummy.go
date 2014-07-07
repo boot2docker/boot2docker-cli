@@ -9,5 +9,6 @@ func GetDummyMachine() (*vbx.Machine) {
     m := &vbx.Machine{}
     m.Name = "dummy"
     m.UUID = "dummy"
+    m.DockerPort = 1234
     return m
 }

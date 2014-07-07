@@ -302,6 +302,6 @@ func DockerHostExportCommand(m* vbx.Machine) string {
     */
     IP := GetIPForMachine(m)
     port := m.DockerPort
-    export := fmt.Sprintf("export DOCKER_HOST=tcp://%s:%s", IP, port)
+    export := fmt.Sprintf("export DOCKER_HOST=tcp://%s:%d", IP, port)
     return export
 }
