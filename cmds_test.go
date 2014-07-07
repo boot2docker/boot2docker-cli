@@ -14,7 +14,7 @@ func TestExportCommandWritten(t *testing.T) {
 	m := GetDummyMachine()
 	cmdShellSetup(m, &stdout)
 	result := stdout.String()
-	expected := "export DOCKER_HOST=tcp://alpha:1234\n"
+	expected := "export DOCKER_HOST=tcp://192.0.2.1:1234\n"
 	if result != expected {
 		t.Error(fmt.Sprintf("Got %#v, expected %#v", result, expected))
 	}

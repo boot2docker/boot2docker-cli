@@ -270,12 +270,13 @@ func RequestIPFromSSH(m *vbx.Machine) string {
 
 func GetIPForMachine(m *vbx.Machine) string {
 	/*
-		Determine the IP address for the default host-only network on a machine. In
-		the case of a dummy machine, return "alpha".
+		Determine the IP address for the default host-only network on a
+		machine. In the case of a dummy machine, return "192.0.2.1"
+		(TEST-NET-1 from http://tools.ietf.org/html/rfc5737).
 	*/
 	IP := ""
 	if m.UUID == "dummy" {
-		return "alpha"
+		return "192.0.2.1"
 	}
 	if B2D.Serial {
 		for i := 1; i < 20; i++ {
