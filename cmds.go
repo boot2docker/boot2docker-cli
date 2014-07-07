@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-    "io"
+	"io"
 	"io/ioutil"
 	"net"
 	"os"
@@ -465,7 +465,7 @@ func cmdIP() int {
 		return 1
 	}
 
-    IP := GetIPForMachine(m)
+	IP := GetIPForMachine(m)
 
 	if IP != "" {
 		errf("\nThe VM's Host only interface IP address is: ")
@@ -499,7 +499,7 @@ func cmdDownload() int {
 }
 
 func cmdShellSetup(m* vbx.Machine, out io.Writer) int {
-    export := DockerHostExportCommand(m)
-    fmt.Fprint(out, export, "\n")
-    return 0
+	export := DockerHostExportCommand(m)
+	fmt.Fprint(out, export, "\n")
+	return 0
 }

@@ -1,7 +1,7 @@
 package main
 
 import (
-    "os"
+	"os"
 	vbx "github.com/boot2docker/boot2docker-cli/virtualbox"
 )
 
@@ -29,7 +29,7 @@ func run() int {
 		return 1
 	}
 
-    stdout := os.Stdout
+	stdout := os.Stdout
 
 	switch cmd := flags.Arg(0); cmd {
 	case "download":
@@ -60,13 +60,13 @@ func run() int {
 		return cmdSSH()
 	case "ip":
 		return cmdIP()
-    case "shellsetup":
-        m, err := vbx.GetMachine(B2D.VM)
-        if err != nil {
-            logf("Failed to get machine %q: %s", B2D.VM, err)
-            return 2
-        }
-        return cmdShellSetup(m, stdout)
+	case "shellsetup":
+		m, err := vbx.GetMachine(B2D.VM)
+		if err != nil {
+			logf("Failed to get machine %q: %s", B2D.VM, err)
+			return 2
+		}
+		return cmdShellSetup(m, stdout)
 	case "version":
 		outf("Client version: %s\nGit commit: %s\n", Version, GitSHA)
 		return 0
