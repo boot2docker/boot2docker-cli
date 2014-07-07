@@ -465,20 +465,8 @@ func cmdIP() int {
 		return 1
 	}
 
-	IP := ""
-	if B2D.Serial {
-		for i := 1; i < 20; i++ {
-			if runtime.GOOS != "windows" {
-				if IP = RequestIPFromSerialPort(m.SerialFile); IP != "" {
-					break
-				}
-			}
-		}
-	}
+    IP := GetIPForMachine(m)
 
-	if IP == "" {
-		IP = RequestIPFromSSH(m)
-	}
 	if IP != "" {
 		errf("\nThe VM's Host only interface IP address is: ")
 		fmt.Printf("%s", IP)

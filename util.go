@@ -11,8 +11,10 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+    "runtime"
 	"strings"
 	"time"
+	vbx "github.com/boot2docker/boot2docker-cli/virtualbox"
 )
 
 // fmt.Printf to stdout. Convention is to outf info intended for scripting.
@@ -236,4 +238,24 @@ func RequestIPFromSerialPort(socket string) string {
 	}
 
 	return IP
+}
+
+// Get the IP for a machine
+func GetIPForMachine(m* vbx.Machine) string {
+	IP := ""
+	if B2D.Serial {
+		for i := 1; i < 20; i++ {
+			if runtime.GOOS != "windows" {
+				if IP = RequestIPFromSerialPort(m.SerialFile); IP != "" {
+					break
+				}
+			}
+		}
+	}
+
+	if IP == "" {
+		IP = RequestIPFromSSH(m)
+	}
+
+    return IP
 }
