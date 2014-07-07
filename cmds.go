@@ -243,7 +243,7 @@ func cmdUp() int {
 
 	logf("Waiting for VM to be started...")
 	//give the VM a little time to start, so we don't kill the Serial Pipe/Socket
-	time.Sleep(2)
+	time.Sleep(600 * time.Millisecond)
 	natSSH := fmt.Sprintf("localhost:%d", B2D.SSHPort)
 	IP := ""
 	for i := 1; i < 30; i++ {
@@ -265,12 +265,10 @@ func cmdUp() int {
 
 	if IP == "" {
 		// lets try one more time
-		time.Sleep(3)
+		time.Sleep(600 * time.Millisecond)
+		logf("  Trying to get IP one more time")
 
 		IP = RequestIPFromSSH(m)
-		if IP == "" {
-			logf("Auto detection of the VM's IP address failed.")
-		}
 	}
 	switch runtime.GOOS {
 	case "windows":
@@ -278,12 +276,17 @@ func cmdUp() int {
 		logf("    \"%s\" ssh", os.Args[0])
 		logf("to SSH into the VM instead.")
 	default:
-		// Check if $DOCKER_HOST ENV var is properly configured.
-		if os.Getenv("DOCKER_HOST") != fmt.Sprintf("tcp://%s:%d", IP, m.DockerPort) {
-			logf("To connect the Docker client to the Docker daemon, please set:")
-			logf("    export DOCKER_HOST=tcp://%s:%d", IP, m.DockerPort)
+		if IP == "" {
+			logf("Auto detection of the VM's IP address failed.")
+			logf("Please run `boot2docker -v up` to diagnose.")
 		} else {
-			logf("Your DOCKER_HOST env variable is already set correctly.")
+			// Check if $DOCKER_HOST ENV var is properly configured.
+			if os.Getenv("DOCKER_HOST") != fmt.Sprintf("tcp://%s:%d", IP, m.DockerPort) {
+				logf("To connect the Docker client to the Docker daemon, please set:")
+				logf("    export DOCKER_HOST=tcp://%s:%d", IP, m.DockerPort)
+			} else {
+				logf("Your DOCKER_HOST env variable is already set correctly.")
+			}
 		}
 	}
 	return 0

@@ -50,7 +50,7 @@ func run() int {
 		return cmdRestart()
 	case "reset":
 		return cmdReset()
-	case "delete":
+	case "delete", "destroy":
 		return cmdDelete()
 	case "info":
 		return cmdInfo()

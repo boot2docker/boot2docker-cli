@@ -190,8 +190,7 @@ func config() (*flag.FlagSet, error) {
 }
 
 func usageShort() {
-	errf("Usage: %s [<options>] {help|init|up|ssh|save|down|poweroff|reset|restart|config|status|info|ip|shellsetup|delete|download|version} [<args>]\n", os.Args[0])
-
+	errf("Usage: %s [<options>] {help|init|up|ssh|save|down|poweroff|reset|restart|config|status|info|ip|shellsetup|delete|destroy|download|version} [<args>]\n", os.Args[0])
 }
 
 func usageLong(flags *flag.FlagSet) {
@@ -209,7 +208,7 @@ Commands:
     restart                 Gracefully reboot the VM.
     poweroff                Forcefully power off the VM (might corrupt disk image).
     reset                   Forcefully power cycle the VM (might corrupt disk image).
-    delete                  Delete boot2docker VM and its disk image.
+    delete|destroy          Delete boot2docker VM and its disk image.
     config|cfg              Show selected profile file settings.
     info                    Display detailed information of VM.
     ip                      Display the IP address of the VM's Host-only network.

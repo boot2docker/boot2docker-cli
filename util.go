@@ -232,7 +232,7 @@ func RequestIPFromSerialPort(socket string) string {
 	}
 	go reader(c)
 	//give us time reader clean up
-	time.Sleep(1)
+	time.Sleep(1 * time.Second)
 	if IP == "" && B2D.Verbose {
 		logf(fullLog)
 	}
@@ -255,6 +255,9 @@ func RequestIPFromSSH(m *vbx.Machine) string {
 	if err != nil {
 		logf("%s", err)
 	} else {
+		if B2D.Verbose {
+			logf("SSH returned: %s\nEND SSH\n", out)
+		}
 		// parse to find: inet 192.168.59.103/24 brd 192.168.59.255 scope global eth1
 		lines := strings.Split(out, "\n")
 		for _, line := range lines {
