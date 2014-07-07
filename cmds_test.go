@@ -2,6 +2,7 @@ package main
 
 import (
     "bytes"
+    "fmt"
     "testing"
 )
 
@@ -13,9 +14,9 @@ func TestExportCommandWritten(t* testing.T) {
     m  := GetDummyMachine()
     cmdShellSetup(m, &stdout)
     result := stdout.String()
-    expected := "export DOCKER_HOST=tcp://alpha:1234"
+    expected := "export DOCKER_HOST=tcp://alpha:1234\n"
     if result != expected {
-        t.Error("Got", result, "expected", expected)
+        t.Error(fmt.Sprintf("Got %#v, expected %#v", result, expected))
     }
 }
 
