@@ -272,6 +272,9 @@ func RequestIPFromSSH(m *vbx.Machine) string {
 // Get the IP for a machine
 func GetIPForMachine(m* vbx.Machine) string {
 	IP := ""
+    if m.UUID == "dummy" {
+        return "alpha"
+    }
 	if B2D.Serial {
 		for i := 1; i < 20; i++ {
 			if runtime.GOOS != "windows" {

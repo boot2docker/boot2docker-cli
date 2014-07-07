@@ -8,5 +8,6 @@ import (
 func GetDummyMachine() (*vbx.Machine) {
     m := &vbx.Machine{}
     m.Name = "dummy"
+    m.UUID = "dummy"
     return m
 }
