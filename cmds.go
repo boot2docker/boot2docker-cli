@@ -5,12 +5,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"time"
 
 	vbx "github.com/boot2docker/boot2docker-cli/virtualbox"
@@ -468,20 +468,8 @@ func cmdIP() int {
 		return 1
 	}
 
-	IP := ""
-	if B2D.Serial {
-		for i := 1; i < 20; i++ {
-			if runtime.GOOS != "windows" {
-				if IP = RequestIPFromSerialPort(m.SerialFile); IP != "" {
-					break
-				}
-			}
-		}
-	}
+	IP := GetIPForMachine(m)
 
-	if IP == "" {
-		IP = RequestIPFromSSH(m)
-	}
 	if IP != "" {
 		errf("\nThe VM's Host only interface IP address is: ")
 		fmt.Printf("%s", IP)
@@ -491,37 +479,6 @@ func cmdIP() int {
 		errf("\tWas the VM initilized using boot2docker?\n")
 	}
 	return 0
-}
-
-func RequestIPFromSSH(m *vbx.Machine) string {
-	// fall back to using the NAT port forwarded ssh
-	out, err := cmd(B2D.SSH,
-		"-v", // please leave in - this seems to improve the chance of success
-		"-o", "StrictHostKeyChecking=no",
-		"-o", "UserKnownHostsFile=/dev/null",
-		"-p", fmt.Sprintf("%d", m.SSHPort),
-		"-i", B2D.SSHKey,
-		"docker@localhost",
-		"ip addr show dev eth1",
-	)
-	IP := ""
-	if err != nil {
-		logf("%s", err)
-	} else {
-		if B2D.Verbose {
-			logf("SSH returned: %s\nEND SSH\n", out)
-		}
-		// parse to find: inet 192.168.59.103/24 brd 192.168.59.255 scope global eth1
-		lines := strings.Split(out, "\n")
-		for _, line := range lines {
-			vals := strings.Split(strings.TrimSpace(line), " ")
-			if len(vals) >= 2 && vals[0] == "inet" {
-				IP = vals[1][:strings.Index(vals[1], "/")]
-				break
-			}
-		}
-	}
-	return IP
 }
 
 // Download the boot2docker ISO image.
@@ -541,5 +498,11 @@ func cmdDownload() int {
 		return 1
 	}
 	logf("Success: downloaded %s\n\tto %s", url, B2D.ISO)
+	return 0
+}
+
+func cmdShellSetup(m *vbx.Machine, out io.Writer) int {
+	export := DockerHostExportCommand(m)
+	fmt.Fprint(out, export, "\n")
 	return 0
 }

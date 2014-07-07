@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	vbx "github.com/boot2docker/boot2docker-cli/virtualbox"
 	"io"
 	"log"
 	"net"
@@ -11,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -236,4 +238,73 @@ func RequestIPFromSerialPort(socket string) string {
 	}
 
 	return IP
+}
+
+func RequestIPFromSSH(m *vbx.Machine) string {
+	// fall back to using the NAT port forwarded ssh
+	out, err := cmd(B2D.SSH,
+		"-v", // please leave in - this seems to improve the chance of success
+		"-o", "StrictHostKeyChecking=no",
+		"-o", "UserKnownHostsFile=/dev/null",
+		"-p", fmt.Sprintf("%d", m.SSHPort),
+		"-i", B2D.SSHKey,
+		"docker@localhost",
+		"ip addr show dev eth1",
+	)
+	IP := ""
+	if err != nil {
+		logf("%s", err)
+	} else {
+		if B2D.Verbose {
+			logf("SSH returned: %s\nEND SSH\n", out)
+		}
+		// parse to find: inet 192.168.59.103/24 brd 192.168.59.255 scope global eth1
+		lines := strings.Split(out, "\n")
+		for _, line := range lines {
+			vals := strings.Split(strings.TrimSpace(line), " ")
+			if len(vals) >= 2 && vals[0] == "inet" {
+				IP = vals[1][:strings.Index(vals[1], "/")]
+				break
+			}
+		}
+	}
+	return IP
+}
+
+func GetIPForMachine(m *vbx.Machine) string {
+	/*
+		Determine the IP address for the default host-only network on a
+		machine. In the case of a dummy machine, return "192.0.2.1"
+		(TEST-NET-1 from http://tools.ietf.org/html/rfc5737).
+	*/
+	IP := ""
+	if m.UUID == "dummy" {
+		return "192.0.2.1"
+	}
+	if B2D.Serial {
+		for i := 1; i < 20; i++ {
+			if runtime.GOOS != "windows" {
+				if IP = RequestIPFromSerialPort(m.SerialFile); IP != "" {
+					break
+				}
+			}
+		}
+	}
+
+	if IP == "" {
+		IP = RequestIPFromSSH(m)
+	}
+
+	return IP
+}
+
+func DockerHostExportCommand(m *vbx.Machine) string {
+	/*
+		Calculate the correct export command to set the DOCKER_HOST environment
+		variable.
+	*/
+	IP := GetIPForMachine(m)
+	port := m.DockerPort
+	export := fmt.Sprintf("export DOCKER_HOST=tcp://%s:%d", IP, port)
+	return export
 }
