@@ -269,8 +269,11 @@ func RequestIPFromSSH(m *vbx.Machine) string {
 }
 
 
-// Get the IP for a machine
 func GetIPForMachine(m* vbx.Machine) string {
+    /*
+    Determine the IP address for the default host-only network on a machine. In
+    the case of a dummy machine, return "alpha".
+    */
 	IP := ""
     if m.UUID == "dummy" {
         return "alpha"
@@ -290,4 +293,15 @@ func GetIPForMachine(m* vbx.Machine) string {
 	}
 
     return IP
+}
+
+func DockerHostExportCommand(m* vbx.Machine) string {
+    /*
+    Calculate the correct export command to set the DOCKER_HOST environment
+    variable.
+    */
+    IP := GetIPForMachine(m)
+    port := m.DockerPort
+    export := fmt.Sprintf("export DOCKER_HOST=tcp://%s:%s", IP, port)
+    return export
 }

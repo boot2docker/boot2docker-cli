@@ -26,6 +26,8 @@ func run() int {
 		return 1
 	}
 
+    stdout := os.Stdout
+
 	switch cmd := flags.Arg(0); cmd {
 	case "download":
 		return cmdDownload()
@@ -55,6 +57,8 @@ func run() int {
 		return cmdSSH()
 	case "ip":
 		return cmdIP()
+    case "shellsetup":
+        return cmdShellSetup(stdout)
 	case "version":
 		outf("Client version: %s\nGit commit: %s\n", Version, GitSHA)
 		return 0

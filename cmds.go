@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+    "io"
 	"io/ioutil"
 	"net"
 	"os"
@@ -495,4 +496,8 @@ func cmdDownload() int {
 	}
 	logf("Success: downloaded %s\n\tto %s", url, B2D.ISO)
 	return 0
+}
+
+func cmdShellSetup(out io.Writer) int {
+    return 0
 }
