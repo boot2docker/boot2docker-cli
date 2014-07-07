@@ -498,6 +498,8 @@ func cmdDownload() int {
 	return 0
 }
 
-func cmdShellSetup(out io.Writer) int {
+func cmdShellSetup(m* vbx.Machine, out io.Writer) int {
+    export := DockerHostExportCommand(m)
+    fmt.Fprint(out, export)
     return 0
 }
