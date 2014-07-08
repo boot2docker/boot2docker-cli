@@ -181,7 +181,7 @@ func reader(r io.Reader) {
 	}
 }
 
-// use the serial port socket to ask what the VM's host only IP is
+// Determine the IP from running 'ip addr' on the host (using using the serial console).
 func RequestIPFromSerialPort(socket string) string {
 	c, err := net.Dial("unix", socket)
 
@@ -240,8 +240,8 @@ func RequestIPFromSerialPort(socket string) string {
 	return IP
 }
 
+// Determine the IP from running 'ip addr' on the host (using the NAT port forwarded ssh).
 func RequestIPFromSSH(m *vbx.Machine) string {
-	// fall back to using the NAT port forwarded ssh
 	out, err := cmd(B2D.SSH,
 		"-v", // please leave in - this seems to improve the chance of success
 		"-o", "StrictHostKeyChecking=no",
@@ -271,12 +271,9 @@ func RequestIPFromSSH(m *vbx.Machine) string {
 	return IP
 }
 
+// Determine the IP address for the default host-only network on a machine.
+// In the case of a dummy machine, return "192.0.2.1" (TEST-NET-1 from http://tools.ietf.org/html/rfc5737).
 func GetIPForMachine(m *vbx.Machine) string {
-	/*
-		Determine the IP address for the default host-only network on a
-		machine. In the case of a dummy machine, return "192.0.2.1"
-		(TEST-NET-1 from http://tools.ietf.org/html/rfc5737).
-	*/
 	IP := ""
 	if m.UUID == "dummy" {
 		return "192.0.2.1"
@@ -298,11 +295,8 @@ func GetIPForMachine(m *vbx.Machine) string {
 	return IP
 }
 
+// Calculate the correct export command to set the DOCKER_HOST environment variable.
 func DockerHostExportCommand(m *vbx.Machine) string {
-	/*
-		Calculate the correct export command to set the DOCKER_HOST environment
-		variable.
-	*/
 	IP := GetIPForMachine(m)
 	port := m.DockerPort
 	export := fmt.Sprintf("export DOCKER_HOST=tcp://%s:%d", IP, port)
