@@ -10,50 +10,14 @@ import (
 	"runtime"
 
 	toml "github.com/BurntSushi/toml"
-	vbx "github.com/boot2docker/boot2docker-cli/virtualbox"
+	"github.com/boot2docker/boot2docker-cli/driver"
 	flag "github.com/ogier/pflag"
 )
-
-// boot2docker config.
-var B2D struct {
-	// NOTE: separate sections with blank lines so gofmt doesn't change
-	// indentation all the time.
-
-	// Gereral flags.
-	Verbose bool
-	VBM     string
-
-	// basic config
-	SSH      string // SSH client executable
-	SSHGen   string // SSH keygen executable
-	SSHKey   string // SSH key to send to the vm
-	VM       string // virtual machine name
-	Dir      string // boot2docker directory
-	ISO      string // boot2docker ISO image path
-	VMDK     string // base VMDK to use as persistent disk
-	DiskSize uint   // VM disk image size (MB)
-	Memory   uint   // VM memory size (MB)
-
-	// NAT network: port forwarding
-	SSHPort    uint16 // host SSH port (forward to port 22 in VM)
-	DockerPort uint16 // host Docker port (forward to port 2375 in VM)
-
-	// host-only network
-	HostIP      net.IP
-	DHCPIP      net.IP
-	NetMask     net.IPMask
-	LowerIP     net.IP
-	UpperIP     net.IP
-	DHCPEnabled bool
-
-	// Serial console pipe/socket
-	Serial     bool
-	SerialFile string
-}
 
 var (
 	// Pattern to parse a key=value line in config profile.
 	reFlagLine = regexp.MustCompile(`^\s*(\w+)\s*=\s*([^#;]+)`)
+	B2D        = driver.MachineConfig{}
 )
 
 func getCfgDir(name string) (string, error) {
@@ -124,8 +88,10 @@ func config() (*flag.FlagSet, error) {
 		}
 		vbm = filepath.Join(p, "VBoxManage.exe")
 	}
+	flags.BoolVarP(&B2D.Init, "init", "i", false, "auto initialize vm instance.")
 	flags.StringVar(&B2D.VBM, "vbm", vbm, "path to VirtualBox management utility.")
 	flags.BoolVarP(&B2D.Verbose, "verbose", "v", false, "display verbose command invocations.")
+	flags.StringVar(&B2D.Driver, "driver", "virtualbox", "hypervisor driver.")
 	flags.StringVar(&B2D.SSH, "ssh", "ssh", "path to SSH client utility.")
 	flags.StringVar(&B2D.SSHGen, "ssh-keygen", "ssh-keygen", "path to ssh-keygen utility.")
 
@@ -174,9 +140,6 @@ func config() (*flag.FlagSet, error) {
 		return nil, err
 	}
 
-	vbx.Verbose = B2D.Verbose
-	vbx.VBM = B2D.VBM
-
 	if B2D.SerialFile == "" {
 		if runtime.GOOS == "windows" {
 			//SerialFile ~~ filepath.Join(dir, B2D.vm+".sock")
@@ -190,7 +153,7 @@ func config() (*flag.FlagSet, error) {
 }
 
 func usageShort() {
-	errf("Usage: %s [<options>] {help|init|up|ssh|save|down|poweroff|reset|restart|config|status|info|ip|delete|destroy|download|upgrade|version} [<args>]\n", os.Args[0])
+	errf("Usage: %s [<options>] {help|init|up|ssh|save|down|poweroff|reset|restart|config|status|info|ip|delete|destroy|download|version} [<args>]\n", os.Args[0])
 }
 
 func usageLong(flags *flag.FlagSet) {

@@ -1,22 +1,20 @@
 package virtualbox
 
 import (
+	"archive/tar"
 	"bufio"
+	"bytes"
 	"fmt"
+	"io/ioutil"
+	"net"
+	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
-)
 
-type MachineState string
-
-const (
-	Poweroff = MachineState("poweroff")
-	Running  = MachineState("running")
-	Paused   = MachineState("paused")
-	Saved    = MachineState("saved")
-	Aborted  = MachineState("aborted")
+	"github.com/boot2docker/boot2docker-cli/driver"
 )
 
 type Flag int
@@ -40,6 +38,19 @@ const (
 	F_accelerate3d
 )
 
+func init() {
+	driver.Register("virtualbox", InitFunc)
+}
+
+// Initialize the Machine.
+func InitFunc(mc *driver.MachineConfig) (driver.Machine, error) {
+	m, err := GetMachine(mc.VM)
+	if err != nil && mc.Init == true {
+		return CreateMachine(mc)
+	}
+	return m, err
+}
+
 // Convert bool to "on"/"off"
 func bool2string(b bool) string {
 	if b {
@@ -57,7 +68,7 @@ func (f Flag) Get(o Flag) string {
 type Machine struct {
 	Name       string
 	UUID       string
-	State      MachineState
+	State      driver.MachineState
 	CPUs       uint
 	Memory     uint // main memory (in MB)
 	VRAM       uint // video memory (in MB)
@@ -88,13 +99,13 @@ func (m *Machine) Refresh() error {
 // Start starts the machine.
 func (m *Machine) Start() error {
 	switch m.State {
-	case Paused:
+	case driver.Paused:
 		return vbm("controlvm", m.Name, "resume")
-	case Poweroff, Saved, Aborted:
+	case driver.Poweroff, driver.Saved, driver.Aborted:
 		return vbm("startvm", m.Name, "--type", "headless")
 	}
 	if err := m.Refresh(); err == nil {
-		if m.State != Running {
+		if m.State != driver.Running {
 			return fmt.Errorf("Failed to start", m.Name)
 		}
 	}
@@ -104,11 +115,11 @@ func (m *Machine) Start() error {
 // Suspend suspends the machine and saves its state to disk.
 func (m *Machine) Save() error {
 	switch m.State {
-	case Paused:
+	case driver.Paused:
 		if err := m.Start(); err != nil {
 			return err
 		}
-	case Poweroff, Aborted, Saved:
+	case driver.Poweroff, driver.Aborted, driver.Saved:
 		return nil
 	}
 	return vbm("controlvm", m.Name, "savestate")
@@ -117,7 +128,7 @@ func (m *Machine) Save() error {
 // Pause pauses the execution of the machine.
 func (m *Machine) Pause() error {
 	switch m.State {
-	case Paused, Poweroff, Aborted, Saved:
+	case driver.Paused, driver.Poweroff, driver.Aborted, driver.Saved:
 		return nil
 	}
 	return vbm("controlvm", m.Name, "pause")
@@ -126,15 +137,15 @@ func (m *Machine) Pause() error {
 // Stop gracefully stops the machine.
 func (m *Machine) Stop() error {
 	switch m.State {
-	case Poweroff, Aborted, Saved:
+	case driver.Poweroff, driver.Aborted, driver.Saved:
 		return nil
-	case Paused:
+	case driver.Paused:
 		if err := m.Start(); err != nil {
 			return err
 		}
 	}
 
-	for m.State != Poweroff { // busy wait until the machine is stopped
+	for m.State != driver.Poweroff { // busy wait until the machine is stopped
 		if err := vbm("controlvm", m.Name, "acpipowerbutton"); err != nil {
 			return err
 		}
@@ -149,7 +160,7 @@ func (m *Machine) Stop() error {
 // Poweroff forcefully stops the machine. State is lost and might corrupt the disk image.
 func (m *Machine) Poweroff() error {
 	switch m.State {
-	case Poweroff, Aborted, Saved:
+	case driver.Poweroff, driver.Aborted, driver.Saved:
 		return nil
 	}
 	return vbm("controlvm", m.Name, "poweroff")
@@ -158,7 +169,7 @@ func (m *Machine) Poweroff() error {
 // Restart gracefully restarts the machine.
 func (m *Machine) Restart() error {
 	switch m.State {
-	case Paused, Saved:
+	case driver.Paused, driver.Saved:
 		if err := m.Start(); err != nil {
 			return err
 		}
@@ -172,7 +183,7 @@ func (m *Machine) Restart() error {
 // Reset forcefully restarts the machine. State is lost and might corrupt the disk image.
 func (m *Machine) Reset() error {
 	switch m.State {
-	case Paused, Saved:
+	case driver.Paused, driver.Saved:
 		if err := m.Start(); err != nil {
 			return err
 		}
@@ -186,6 +197,26 @@ func (m *Machine) Delete() error {
 		return err
 	}
 	return vbm("unregistervm", m.Name, "--delete")
+}
+
+// Get current state
+func (m *Machine) GetState() driver.MachineState {
+	return m.State
+}
+
+// Get serial file
+func (m *Machine) GetSerialFile() string {
+	return m.SerialFile
+}
+
+// Get Docker port
+func (m *Machine) GetDockerPort() uint {
+	return m.DockerPort
+}
+
+// Get SSH port
+func (m *Machine) GetSSHPort() uint {
+	return m.SSHPort
 }
 
 // GetMachine finds a machine by its name or UUID.
@@ -219,7 +250,7 @@ func GetMachine(id string) (*Machine, error) {
 		case "UUID":
 			m.UUID = val
 		case "VMState":
-			m.State = MachineState(val)
+			m.State = driver.MachineState(val)
 		case "memory":
 			n, err := strconv.ParseUint(val, 10, 32)
 			if err != nil {
@@ -294,8 +325,8 @@ func ListMachines() ([]string, error) {
 }
 
 // CreateMachine creates a new machine. If basefolder is empty, use default.
-func CreateMachine(name, basefolder string) (*Machine, error) {
-	if name == "" {
+func CreateMachine(mc *driver.MachineConfig) (*Machine, error) {
+	if mc.VM == "" {
 		return nil, fmt.Errorf("machine name is empty")
 	}
 
@@ -305,23 +336,140 @@ func CreateMachine(name, basefolder string) (*Machine, error) {
 		return nil, err
 	}
 	for _, m := range machineNames {
-		if m == name {
+		if m == mc.VM {
 			return nil, ErrMachineExist
 		}
 	}
 
 	// Create and register the machine.
-	args := []string{"createvm", "--name", name, "--register"}
-	if basefolder != "" {
-		args = append(args, "--basefolder", basefolder)
-	}
+	args := []string{"createvm", "--name", mc.VM, "--register"}
 	if err := vbm(args...); err != nil {
 		return nil, err
 	}
 
-	m, err := GetMachine(name)
+	m, err := GetMachine(mc.VM)
 	if err != nil {
 		return nil, err
+	}
+
+	// Configure VM for Boot2docker
+	SetExtra(mc.VM, "VBoxInternal/CPUM/EnableHVP", "1")
+	m.OSType = "Linux26_64"
+	m.CPUs = uint(runtime.NumCPU())
+	m.Memory = mc.Memory
+	m.SerialFile = mc.SerialFile
+
+	m.Flag |= F_pae
+	m.Flag |= F_longmode // important: use x86-64 processor
+	m.Flag |= F_rtcuseutc
+	m.Flag |= F_acpi
+	m.Flag |= F_ioapic
+	m.Flag |= F_hpet
+	m.Flag |= F_hwvirtex
+	m.Flag |= F_vtxvpid
+	m.Flag |= F_largepages
+	m.Flag |= F_nestedpaging
+
+	// Set VM boot order
+	m.BootOrder = []string{"dvd"}
+	if err := m.Modify(); err != nil {
+		return m, err
+	}
+
+	// Set NIC #1 to use NAT
+	m.SetNIC(1, driver.NIC{Network: driver.NICNetNAT, Hardware: driver.VirtIO})
+	pfRules := map[string]driver.PFRule{
+		"ssh":    {Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: mc.SSHPort, GuestPort: driver.SSHPort},
+	}
+	if driver.DockerPort > 0 {
+		pfRules["docker"] = vbx.PFRule{Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: mc.DockerPort, GuestPort: driver.dockerPort}
+	}
+
+	for name, rule := range pfRules {
+		if err := m.AddNATPF(1, name, rule); err != nil {
+			return m, err
+		}
+	}
+
+	hostIFName, err := getHostOnlyNetworkInterface(mc)
+	if err != nil {
+		return m, err
+	}
+
+	// Set NIC #2 to use host-only
+	if err := m.SetNIC(2, driver.NIC{Network: driver.NICNetHostonly, Hardware: driver.VirtIO, HostonlyAdapter: hostIFName}); err != nil {
+		return m, err
+	}
+
+	// Set VM storage
+	if err := m.AddStorageCtl("SATA", driver.StorageController{SysBus: driver.SysBusSATA, HostIOCache: true, Bootable: true}); err != nil {
+		return m, err
+	}
+
+	// Attach ISO image
+	if err := m.AttachStorage("SATA", driver.StorageMedium{Port: 0, Device: 0, DriveType: driver.DriveDVD, Medium: mc.ISO}); err != nil {
+		return m, err
+	}
+
+	diskImg := filepath.Join(m.BaseFolder, fmt.Sprintf("%s.vmdk", mc.VM))
+	if _, err := os.Stat(diskImg); err != nil {
+		if !os.IsNotExist(err) {
+			return m, err
+		}
+
+		if mc.VMDK != "" {
+			if err := copyDiskImage(diskImg, mc.VMDK); err != nil {
+				return m, err
+			}
+		} else {
+			magicString := "boot2docker, please format-me"
+
+			buf := new(bytes.Buffer)
+			tw := tar.NewWriter(buf)
+
+			// magicString first so the automount script knows to format the disk
+			file := &tar.Header{Name: magicString, Size: int64(len(magicString))}
+			if err := tw.WriteHeader(file); err != nil {
+				return m, err
+			}
+			if _, err := tw.Write([]byte(magicString)); err != nil {
+				return m, err
+			}
+			// .ssh/key.pub => authorized_keys
+			file = &tar.Header{Name: ".ssh", Typeflag: tar.TypeDir, Mode: 0700}
+			if err := tw.WriteHeader(file); err != nil {
+				return m, err
+			}
+			pubKey, err := ioutil.ReadFile(mc.SSHKey + ".pub")
+			if err != nil {
+				return m, err
+			}
+			file = &tar.Header{Name: ".ssh/authorized_keys", Size: int64(len(pubKey)), Mode: 0644}
+			if err := tw.WriteHeader(file); err != nil {
+				return m, err
+			}
+			if _, err := tw.Write([]byte(pubKey)); err != nil {
+				return m, err
+			}
+			file = &tar.Header{Name: ".ssh/authorized_keys2", Size: int64(len(pubKey)), Mode: 0644}
+			if err := tw.WriteHeader(file); err != nil {
+				return m, err
+			}
+			if _, err := tw.Write([]byte(pubKey)); err != nil {
+				return m, err
+			}
+			if err := tw.Close(); err != nil {
+				return m, err
+			}
+
+			if err := makeDiskImage(diskImg, mc.DiskSize, buf.Bytes()); err != nil {
+				return m, err
+			}
+		}
+	}
+
+	if err := m.AttachStorage("SATA", driver.StorageMedium{Port: 1, Device: 0, DriveType: driver.DriveHDD, Medium: diskImg}); err != nil {
+		return m, err
 	}
 
 	return m, nil
@@ -379,7 +527,7 @@ func (m *Machine) Modify() error {
 }
 
 // AddNATPF adds a NAT port forarding rule to the n-th NIC with the given name.
-func (m *Machine) AddNATPF(n int, name string, rule PFRule) error {
+func (m *Machine) AddNATPF(n int, name string, rule driver.PFRule) error {
 	return vbm("controlvm", m.Name, fmt.Sprintf("natpf%d", n),
 		fmt.Sprintf("%s,%s", name, rule.Format()))
 }
@@ -390,7 +538,7 @@ func (m *Machine) DelNATPF(n int, name string) error {
 }
 
 // SetNIC set the n-th NIC.
-func (m *Machine) SetNIC(n int, nic NIC) error {
+func (m *Machine) SetNIC(n int, nic driver.NIC) error {
 	args := []string{"modifyvm", m.Name,
 		fmt.Sprintf("--nic%d", n), string(nic.Network),
 		fmt.Sprintf("--nictype%d", n), string(nic.Hardware),
@@ -404,7 +552,7 @@ func (m *Machine) SetNIC(n int, nic NIC) error {
 }
 
 // AddStorageCtl adds a storage controller with the given name.
-func (m *Machine) AddStorageCtl(name string, ctl StorageController) error {
+func (m *Machine) AddStorageCtl(name string, ctl driver.StorageController) error {
 	args := []string{"storagectl", m.Name, "--name", name}
 	if ctl.SysBus != "" {
 		args = append(args, "--add", string(ctl.SysBus))
@@ -426,7 +574,7 @@ func (m *Machine) DelStorageCtl(name string) error {
 }
 
 // AttachStorage attaches a storage medium to the named storage controller.
-func (m *Machine) AttachStorage(ctlName string, medium StorageMedium) error {
+func (m *Machine) AttachStorage(ctlName string, medium driver.StorageMedium) error {
 	return vbm("storageattach", m.Name, "--storagectl", ctlName,
 		"--port", fmt.Sprintf("%d", medium.Port),
 		"--device", fmt.Sprintf("%d", medium.Device),
