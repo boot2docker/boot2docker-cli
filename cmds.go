@@ -503,6 +503,6 @@ func cmdDownload() int {
 
 func cmdShellSetup(m *vbx.Machine, out io.Writer) int {
 	export := DockerHostExportCommand(m)
-	fmt.Fprint(out, export, "\n")
+	fmt.Fprintln(out, export)
 	return 0
 }
