@@ -468,9 +468,9 @@ func cmdIP() int {
 		return 1
 	}
 
-	IP := GetIPForMachine(m)
+	IP, err := GetIPForMachine(m)
 
-	if IP != "" {
+	if err != nil {
 		errf("\nThe VM's Host only interface IP address is: ")
 		fmt.Printf("%s", IP)
 		errf("\n\n")
@@ -502,7 +502,12 @@ func cmdDownload() int {
 }
 
 func cmdShellSetup(m *vbx.Machine, out io.Writer) int {
-	export := DockerHostExportCommand(m)
+	export, err := DockerHostExportCommand(m)
+	if err != nil {
+		errf("\nFailed to get VM Host only IP address.\n")
+		errf("\tWas the VM initilized using boot2docker?\n")
+		return 1
+	}
 	fmt.Fprintln(out, export)
 	return 0
 }

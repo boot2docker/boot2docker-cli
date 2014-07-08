@@ -15,6 +15,11 @@ import (
 	"runtime"
 	"strings"
 	"time"
+	"errors"
+)
+
+var (
+	ErrCouldNotDetermineIP = errors.New("Could not deternmine IP address of boot2docker VM.")
 )
 
 // fmt.Printf to stdout. Convention is to outf info intended for scripting.
@@ -273,10 +278,10 @@ func RequestIPFromSSH(m *vbx.Machine) string {
 
 // Determine the IP address for the default host-only network on a machine.
 // In the case of a dummy machine, return "192.0.2.1" (TEST-NET-1 from http://tools.ietf.org/html/rfc5737).
-func GetIPForMachine(m *vbx.Machine) string {
+func GetIPForMachine(m *vbx.Machine) (string, error) {
 	IP := ""
 	if m.UUID == "dummy" {
-		return "192.0.2.1"
+		return "192.0.2.1", nil
 	}
 	if B2D.Serial {
 		for i := 1; i < 20; i++ {
@@ -292,13 +297,20 @@ func GetIPForMachine(m *vbx.Machine) string {
 		IP = RequestIPFromSSH(m)
 	}
 
-	return IP
+	if IP == "" {
+		return "", ErrCouldNotDetermineIP
+	}
+
+	return IP, nil
 }
 
 // Calculate the correct export command to set the DOCKER_HOST environment variable.
-func DockerHostExportCommand(m *vbx.Machine) string {
-	IP := GetIPForMachine(m)
+func DockerHostExportCommand(m *vbx.Machine) (string, error) {
+	IP, err := GetIPForMachine(m)
+	if err != nil {
+		return "", err
+	}
 	port := m.DockerPort
 	export := fmt.Sprintf("export DOCKER_HOST=tcp://%s:%d", IP, port)
-	return export
+	return export, nil
 }
