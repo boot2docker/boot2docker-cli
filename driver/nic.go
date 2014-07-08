@@ -1,4 +1,4 @@
-package virtualbox
+package driver
 
 // NIC represents a virtualized network interface card.
 type NIC struct {

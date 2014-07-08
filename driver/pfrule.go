@@ -1,4 +1,4 @@
-package virtualbox
+package driver
 
 import (
 	"fmt"
