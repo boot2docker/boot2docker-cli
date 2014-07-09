@@ -88,6 +88,7 @@ func config() (*flag.FlagSet, error) {
 		}
 		vbm = filepath.Join(p, "VBoxManage.exe")
 	}
+	flags.BoolVarP(&B2D.Init, "init", "i", false, "auto initialize vm instance.")
 	flags.StringVar(&B2D.VBM, "vbm", vbm, "path to VirtualBox management utility.")
 	flags.BoolVarP(&B2D.Verbose, "verbose", "v", false, "display verbose command invocations.")
 	flags.StringVar(&B2D.Driver, "driver", "virtualbox", "hypervisor driver.")
@@ -152,7 +153,7 @@ func config() (*flag.FlagSet, error) {
 }
 
 func usageShort() {
-	errf("Usage: %s [<options>] {help|up|ssh|save|down|poweroff|reset|restart|config|status|info|ip|delete|destroy|download|version} [<args>]\n", os.Args[0])
+	errf("Usage: %s [<options>] {help|init|up|ssh|save|down|poweroff|reset|restart|config|status|info|ip|delete|destroy|download|version} [<args>]\n", os.Args[0])
 
 }
 
@@ -163,6 +164,7 @@ func usageLong(flags *flag.FlagSet) {
 boot2docker management utility.
 
 Commands:
+    init                    Create a new boot2docker VM.
     up|start|boot           Start VM from any states.
     ssh [ssh-command]       Login to VM via SSH.
     save|suspend            Suspend VM and save state to disk.

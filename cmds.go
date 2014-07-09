@@ -16,6 +16,17 @@ import (
 
 const dockerPort = 2375
 
+// Initialize the boot2docker VM from scratch.
+func cmdInit() int {
+	B2D.Init = true
+	_, err := driver.GetMachine(&B2D)
+	if err != nil {
+		logf("Failed to initialize machine %q: %s", B2D.VM, err)
+		return 1
+	}
+	return 0
+}
+
 // Bring up the VM from all possible states.
 func cmdUp() int {
 	m, err := driver.GetMachine(&B2D)
@@ -40,7 +51,7 @@ func cmdUp() int {
 	logf("Waiting for VM to be started...")
 	//give the VM a little time to start, so we don't kill the Serial Pipe/Socket
 	time.Sleep(600 * time.Millisecond)
-	natSSH := fmt.Sprintf("localhost:%d", m.SSHPort)
+	natSSH := fmt.Sprintf("localhost:%d", m.GetSSHPort())
 	IP := ""
 	for i := 1; i < 30; i++ {
 		if B2D.Serial && runtime.GOOS != "windows" {

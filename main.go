@@ -31,6 +31,8 @@ func run() int {
 		return cmdDownload()
 	case "config", "cfg":
 		return cmdConfig()
+	case "init":
+		return cmdInit()
 	case "up", "start", "boot", "resume":
 		return cmdUp()
 	case "save", "suspend":

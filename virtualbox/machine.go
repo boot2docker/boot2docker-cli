@@ -45,10 +45,10 @@ func init() {
 // Initialize the Machine.
 func InitFunc(i *driver.MachineConfig) (driver.Machine, error) {
 	m, err := GetMachine(i.VM)
-	if err != nil {
+	if err != nil && i.Init == true {
 		return CreateMachine(i)
 	}
-	return m, nil
+	return m, err
 }
 
 // Convert bool to "on"/"off"

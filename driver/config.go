@@ -5,6 +5,7 @@ import "net"
 // Machine config.
 type MachineConfig struct {
 	// Gereral flags.
+	Init    bool
 	Verbose bool
 	VBM     string
 	Driver  string
