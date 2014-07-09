@@ -241,27 +241,28 @@ func GetMachine(id string) (*Machine, error) {
 		case "CfgFile":
 			m.CfgFile = val
 			m.BaseFolder = filepath.Dir(val)
-		case "Forwarding(0)":
-			// Forwarding(0)="docker,tcp,127.0.0.1,5555,,"
-			vals := strings.Split(val, ",")
-			n, err := strconv.ParseUint(vals[3], 10, 32)
-			if err != nil {
-				return nil, err
-			}
-			m.DockerPort = uint(n)
-		case "Forwarding(1)":
-			// Forwarding(1)="ssh,tcp,127.0.0.1,2222,,22"
-			vals := strings.Split(val, ",")
-			n, err := strconv.ParseUint(vals[3], 10, 32)
-			if err != nil {
-				return nil, err
-			}
-			m.SSHPort = uint(n)
 		case "uartmode1":
 			// uartmode1="server,/home/sven/.boot2docker/boot2docker-vm.sock"
 			vals := strings.Split(val, ",")
 			if len(vals) >= 2 {
 				m.SerialFile = vals[1]
+			}
+		default:
+			if strings.HasPrefix(key, "Forwarding(") {
+				// "Forwarding(\d*)" are ordered by the name inside the val, not fixed order.
+				// Forwarding(0)="docker,tcp,127.0.0.1,5555,,"
+				// Forwarding(1)="ssh,tcp,127.0.0.1,2222,,22"
+				vals := strings.Split(val, ",")
+				n, err := strconv.ParseUint(vals[3], 10, 32)
+				if err != nil {
+					return nil, err
+				}
+				switch vals[0] {
+				case "docker":
+					m.DockerPort = uint(n)
+				case "ssh":
+					m.SSHPort = uint(n)
+				}
 			}
 		}
 	}
