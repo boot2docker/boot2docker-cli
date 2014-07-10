@@ -246,7 +246,7 @@ func cmdUp() int {
 	logf("Waiting for VM to be started...")
 	//give the VM a little time to start, so we don't kill the Serial Pipe/Socket
 	time.Sleep(600 * time.Millisecond)
-	natSSH := fmt.Sprintf("localhost:%d", B2D.SSHPort)
+	natSSH := fmt.Sprintf("localhost:%d", m.SSHPort)
 	IP := ""
 	for i := 1; i < 30; i++ {
 		if B2D.Serial && runtime.GOOS != "windows" {
