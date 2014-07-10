@@ -16,6 +16,8 @@ import (
 	vbx "github.com/boot2docker/boot2docker-cli/virtualbox"
 )
 
+const dockerPort = 2375
+
 // Initialize the boot2docker VM from scratch.
 func cmdInit() int {
 	// TODO(@riobard) break up this command into multiple stages
@@ -106,7 +108,7 @@ func cmdInit() int {
 
 	pfRules := map[string]vbx.PFRule{
 		"ssh":    {Proto: vbx.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: B2D.SSHPort, GuestPort: 22},
-		"docker": {Proto: vbx.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: B2D.DockerPort, GuestPort: 2375},
+		"docker": {Proto: vbx.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: B2D.DockerPort, GuestPort: dockerPort},
 	}
 
 	for name, rule := range pfRules {
@@ -281,9 +283,9 @@ func cmdUp() int {
 			logf("Please run `boot2docker -v up` to diagnose.")
 		} else {
 			// Check if $DOCKER_HOST ENV var is properly configured.
-			if os.Getenv("DOCKER_HOST") != fmt.Sprintf("tcp://%s:%d", IP, m.DockerPort) {
+			if os.Getenv("DOCKER_HOST") != fmt.Sprintf("tcp://%s:%d", IP, dockerPort) {
 				logf("To connect the Docker client to the Docker daemon, please set:")
-				logf("    export DOCKER_HOST=tcp://%s:%d", IP, m.DockerPort)
+				logf("    export DOCKER_HOST=tcp://%s:%d", IP, dockerPort)
 			} else {
 				logf("Your DOCKER_HOST env variable is already set correctly.")
 			}
