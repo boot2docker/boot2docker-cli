@@ -350,6 +350,20 @@ func cmdPoweroff() int {
 	return 0
 }
 
+// Upgrade the boot2docker iso - preserving server state
+func cmdUpgrade() int {
+	m, err := vbx.GetMachine(B2D.VM)
+	if err == nil && m.State == vbx.Running {
+		if cmdDownload() == 0 && cmdStop() == 0 {
+			return cmdUp()
+		} else {
+			return 0
+		}
+	} else {
+		return cmdDownload()
+	}
+}
+
 // Gracefully stop and then start the VM.
 func cmdRestart() int {
 	m, err := vbx.GetMachine(B2D.VM)

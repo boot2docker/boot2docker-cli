@@ -11,3 +11,4 @@ nbproject
 *.sublime-project
 *.sublime-workspace
 *.swp
+boot2docker-cli
