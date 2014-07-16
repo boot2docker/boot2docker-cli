@@ -146,22 +146,20 @@ func copyDiskImage(dst, src string) (err error) {
 	if err != nil {
 		return err
 	}
-	closeSrcImg := func() {
+	defer func() {
 		if ee := srcImg.Close(); ee != nil {
 			err = ee
 		}
-	}
-	defer closeSrcImg()
+	}()
 	dstImg, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
-	closeDstImg := func() {
+	defer func() {
 		if ee := dstImg.Close(); ee != nil {
 			err = ee
 		}
-	}
-	defer closeDstImg()
+	}()
 	_, err = io.Copy(dstImg, srcImg)
 	return err
 }
