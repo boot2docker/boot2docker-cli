@@ -190,8 +190,7 @@ func config() (*flag.FlagSet, error) {
 }
 
 func usageShort() {
-	errf("Usage: %s [<options>] {help|init|up|ssh|save|down|poweroff|reset|restart|config|status|info|ip|delete|destroy|download|version} [<args>]\n", os.Args[0])
-
+	errf("Usage: %s [<options>] {help|init|up|ssh|save|down|poweroff|reset|restart|config|status|info|ip|shellsetup|delete|destroy|download|version} [<args>]\n", os.Args[0])
 }
 
 func usageLong(flags *flag.FlagSet) {
