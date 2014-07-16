@@ -10,6 +10,11 @@ type InitFunc func(i *MachineConfig) (Machine, error)
 type MachineState string
 
 const (
+	// Known ports
+	SSHPort    = 22
+	DockerPort = 2375
+
+	// VM states
 	Poweroff = MachineState("poweroff")
 	Running  = MachineState("running")
 	Paused   = MachineState("paused")

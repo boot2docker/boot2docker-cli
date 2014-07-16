@@ -379,8 +379,8 @@ func CreateMachine(mc *driver.MachineConfig) (*Machine, error) {
 	// Set NIC #1 to use NAT
 	m.SetNIC(1, driver.NIC{Network: driver.NICNetNAT, Hardware: driver.VirtIO})
 	pfRules := map[string]driver.PFRule{
-		"ssh":    {Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: mc.SSHPort, GuestPort: 22},
-		"docker": {Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: mc.DockerPort, GuestPort: 2375},
+		"ssh":    {Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: mc.SSHPort, GuestPort: driver.SSHPort},
+		"docker": {Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: mc.DockerPort, GuestPort: driver.DockerPort},
 	}
 
 	for name, rule := range pfRules {

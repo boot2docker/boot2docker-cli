@@ -14,8 +14,6 @@ import (
 	"github.com/boot2docker/boot2docker-cli/driver"
 )
 
-const dockerPort = 2375
-
 // Initialize the boot2docker VM from scratch.
 func cmdInit() int {
 	B2D.Init = true
@@ -88,9 +86,9 @@ func cmdUp() int {
 			logf("Please run `boot2docker -v up` to diagnose.")
 		} else {
 			// Check if $DOCKER_HOST ENV var is properly configured.
-			if os.Getenv("DOCKER_HOST") != fmt.Sprintf("tcp://%s:%d", IP, dockerPort) {
+			if os.Getenv("DOCKER_HOST") != fmt.Sprintf("tcp://%s:%d", IP, driver.DockerPort) {
 				logf("To connect the Docker client to the Docker daemon, please set:")
-				logf("    export DOCKER_HOST=tcp://%s:%d", IP, dockerPort)
+				logf("    export DOCKER_HOST=tcp://%s:%d", IP, driver.DockerPort)
 			} else {
 				logf("Your DOCKER_HOST env variable is already set correctly.")
 			}
