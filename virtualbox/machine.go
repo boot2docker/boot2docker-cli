@@ -43,10 +43,10 @@ func init() {
 }
 
 // Initialize the Machine.
-func InitFunc(i *driver.MachineConfig) (driver.Machine, error) {
-	m, err := GetMachine(i.VM)
-	if err != nil && i.Init == true {
-		return CreateMachine(i)
+func InitFunc(mc *driver.MachineConfig) (driver.Machine, error) {
+	m, err := GetMachine(mc.VM)
+	if err != nil && mc.Init == true {
+		return CreateMachine(mc)
 	}
 	return m, err
 }
@@ -325,8 +325,8 @@ func ListMachines() ([]string, error) {
 }
 
 // CreateMachine creates a new machine. If basefolder is empty, use default.
-func CreateMachine(i *driver.MachineConfig) (*Machine, error) {
-	if i.VM == "" {
+func CreateMachine(mc *driver.MachineConfig) (*Machine, error) {
+	if mc.VM == "" {
 		return nil, fmt.Errorf("machine name is empty")
 	}
 
@@ -336,28 +336,28 @@ func CreateMachine(i *driver.MachineConfig) (*Machine, error) {
 		return nil, err
 	}
 	for _, m := range machineNames {
-		if m == i.VM {
+		if m == mc.VM {
 			return nil, ErrMachineExist
 		}
 	}
 
 	// Create and register the machine.
-	args := []string{"createvm", "--name", i.VM, "--register"}
+	args := []string{"createvm", "--name", mc.VM, "--register"}
 	if err := vbm(args...); err != nil {
 		return nil, err
 	}
 
-	m, err := GetMachine(i.VM)
+	m, err := GetMachine(mc.VM)
 	if err != nil {
 		return nil, err
 	}
 
 	// Configure VM for Boot2docker
-	SetExtra(i.VM, "VBoxInternal/CPUM/EnableHVP", "1")
+	SetExtra(mc.VM, "VBoxInternal/CPUM/EnableHVP", "1")
 	m.OSType = "Linux26_64"
 	m.CPUs = uint(runtime.NumCPU())
-	m.Memory = i.Memory
-	m.SerialFile = i.SerialFile
+	m.Memory = mc.Memory
+	m.SerialFile = mc.SerialFile
 
 	m.Flag |= F_pae
 	m.Flag |= F_longmode // important: use x86-64 processor
@@ -379,8 +379,8 @@ func CreateMachine(i *driver.MachineConfig) (*Machine, error) {
 	// Set NIC #1 to use NAT
 	m.SetNIC(1, driver.NIC{Network: driver.NICNetNAT, Hardware: driver.VirtIO})
 	pfRules := map[string]driver.PFRule{
-		"ssh":    {Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: i.SSHPort, GuestPort: 22},
-		"docker": {Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: i.DockerPort, GuestPort: 2375},
+		"ssh":    {Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: mc.SSHPort, GuestPort: 22},
+		"docker": {Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: mc.DockerPort, GuestPort: 2375},
 	}
 
 	for name, rule := range pfRules {
@@ -389,7 +389,7 @@ func CreateMachine(i *driver.MachineConfig) (*Machine, error) {
 		}
 	}
 
-	hostIFName, err := getHostOnlyNetworkInterface(i)
+	hostIFName, err := getHostOnlyNetworkInterface(mc)
 	if err != nil {
 		return m, err
 	}
@@ -405,18 +405,18 @@ func CreateMachine(i *driver.MachineConfig) (*Machine, error) {
 	}
 
 	// Attach ISO image
-	if err := m.AttachStorage("SATA", driver.StorageMedium{Port: 0, Device: 0, DriveType: driver.DriveDVD, Medium: i.ISO}); err != nil {
+	if err := m.AttachStorage("SATA", driver.StorageMedium{Port: 0, Device: 0, DriveType: driver.DriveDVD, Medium: mc.ISO}); err != nil {
 		return m, err
 	}
 
-	diskImg := filepath.Join(m.BaseFolder, fmt.Sprintf("%s.vmdk", i.VM))
+	diskImg := filepath.Join(m.BaseFolder, fmt.Sprintf("%s.vmdk", mc.VM))
 	if _, err := os.Stat(diskImg); err != nil {
 		if !os.IsNotExist(err) {
 			return m, err
 		}
 
-		if i.VMDK != "" {
-			if err := copyDiskImage(diskImg, i.VMDK); err != nil {
+		if mc.VMDK != "" {
+			if err := copyDiskImage(diskImg, mc.VMDK); err != nil {
 				return m, err
 			}
 		} else {
@@ -438,7 +438,7 @@ func CreateMachine(i *driver.MachineConfig) (*Machine, error) {
 			if err := tw.WriteHeader(file); err != nil {
 				return m, err
 			}
-			pubKey, err := ioutil.ReadFile(i.SSHKey + ".pub")
+			pubKey, err := ioutil.ReadFile(mc.SSHKey + ".pub")
 			if err != nil {
 				return m, err
 			}
@@ -460,7 +460,7 @@ func CreateMachine(i *driver.MachineConfig) (*Machine, error) {
 				return m, err
 			}
 
-			if err := makeDiskImage(diskImg, i.DiskSize, buf.Bytes()); err != nil {
+			if err := makeDiskImage(diskImg, mc.DiskSize, buf.Bytes()); err != nil {
 				return m, err
 			}
 		}

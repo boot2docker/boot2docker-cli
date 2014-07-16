@@ -91,7 +91,7 @@ func vbmOutErr(args ...string) (string, string, error) {
 }
 
 // Get or create the hostonly network interface
-func getHostOnlyNetworkInterface(i *driver.MachineConfig) (string, error) {
+func getHostOnlyNetworkInterface(mc *driver.MachineConfig) (string, error) {
 	// Check if the interface/dhcp exists.
 	nets, err := HostonlyNets()
 	if err != nil {
@@ -105,11 +105,11 @@ func getHostOnlyNetworkInterface(i *driver.MachineConfig) (string, error) {
 
 	for _, n := range nets {
 		if dhcp, ok := dhcps[n.NetworkName]; ok {
-			if dhcp.IPv4.IP.Equal(i.DHCPIP) &&
-				dhcp.IPv4.Mask.String() == i.NetMask.String() &&
-				dhcp.LowerIP.Equal(i.LowerIP) &&
-				dhcp.UpperIP.Equal(i.UpperIP) &&
-				dhcp.Enabled == i.DHCPEnabled {
+			if dhcp.IPv4.IP.Equal(mc.DHCPIP) &&
+				dhcp.IPv4.Mask.String() == mc.NetMask.String() &&
+				dhcp.LowerIP.Equal(mc.LowerIP) &&
+				dhcp.UpperIP.Equal(mc.UpperIP) &&
+				dhcp.Enabled == mc.DHCPEnabled {
 				return n.Name, nil
 			}
 		}
@@ -120,18 +120,18 @@ func getHostOnlyNetworkInterface(i *driver.MachineConfig) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	hostonlyNet.IPv4.IP = i.HostIP
-	hostonlyNet.IPv4.Mask = i.NetMask
+	hostonlyNet.IPv4.IP = mc.HostIP
+	hostonlyNet.IPv4.Mask = mc.NetMask
 	if err := hostonlyNet.Config(); err != nil {
 		return "", err
 	}
 
 	// Create and add a DHCP server to the host-only network
 	dhcp := driver.DHCP{}
-	dhcp.IPv4.IP = i.DHCPIP
-	dhcp.IPv4.Mask = i.NetMask
-	dhcp.LowerIP = i.LowerIP
-	dhcp.UpperIP = i.UpperIP
+	dhcp.IPv4.IP = mc.DHCPIP
+	dhcp.IPv4.Mask = mc.NetMask
+	dhcp.LowerIP = mc.LowerIP
+	dhcp.UpperIP = mc.UpperIP
 	dhcp.Enabled = true
 	if err := AddHostonlyDHCP(hostonlyNet.Name, dhcp); err != nil {
 		return "", err

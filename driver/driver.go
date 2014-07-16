@@ -63,9 +63,9 @@ func Register(driver string, initFunc InitFunc) error {
 	return nil
 }
 
-func GetMachine(i *MachineConfig) (Machine, error) {
-	if initFunc, exists := machines[i.Driver]; exists {
-		return initFunc(i)
+func GetMachine(mc *MachineConfig) (Machine, error) {
+	if initFunc, exists := machines[mc.Driver]; exists {
+		return initFunc(mc)
 	}
 	return nil, ErrNotSupported
 }
