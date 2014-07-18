@@ -381,8 +381,8 @@ func CreateMachine(mc *driver.MachineConfig) (*Machine, error) {
 	pfRules := map[string]driver.PFRule{
 		"ssh":    {Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: mc.SSHPort, GuestPort: driver.SSHPort},
 	}
-	if driver.DockerPort > 0 {
-		pfRules["docker"] = vbx.PFRule{Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: mc.DockerPort, GuestPort: driver.dockerPort}
+	if mc.DockerPort > 0 {
+		pfRules["docker"] = driver.PFRule{Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: mc.DockerPort, GuestPort: driver.DockerPort}
 	}
 
 	for name, rule := range pfRules {

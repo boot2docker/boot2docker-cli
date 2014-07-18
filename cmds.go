@@ -155,8 +155,9 @@ func cmdPoweroff() int {
 
 // Upgrade the boot2docker iso - preserving server state
 func cmdUpgrade() int {
-	m, err := vbx.GetMachine(B2D.VM)
-	if err == nil && m.State == vbx.Running {
+	m, err := driver.GetMachine(&B2D)
+	if err == nil && m.GetState() == driver.Running {
+		// Windows won't let us move the iso aside while its in use
 		if cmdStop() == 0 && cmdDownload() == 0 {
 			return cmdUp()
 		} else {
