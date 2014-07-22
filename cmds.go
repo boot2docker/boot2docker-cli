@@ -9,6 +9,7 @@ import (
 	"time"
 
 	_ "github.com/boot2docker/boot2docker-cli/dummy"
+	_ "github.com/boot2docker/boot2docker-cli/qemu"
 	_ "github.com/boot2docker/boot2docker-cli/virtualbox"
 
 	"github.com/boot2docker/boot2docker-cli/driver"
