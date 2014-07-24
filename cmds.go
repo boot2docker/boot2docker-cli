@@ -354,7 +354,7 @@ func cmdPoweroff() int {
 func cmdUpgrade() int {
 	m, err := vbx.GetMachine(B2D.VM)
 	if err == nil && m.State == vbx.Running {
-		if cmdDownload() == 0 && cmdStop() == 0 {
+		if cmdStop() == 0 && cmdDownload() == 0 {
 			return cmdUp()
 		} else {
 			return 0
