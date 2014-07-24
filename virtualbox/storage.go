@@ -1,4 +1,4 @@
-package driver
+package virtualbox
 
 // StorageController represents a virtualized storage controller.
 type StorageController struct {

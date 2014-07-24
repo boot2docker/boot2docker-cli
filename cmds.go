@@ -1,33 +1,230 @@
 package main
 
 import (
+	"archive/tar"
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
 
-	_ "github.com/boot2docker/boot2docker-cli/dummy"
-	_ "github.com/boot2docker/boot2docker-cli/virtualbox"
-
-	"github.com/boot2docker/boot2docker-cli/driver"
+	vbx "github.com/boot2docker/boot2docker-cli/virtualbox"
 )
+
+const dockerPort = 2375
 
 // Initialize the boot2docker VM from scratch.
 func cmdInit() int {
-	B2D.Init = true
-	_, err := driver.GetMachine(&B2D)
-	if err != nil {
-		logf("Failed to initialize machine %q: %s", B2D.VM, err)
+	// TODO(@riobard) break up this command into multiple stages
+	m, err := vbx.GetMachine(B2D.VM)
+	if err == nil {
+		logf("Virtual machine %s already exists", B2D.VM)
 		return 1
 	}
+
+	if ping(fmt.Sprintf("localhost:%d", B2D.DockerPort)) {
+		logf("--dockerport=%d on localhost is occupied. Please choose another one.", B2D.DockerPort)
+		return 1
+	}
+
+	if ping(fmt.Sprintf("localhost:%d", B2D.SSHPort)) {
+		logf("--sshport=%d on localhost is occupied. Please choose another one.", B2D.SSHPort)
+		return 1
+	}
+
+	if _, err := os.Stat(B2D.ISO); err != nil {
+		if !os.IsNotExist(err) {
+			logf("Failed to open ISO image %q: %s", B2D.ISO, err)
+			return 1
+		}
+
+		if exitcode := cmdDownload(); exitcode != 0 {
+			return exitcode
+		}
+	}
+	if _, err := os.Stat(B2D.SSHKey); err != nil {
+		if !os.IsNotExist(err) {
+			logf("Something wrong with SSH Key file %q: %s", B2D.SSHKey, err)
+			return 1
+		}
+		if err := cmdInteractive(B2D.SSHGen, "-t", "rsa", "-N", "", "-f", B2D.SSHKey); err != nil {
+			logf("Error generating new SSH Key into %s: %s", B2D.SSHKey, err)
+			return 1
+		}
+	}
+	//TODO: print a ~/.ssh/config entry for our b2d connection that the user can c&p
+
+	logf("Creating VM %s...", B2D.VM)
+	m, err = vbx.CreateMachine(B2D.VM, "")
+	if err != nil {
+		logf("FIRST: Failed to create VM %q: %s", B2D.VM, err)
+		// double tap. VBox will sometimes (like on initial install, or reboot)
+		// fail to start the service the first time.
+		m, err = vbx.CreateMachine(B2D.VM, "")
+		if err != nil {
+			logf("Failed to create VM %q: %s", B2D.VM, err)
+			return 1
+		}
+	}
+
+	logf("Apply interim patch to VM %s (https://www.virtualbox.org/ticket/12748)", B2D.VM)
+	if err := vbx.SetExtra(B2D.VM, "VBoxInternal/CPUM/EnableHVP", "1"); err != nil {
+		logf("Failed to patch vm: %s", err)
+		return 1
+	}
+
+	m.OSType = "Linux26_64"
+	m.CPUs = uint(runtime.NumCPU())
+	m.Memory = B2D.Memory
+	m.SerialFile = B2D.SerialFile
+
+	m.Flag |= vbx.F_pae
+	m.Flag |= vbx.F_longmode // important: use x86-64 processor
+	m.Flag |= vbx.F_rtcuseutc
+	m.Flag |= vbx.F_acpi
+	m.Flag |= vbx.F_ioapic
+	m.Flag |= vbx.F_hpet
+	m.Flag |= vbx.F_hwvirtex
+	m.Flag |= vbx.F_vtxvpid
+	m.Flag |= vbx.F_largepages
+	m.Flag |= vbx.F_nestedpaging
+
+	m.BootOrder = []string{"dvd"}
+	if err := m.Modify(); err != nil {
+		logf("Failed to modify VM %q: %s", B2D.VM, err)
+		return 1
+	}
+
+	logf("Setting NIC #1 to use NAT network...")
+	if err := m.SetNIC(1, vbx.NIC{Network: vbx.NICNetNAT, Hardware: vbx.VirtIO}); err != nil {
+		logf("Failed to add network interface to VM %q: %s", B2D.VM, err)
+		return 1
+	}
+
+	pfRules := map[string]vbx.PFRule{
+		"ssh":    {Proto: vbx.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: B2D.SSHPort, GuestPort: 22},
+		"docker": {Proto: vbx.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: B2D.DockerPort, GuestPort: dockerPort},
+	}
+
+	for name, rule := range pfRules {
+		if err := m.AddNATPF(1, name, rule); err != nil {
+			logf("Failed to add port forwarding to VM %q: %s", B2D.VM, err)
+			return 1
+		}
+		logf("Port forwarding [%s] %s", name, rule)
+	}
+
+	hostIFName, err := getHostOnlyNetworkInterface()
+	if err != nil {
+		logf("Failed to create host-only network interface: %s", err)
+		return 1
+	}
+
+	logf("Setting NIC #2 to use host-only network %q...", hostIFName)
+	if err := m.SetNIC(2, vbx.NIC{Network: vbx.NICNetHostonly, Hardware: vbx.VirtIO, HostonlyAdapter: hostIFName}); err != nil {
+		logf("Failed to add network interface to VM %q: %s", B2D.VM, err)
+		return 1
+	}
+
+	logf("Setting VM storage...")
+	if err := m.AddStorageCtl("SATA", vbx.StorageController{SysBus: vbx.SysBusSATA, HostIOCache: true, Bootable: true}); err != nil {
+		logf("Failed to add storage controller to VM %q: %s", B2D.VM, err)
+		return 1
+	}
+
+	if err := m.AttachStorage("SATA", vbx.StorageMedium{Port: 0, Device: 0, DriveType: vbx.DriveDVD, Medium: B2D.ISO}); err != nil {
+		logf("Failed to attach ISO image %q: %s", B2D.ISO, err)
+		return 1
+	}
+
+	diskImg := filepath.Join(m.BaseFolder, fmt.Sprintf("%s.vmdk", B2D.VM))
+
+	if _, err := os.Stat(diskImg); err != nil {
+		if !os.IsNotExist(err) {
+			logf("Failed to open disk image %q: %s", diskImg, err)
+			return 1
+		}
+
+		if B2D.VMDK != "" {
+			logf("Using %v as base VMDK", B2D.VMDK)
+			if err := copyDiskImage(diskImg, B2D.VMDK); err != nil {
+				logf("Failed to copy disk image %v from %v: %s", diskImg, B2D.VMDK, err)
+				return 1
+			}
+		} else {
+			magicString := "boot2docker, please format-me"
+
+			buf := new(bytes.Buffer)
+			tw := tar.NewWriter(buf)
+
+			// magicString first so the automount script knows to format the disk
+			file := &tar.Header{Name: magicString, Size: int64(len(magicString))}
+			if err := tw.WriteHeader(file); err != nil {
+				logf("Error making tarfile: %s", err)
+				return 1
+			}
+			if _, err := tw.Write([]byte(magicString)); err != nil {
+				logf("Error making tarfile: %s", err)
+				return 1
+			}
+			// .ssh/key.pub => authorized_keys
+			file = &tar.Header{Name: ".ssh", Typeflag: tar.TypeDir, Mode: 0700}
+			if err := tw.WriteHeader(file); err != nil {
+				logf("Error making tarfile: %s", err)
+				return 1
+			}
+			pubKey, err := ioutil.ReadFile(B2D.SSHKey + ".pub")
+			if err != nil {
+				logf("Error making tarfile: %s", err)
+				return 1
+			}
+			file = &tar.Header{Name: ".ssh/authorized_keys", Size: int64(len(pubKey)), Mode: 0644}
+			if err := tw.WriteHeader(file); err != nil {
+				logf("Error making tarfile: %s", err)
+				return 1
+			}
+			if _, err := tw.Write([]byte(pubKey)); err != nil {
+				logf("Error making tarfile: %s", err)
+				return 1
+			}
+			file = &tar.Header{Name: ".ssh/authorized_keys2", Size: int64(len(pubKey)), Mode: 0644}
+			if err := tw.WriteHeader(file); err != nil {
+				logf("Error making tarfile: %s", err)
+				return 1
+			}
+			if _, err := tw.Write([]byte(pubKey)); err != nil {
+				logf("Error making tarfile: %s", err)
+				return 1
+			}
+			if err := tw.Close(); err != nil {
+				logf("Error making tarfile: %s", err)
+				return 1
+			}
+
+			if err := makeDiskImage(diskImg, B2D.DiskSize, buf.Bytes()); err != nil {
+				logf("Failed to create disk image %q: %s", diskImg, err)
+				return 1
+			}
+		}
+	}
+
+	if err := m.AttachStorage("SATA", vbx.StorageMedium{Port: 1, Device: 0, DriveType: vbx.DriveHDD, Medium: diskImg}); err != nil {
+		logf("Failed to attach disk image %q: %s", diskImg, err)
+		return 1
+	}
+
+	logf("Done. Type `%s up` to start the VM.", os.Args[0])
 	return 0
 }
 
 // Bring up the VM from all possible states.
 func cmdUp() int {
-	m, err := driver.GetMachine(&B2D)
+	m, err := vbx.GetMachine(B2D.VM)
 	if err != nil {
 		logf("Failed to get machine %q: %s", B2D.VM, err)
 		return 2
@@ -41,7 +238,7 @@ func cmdUp() int {
 		logf("Failed to start machine %q: %s", B2D.VM, err)
 		return 1
 	}
-	if m.GetState() != driver.Running {
+	if m.State != vbx.Running {
 		logf("Failed to start machine %q (run again with -v for details)", B2D.VM)
 		return 1
 	}
@@ -49,11 +246,11 @@ func cmdUp() int {
 	logf("Waiting for VM to be started...")
 	//give the VM a little time to start, so we don't kill the Serial Pipe/Socket
 	time.Sleep(600 * time.Millisecond)
-	natSSH := fmt.Sprintf("localhost:%d", m.GetSSHPort())
+	natSSH := fmt.Sprintf("localhost:%d", m.SSHPort)
 	IP := ""
 	for i := 1; i < 30; i++ {
 		if B2D.Serial && runtime.GOOS != "windows" {
-			if IP = RequestIPFromSerialPort(m.GetSerialFile()); IP != "" {
+			if IP = RequestIPFromSerialPort(m.SerialFile); IP != "" {
 				break
 			}
 		}
@@ -86,9 +283,9 @@ func cmdUp() int {
 			logf("Please run `boot2docker -v up` to diagnose.")
 		} else {
 			// Check if $DOCKER_HOST ENV var is properly configured.
-			if os.Getenv("DOCKER_HOST") != fmt.Sprintf("tcp://%s:%d", IP, driver.DockerPort) {
+			if os.Getenv("DOCKER_HOST") != fmt.Sprintf("tcp://%s:%d", IP, dockerPort) {
 				logf("To connect the Docker client to the Docker daemon, please set:")
-				logf("    export DOCKER_HOST=tcp://%s:%d", IP, driver.DockerPort)
+				logf("    export DOCKER_HOST=tcp://%s:%d", IP, dockerPort)
 			} else {
 				logf("Your DOCKER_HOST env variable is already set correctly.")
 			}
@@ -112,7 +309,7 @@ func cmdConfig() int {
 
 // Suspend and save the current state of VM on disk.
 func cmdSave() int {
-	m, err := driver.GetMachine(&B2D)
+	m, err := vbx.GetMachine(B2D.VM)
 	if err != nil {
 		logf("Failed to get machine %q: %s", B2D.VM, err)
 		return 2
@@ -126,7 +323,7 @@ func cmdSave() int {
 
 // Gracefully stop the VM by sending ACPI shutdown signal.
 func cmdStop() int {
-	m, err := driver.GetMachine(&B2D)
+	m, err := vbx.GetMachine(B2D.VM)
 	if err != nil {
 		logf("Failed to get machine %q: %s", B2D.VM, err)
 		return 2
@@ -141,7 +338,7 @@ func cmdStop() int {
 // Forcefully power off the VM (equivalent to unplug power). Might corrupt disk
 // image.
 func cmdPoweroff() int {
-	m, err := driver.GetMachine(&B2D)
+	m, err := vbx.GetMachine(B2D.VM)
 	if err != nil {
 		logf("Failed to get machine %q: %s", B2D.VM, err)
 		return 2
@@ -169,7 +366,7 @@ func cmdUpgrade() int {
 
 // Gracefully stop and then start the VM.
 func cmdRestart() int {
-	m, err := driver.GetMachine(&B2D)
+	m, err := vbx.GetMachine(B2D.VM)
 	if err != nil {
 		logf("Failed to get machine %q: %s", B2D.VM, err)
 		return 2
@@ -183,7 +380,7 @@ func cmdRestart() int {
 
 // Forcefully reset (equivalent to cold boot) the VM. Might corrupt disk image.
 func cmdReset() int {
-	m, err := driver.GetMachine(&B2D)
+	m, err := vbx.GetMachine(B2D.VM)
 	if err != nil {
 		logf("Failed to get machine %q: %s", B2D.VM, err)
 		return 2
@@ -197,9 +394,9 @@ func cmdReset() int {
 
 // Delete the VM and associated disk image.
 func cmdDelete() int {
-	m, err := driver.GetMachine(&B2D)
+	m, err := vbx.GetMachine(B2D.VM)
 	if err != nil {
-		if err == driver.ErrMachineNotExist {
+		if err == vbx.ErrMachineNotExist {
 			logf("Machine %q does not exist.", B2D.VM)
 			return 0
 		}
@@ -215,7 +412,7 @@ func cmdDelete() int {
 
 // Show detailed info of the VM.
 func cmdInfo() int {
-	m, err := driver.GetMachine(&B2D)
+	m, err := vbx.GetMachine(B2D.VM)
 	if err != nil {
 		logf("Failed to get machine %q: %s", B2D.VM, err)
 		return 2
@@ -229,24 +426,24 @@ func cmdInfo() int {
 
 // Show the current state of the VM.
 func cmdStatus() int {
-	m, err := driver.GetMachine(&B2D)
+	m, err := vbx.GetMachine(B2D.VM)
 	if err != nil {
 		logf("Failed to get machine %q: %s", B2D.VM, err)
 		return 2
 	}
-	fmt.Println(m.GetState())
+	fmt.Println(m.State)
 	return 0
 }
 
 // Call the external SSH command to login into boot2docker VM.
 func cmdSSH() int {
-	m, err := driver.GetMachine(&B2D)
+	m, err := vbx.GetMachine(B2D.VM)
 	if err != nil {
 		logf("Failed to get machine %q: %s", B2D.VM, err)
 		return 2
 	}
 
-	if m.GetState() != driver.Running {
+	if m.State != vbx.Running {
 		logf("VM %q is not running.", B2D.VM)
 		return 1
 	}
@@ -263,7 +460,7 @@ func cmdSSH() int {
 		"-o", "StrictHostKeyChecking=no",
 		"-o", "UserKnownHostsFile=/dev/null",
 		"-o", "LogLevel=quiet", // suppress "Warning: Permanently added '[localhost]:2022' (ECDSA) to the list of known hosts."
-		"-p", fmt.Sprintf("%d", m.GetSSHPort()),
+		"-p", fmt.Sprintf("%d", m.SSHPort),
 		"-i", B2D.SSHKey,
 		"docker@localhost",
 	}, os.Args[i:]...)
@@ -276,13 +473,13 @@ func cmdSSH() int {
 }
 
 func cmdIP() int {
-	m, err := driver.GetMachine(&B2D)
+	m, err := vbx.GetMachine(B2D.VM)
 	if err != nil {
 		logf("Failed to get machine %q: %s", B2D.VM, err)
 		return 2
 	}
 
-	if m.GetState() != driver.Running {
+	if m.State != vbx.Running {
 		logf("VM %q is not running.", B2D.VM)
 		return 1
 	}
@@ -291,7 +488,7 @@ func cmdIP() int {
 	if B2D.Serial {
 		for i := 1; i < 20; i++ {
 			if runtime.GOOS != "windows" {
-				if IP = RequestIPFromSerialPort(m.GetSerialFile()); IP != "" {
+				if IP = RequestIPFromSerialPort(m.SerialFile); IP != "" {
 					break
 				}
 			}
@@ -312,13 +509,13 @@ func cmdIP() int {
 	return 0
 }
 
-func RequestIPFromSSH(m driver.Machine) string {
+func RequestIPFromSSH(m *vbx.Machine) string {
 	// fall back to using the NAT port forwarded ssh
 	out, err := cmd(B2D.SSH,
 		"-v", // please leave in - this seems to improve the chance of success
 		"-o", "StrictHostKeyChecking=no",
 		"-o", "UserKnownHostsFile=/dev/null",
-		"-p", fmt.Sprintf("%d", m.GetSSHPort()),
+		"-p", fmt.Sprintf("%d", m.SSHPort),
 		"-i", B2D.SSHKey,
 		"docker@localhost",
 		"ip addr show dev eth1",
