@@ -45,7 +45,7 @@ func init() {
 // Initialize the Machine.
 func InitFunc(mc *driver.MachineConfig) (driver.Machine, error) {
 	m, err := GetMachine(mc.VM)
-	if err != nil && mc.Init == true {
+	if err != nil && mc.Init {
 		return CreateMachine(mc)
 	}
 	return m, err
