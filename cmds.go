@@ -457,6 +457,7 @@ func cmdSSH() int {
 	}
 
 	sshArgs := append([]string{
+		"-o", "IdentitiesOnly=yes",
 		"-o", "StrictHostKeyChecking=no",
 		"-o", "UserKnownHostsFile=/dev/null",
 		"-o", "LogLevel=quiet", // suppress "Warning: Permanently added '[localhost]:2022' (ECDSA) to the list of known hosts."
@@ -513,6 +514,7 @@ func RequestIPFromSSH(m *vbx.Machine) string {
 	// fall back to using the NAT port forwarded ssh
 	out, err := cmd(B2D.SSH,
 		"-v", // please leave in - this seems to improve the chance of success
+		"-o", "IdentitiesOnly=yes",
 		"-o", "StrictHostKeyChecking=no",
 		"-o", "UserKnownHostsFile=/dev/null",
 		"-p", fmt.Sprintf("%d", m.SSHPort),
