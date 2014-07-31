@@ -27,9 +27,13 @@ func cmdInit() int {
 		return 1
 	}
 
-	if ping(fmt.Sprintf("localhost:%d", B2D.DockerPort)) {
-		logf("--dockerport=%d on localhost is occupied. Please choose another one.", B2D.DockerPort)
-		return 1
+	if B2D.DockerPort > 0 {
+		// Reference Issue boot2docker-cli issue #150, docker issues #6247, #6271, #6327
+		logf("warning: VirtualBox (4.3.x) NAT port forwarding is currently unreliable. Prefer to use the host only interface if possible.")
+		if ping(fmt.Sprintf("localhost:%d", B2D.DockerPort)) {
+			logf("--dockerport=%d on localhost is occupied. Please choose another one.", B2D.DockerPort)
+			return 1
+		}
 	}
 
 	if ping(fmt.Sprintf("localhost:%d", B2D.SSHPort)) {
@@ -107,8 +111,10 @@ func cmdInit() int {
 	}
 
 	pfRules := map[string]vbx.PFRule{
-		"ssh":    {Proto: vbx.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: B2D.SSHPort, GuestPort: 22},
-		"docker": {Proto: vbx.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: B2D.DockerPort, GuestPort: dockerPort},
+		"ssh": {Proto: vbx.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: B2D.SSHPort, GuestPort: 22},
+	}
+	if B2D.DockerPort > 0 {
+		pfRules["docker"] = vbx.PFRule{Proto: vbx.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: B2D.DockerPort, GuestPort: dockerPort}
 	}
 
 	for name, rule := range pfRules {
