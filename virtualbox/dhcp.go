@@ -4,18 +4,11 @@ import (
 	"bufio"
 	"net"
 	"strings"
+
+	"github.com/boot2docker/boot2docker-cli/driver"
 )
 
-// DHCP server info.
-type DHCP struct {
-	NetworkName string
-	IPv4        net.IPNet
-	LowerIP     net.IP
-	UpperIP     net.IP
-	Enabled     bool
-}
-
-func addDHCP(kind, name string, d DHCP) error {
+func addDHCP(kind, name string, d driver.DHCP) error {
 	command := "modify"
 
 	// On some platforms (OSX), creating a hostonlyinterface adds a default dhcpserver
@@ -45,29 +38,29 @@ func addDHCP(kind, name string, d DHCP) error {
 }
 
 // AddInternalDHCP adds a DHCP server to an internal network.
-func AddInternalDHCP(netname string, d DHCP) error {
+func AddInternalDHCP(netname string, d driver.DHCP) error {
 	return addDHCP("--netname", netname, d)
 }
 
 // AddHostonlyDHCP adds a DHCP server to a host-only network.
-func AddHostonlyDHCP(ifname string, d DHCP) error {
+func AddHostonlyDHCP(ifname string, d driver.DHCP) error {
 	return addDHCP("--netname", "HostInterfaceNetworking-"+ifname, d)
 }
 
 // DHCPs gets all DHCP server settings in a map keyed by DHCP.NetworkName.
-func DHCPs() (map[string]*DHCP, error) {
+func DHCPs() (map[string]*driver.DHCP, error) {
 	out, err := vbmOut("list", "dhcpservers")
 	if err != nil {
 		return nil, err
 	}
 	s := bufio.NewScanner(strings.NewReader(out))
-	m := map[string]*DHCP{}
-	dhcp := &DHCP{}
+	m := map[string]*driver.DHCP{}
+	dhcp := &driver.DHCP{}
 	for s.Scan() {
 		line := s.Text()
 		if line == "" {
 			m[dhcp.NetworkName] = dhcp
-			dhcp = &DHCP{}
+			dhcp = &driver.DHCP{}
 			continue
 		}
 		res := reColonLine.FindStringSubmatch(line)
