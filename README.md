@@ -122,7 +122,7 @@ boot2docker vm, which you can then use to access ports you map from your contain
 
 The `boot2docker` binary reads configuration from `$BOOT2DOCKER_PROFILE` if set, or
 `$BOOT2DOCKER_DIR/profile` or `$HOME/.boot2docker/profile` or (on Windows) 
-`$USERPROFILE/.boot2docker/profile`.  `boot2docker config` will
+`%USERPROFILE%/.boot2docker/profile`.  `boot2docker config` will
 tell you where it is looking for the file, and will also output the settings that 
 are in use, so you can initialise a default file to customise using 
 `boot2docker config > /home/sven/.boot2docker/profile`.
