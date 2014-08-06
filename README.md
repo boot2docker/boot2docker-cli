@@ -27,9 +27,26 @@ Refer to the installation instructions for [Windows](http://docs.docker.io/insta
 
 You can dowload binary releases at https://github.com/boot2docker/boot2docker-cli/releases
 
+### Docker container build
+
+The most reliable way to cross-compile boot2docker for all 3 platforms, is to
+use the Dockerfile (and Docker)
+
+```sh
+git clone https://github.com/boot2docker/boot2docker-cli
+cd boot2docker-cli
+make
+```
+
+Built binaries will be available in the current directory.
+
+This assumes you have an accessible Docker daemon (local or remote with `DOCKER_HOST` set)
+and `make` installed.
+
+
 ### Install from source
 
-You need to have [Go compiler](http://golang.org) installed, and `$GOPATH`
+You need to have the [Go compiler (v1.3 or higher)](http://golang.org) installed, and `$GOPATH`
 [properly setup](http://golang.org/doc/code.html#GOPATH). Then run
 
     go get github.com/boot2docker/boot2docker-cli
@@ -52,6 +69,9 @@ You can cross compile to OS X, Windows, and Linux. For that you need to first
 [make your Go compiler ready for cross compiling to the target
 platforms](http://stackoverflow.com/questions/12168873/cross-compile-go-on-osx).
 
+Please make sure you build with golang v1.3 or later - it is required for 
+`boot2docker download` to work on OS X.
+
 We provide a Makefile to make the process a bit easier.
 
 ```sh
@@ -63,28 +83,6 @@ make clean      # clean up the built binaries
 ```
 
 Built binaries will be available in the current directory.
-
-
-### Docker build
-
-You can also build in a Docker container.
-
-```sh
-make dockerbuild
-```
-
-Built binaries will be available in the current directory.
-
-
-### Caveats
-
-Currently the binary cross-compiled from Windows/Linux to OS X has a [TLS
-issue](https://github.com/boot2docker/boot2docker-cli/issues/11), and as a
-result
-
-    $ boot2docker download
-
-will fail. You need to do a native OS X build to avoid this problem.
 
 
 ## Usage
