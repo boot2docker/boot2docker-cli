@@ -2,12 +2,16 @@ package dummy
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/boot2docker/boot2docker-cli/driver"
 )
 
 func init() {
-	driver.Register("dummy", InitFunc)
+	if err := driver.Register("dummy", InitFunc); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to initialize driver. Error : %s", err.Error())
+		os.Exit(1)
+	}
 }
 
 // Initialize the Machine.

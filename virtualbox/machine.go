@@ -40,7 +40,7 @@ const (
 
 func init() {
 	if err := driver.Register("virtualbox", InitFunc); err != nil {
-		fmt.Printf("Failed to initialize driver. Error : %s", err.Error())
+		fmt.Fprintf(os.Stderr, "Failed to initialize driver. Error : %s", err.Error())
 		os.Exit(1)
 	}
 }
