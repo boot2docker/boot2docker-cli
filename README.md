@@ -184,6 +184,8 @@ the same as the command-line flags with long names.
 
 ## Contribution
 
+[![Build Status](https://travis-ci.org/boot2docker/boot2docker-cli.svg?branch=master)](https://travis-ci.org/boot2docker/boot2docker-cli)
+
 We are implementing the same process as [Docker merge
 approval](https://github.com/dotcloud/docker/blob/master/CONTRIBUTING.md#merge-approval),
 so all commits need to be done via pull requests, and will need three or more
