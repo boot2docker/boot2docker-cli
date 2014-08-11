@@ -1,6 +1,9 @@
 package main
 
 import (
+	"archive/tar"
+	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,6 +16,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/boot2docker/boot2docker-cli/driver"
 )
 
 // Try if addr tcp://addr is readable for n times at wait interval.
@@ -110,23 +115,8 @@ func getLatestReleaseName(url string) (string, error) {
 	return t[0].TagName, nil
 }
 
-// Convenient function to exec a command.
-func cmd(name string, args ...string) (string, error) {
-	cmd := exec.Command(name, args...)
-	if B2D.Verbose {
-		cmd.Stderr = os.Stderr
-		log.Printf("executing: %v %v", name, strings.Join(args, " "))
-	}
-
-	b, err := cmd.Output()
-	return string(b), err
-}
-
-func cmdInteractive(name string, args ...string) error {
-	cmd := exec.Command(name, args...)
-	if B2D.Verbose {
-		fmt.Printf("executing: %v %v", name, strings.Join(args, " "))
-	}
+func cmdInteractive(m driver.Machine, args ...string) error {
+	cmd := getSSHCommand(m, args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -162,6 +152,76 @@ func reader(r io.Reader) {
 			return
 		}
 	}
+}
+
+func getSSHCommand(m driver.Machine, args ...string) *exec.Cmd {
+
+	DefaultSSHArgs := []string{
+		"-o", "IdentitiesOnly=yes",
+		"-o", "StrictHostKeyChecking=no",
+		"-o", "UserKnownHostsFile=/dev/null",
+		"-o", "LogLevel=quiet", // suppress "Warning: Permanently added '[localhost]:2022' (ECDSA) to the list of known hosts."
+		"-p", fmt.Sprintf("%d", m.GetSSHPort()),
+		"-i", B2D.SSHKey,
+		"docker@localhost",
+	}
+
+	sshArgs := append(DefaultSSHArgs, args...)
+	cmd := exec.Command(B2D.SSH, sshArgs...)
+	if B2D.Verbose {
+		cmd.Stderr = os.Stderr
+		log.Printf("executing: %v %v", B2D.SSH, strings.Join(sshArgs, " "))
+	}
+
+	return cmd
+}
+
+func RequestIPFromSSH(m driver.Machine) string {
+	cmd := getSSHCommand(m, "ip addr show dev eth1")
+
+	b, err := cmd.Output()
+	IP := ""
+	if err != nil {
+		fmt.Printf("%s", err)
+	} else {
+		out := string(b)
+		if B2D.Verbose {
+			fmt.Printf("SSH returned: %s\nEND SSH\n", out)
+		}
+		// parse to find: inet 192.168.59.103/24 brd 192.168.59.255 scope global eth1
+		lines := strings.Split(out, "\n")
+		for _, line := range lines {
+			vals := strings.Split(strings.TrimSpace(line), " ")
+			if len(vals) >= 2 && vals[0] == "inet" {
+				IP = vals[1][:strings.Index(vals[1], "/")]
+				break
+			}
+		}
+	}
+	return IP
+}
+
+func RequestSocketFromSSH(m driver.Machine) string {
+	cmd := getSSHCommand(m, "grep tcp:// /proc/$(cat /var/run/docker.pid)/cmdline")
+
+	b, err := cmd.Output()
+	if err != nil {
+		fmt.Printf("%s", err)
+	} else {
+		out := string(b)
+		if B2D.Verbose {
+			fmt.Printf("SSH returned: %s\nEND SSH\n", out)
+		}
+		// Lets only use the first one - its possible to specify more than one...
+		lines := strings.Split(out, "\n")
+		tcpRE := regexp.MustCompile(`^(tcp://)(0.0.0.0)(:.*)`)
+		if s := tcpRE.FindStringSubmatch(lines[0]); s != nil {
+			IP := RequestIPFromSSH(m)
+			return s[1] + IP + s[3]
+		}
+		return lines[0]
+	}
+	return ""
 }
 
 // use the serial port socket to ask what the VM's host only IP is
@@ -200,8 +260,8 @@ func RequestIPFromSerialPort(socket string) string {
 				//go looking for the string we want, and chomp line to after the \n
 				if i := strings.IndexAny(line, "\n"); i != -1 {
 					//     inet 10.180.1.3/16 brd 10.180.255.255 scope global wlan0
-					inet := regexp.MustCompile(`^[\t ]*inet ([0-9.]*).*$`)
-					if ip := inet.FindStringSubmatch(line[:i]); ip != nil {
+					inetRE := regexp.MustCompile(`^[\t ]*inet ([0-9.]*).*$`)
+					if ip := inetRE.FindStringSubmatch(line[:i]); ip != nil {
 						IP = ip[1]
 						// clean up
 						break
@@ -221,4 +281,53 @@ func RequestIPFromSerialPort(socket string) string {
 	}
 
 	return IP
+}
+
+// TODO: need to add or abstract to get a Serial coms version
+func RequestCertsUsingSSH(m driver.Machine) string {
+	cmd := getSSHCommand(m, "tar c /home/docker/.docker/*.pem")
+
+	b, err := cmd.Output()
+	if err != nil {
+		fmt.Printf("%s", err)
+	} else {
+		dir, err := cfgDir(".docker")
+		if err != nil {
+			return ""
+		}
+
+		// Open the tar archive for reading.
+		r := bytes.NewReader(b)
+		tr := tar.NewReader(r)
+
+		// Iterate through the files in the archive.
+		for {
+			hdr, err := tr.Next()
+			if err == io.EOF {
+				// end of tar archive
+				break
+			}
+			if err != nil {
+				fmt.Printf("%s", err)
+				return ""
+			}
+			filename := filepath.Base(hdr.Name)
+			certpath := filepath.Join(dir, filename)
+			fmt.Printf("Writing %s:\n", certpath)
+			// TODO: this is unsafe - would be better to put in ~/.docker/boot2docker/
+			// sadly, last time i tested the CERT_PATH setting also wasn't reliable.
+			f, err := os.Create(certpath)
+			if err != nil {
+				fmt.Printf("%s", err)
+				return ""
+			}
+			w := bufio.NewWriter(f)
+			if _, err := io.Copy(w, tr); err != nil {
+				fmt.Printf("%s", err)
+				return ""
+			}
+			w.Flush()
+		}
+	}
+	return "OK"
 }

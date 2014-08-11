@@ -1,8 +1,8 @@
 package main
 
 import (
-	"os"
 	"fmt"
+	"os"
 )
 
 // The following vars will be injected during the build process.
@@ -65,6 +65,8 @@ func run() error {
 		return cmdDelete()
 	case "info":
 		return cmdInfo()
+	case "socket":
+		return cmdSocket()
 	case "status":
 		return cmdStatus()
 	case "ssh":
