@@ -304,12 +304,12 @@ func cmdIP() int {
 		IP = RequestIPFromSSH(m)
 	}
 	if IP != "" {
-		errf("\nThe VM's Host only interface IP address is: ")
+		fmt.Fprintf(os.Stderr, "\nThe VM's Host only interface IP address is: ")
 		fmt.Printf("%s", IP)
-		errf("\n\n")
+		fmt.Fprintf(os.Stderr, "\n\n")
 	} else {
-		errf("\nFailed to get VM Host only IP address.\n")
-		errf("\tWas the VM initilized using boot2docker?\n")
+		fmt.Fprintf(os.Stderr, "\nFailed to get VM Host only IP address.\n")
+		fmt.Fprintf(os.Stderr, "\tWas the VM initilized using boot2docker?\n")
 	}
 	return 0
 }

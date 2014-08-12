@@ -1,6 +1,9 @@
 package main
 
-import "os"
+import (
+	"os"
+	"fmt"
+)
 
 // The following vars will be injected during the build process.
 var (
@@ -22,7 +25,7 @@ func main() {
 func run() int {
 	flags, err := config()
 	if err != nil {
-		errf("config error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "config error: %v\n", err)
 		return 1
 	}
 
@@ -58,7 +61,7 @@ func run() int {
 	case "upgrade":
 		return cmdUpgrade()
 	case "version":
-		outf("Client version: %s\nGit commit: %s\n", Version, GitSHA)
+		fmt.Printf("Client version: %s\nGit commit: %s\n", Version, GitSHA)
 		return 0
 	case "help":
 		flags.Usage()
@@ -67,7 +70,7 @@ func run() int {
 		usageShort()
 		return 0
 	default:
-		errf("Unknown command %q\n", cmd)
+		fmt.Fprintf(os.Stderr, "Unknown command %q\n", cmd)
 		usageShort()
 		return 1
 	}

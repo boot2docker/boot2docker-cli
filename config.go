@@ -153,12 +153,12 @@ func config() (*flag.FlagSet, error) {
 }
 
 func usageShort() {
-	errf("Usage: %s [<options>] {help|init|up|ssh|save|down|poweroff|reset|restart|config|status|info|ip|delete|destroy|download|version} [<args>]\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "Usage: %s [<options>] {help|init|up|ssh|save|down|poweroff|reset|restart|config|status|info|ip|delete|destroy|download|version} [<args>]\n", os.Args[0])
 }
 
 func usageLong(flags *flag.FlagSet) {
 	// NOTE: the help message uses spaces, not tabs for indentation!
-	errf(`Usage: %s [<options>] <command> [<args>]
+	fmt.Fprintf(os.Stderr, `Usage: %s [<options>] <command> [<args>]
 
 boot2docker management utility.
 
@@ -177,7 +177,7 @@ Commands:
     ip                      Display the IP address of the VM's Host-only network.
     status                  Display current state of VM.
     download                Download boot2docker ISO image.
-    upgrade                 Upgrade the boot2docker ISO image (if vm is running it will be stopped and started).    
+    upgrade                 Upgrade the boot2docker ISO image (if vm is running it will be stopped and started).
     version                 Display version information.
 
 Options:
