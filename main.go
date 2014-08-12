@@ -11,6 +11,13 @@ var (
 	GitSHA  string
 )
 
+type unknownCommandError struct {
+	cmd string
+}
+func (e unknownCommandError) Error() string {
+	return fmt.Sprintf("Unknown command: %s", e.cmd)
+}
+
 func main() {
 	// os.Exit will terminate the program at the place of call without running
 	// any deferred cleanup statements. It might cause unintended effects. To
@@ -18,11 +25,13 @@ func main() {
 	// wrapper. Be careful not to indirectly trigger os.Exit() in the program,
 	// notably via log.Fatal() and on flag.Parse() where the default behavior
 	// is ExitOnError.
-	err := run()
-	if err != nil {
+	if err := run(); err == nil {
 		os.Exit(0)
 	} else {
-		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
+		fmt.Fprintf(os.Stderr, "error in run: %v\n", err)
+		if _, ok := err.(unknownCommandError); ok {
+			usageShort()
+		}
 		os.Exit(1)
 	}
 }
@@ -75,8 +84,6 @@ func run() error {
 		usageShort()
 		return nil
 	default:
-		fmt.Fprintf(os.Stderr, "Unknown command %q\n", cmd)
-		usageShort()
-		return fmt.Errorf("Unknown command %q\n", cmd)
+		return unknownCommandError{cmd: cmd}
 	}
 }

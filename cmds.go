@@ -77,8 +77,8 @@ func cmdUp() error {
 		fmt.Printf("to SSH into the VM instead.")
 	default:
 		if IP == "" {
-			fmt.Printf("Auto detection of the VM's IP address failed.")
-			fmt.Printf("Please run `boot2docker -v up` to diagnose.")
+			fmt.Fprintf(os.Stderr, "Auto detection of the VM's IP address failed.")
+			fmt.Fprintf(os.Stderr, "Please run `boot2docker -v up` to diagnose.")
 		} else {
 			// Check if $DOCKER_HOST ENV var is properly configured.
 			if os.Getenv("DOCKER_HOST") != fmt.Sprintf("tcp://%s:%d", IP, driver.DockerPort) {
@@ -301,7 +301,7 @@ func RequestIPFromSSH(m driver.Machine) string {
 	)
 	IP := ""
 	if err != nil {
-		fmt.Printf("%s", err)
+		fmt.Fprintf(os.Stderr, "request ip from ssh error: %v", err)
 	} else {
 		if B2D.Verbose {
 			fmt.Printf("SSH returned: %s\nEND SSH\n", out)
