@@ -15,17 +15,12 @@ import (
 	"time"
 )
 
-// Verbose output for debugging.
-func logf(fmt string, v ...interface{}) {
-	log.Printf(fmt, v...)
-}
-
 // Try if addr tcp://addr is readable for n times at wait interval.
 func read(addr string, n int, wait time.Duration) error {
 	var lastErr error
 	for i := 0; i < n; i++ {
 		if B2D.Verbose {
-			logf("Connecting to tcp://%v (attempt #%d)", addr, i)
+			fmt.Printf("Connecting to tcp://%v (attempt #%d)", addr, i)
 		}
 		conn, err := net.DialTimeout("tcp", addr, 1*time.Second)
 		if err != nil {
@@ -130,7 +125,7 @@ func cmd(name string, args ...string) (string, error) {
 func cmdInteractive(name string, args ...string) error {
 	cmd := exec.Command(name, args...)
 	if B2D.Verbose {
-		logf("executing: %v %v", name, strings.Join(args, " "))
+		fmt.Printf("executing: %v %v", name, strings.Join(args, " "))
 	}
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -222,7 +217,7 @@ func RequestIPFromSerialPort(socket string) string {
 	//give us time reader clean up
 	time.Sleep(1 * time.Second)
 	if IP == "" && B2D.Verbose {
-		logf(fullLog)
+		fmt.Printf(fullLog)
 	}
 
 	return IP

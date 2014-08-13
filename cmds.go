@@ -15,38 +15,33 @@ import (
 )
 
 // Initialize the boot2docker VM from scratch.
-func cmdInit() int {
+func cmdInit() error {
 	B2D.Init = true
 	_, err := driver.GetMachine(&B2D)
 	if err != nil {
-		logf("Failed to initialize machine %q: %s", B2D.VM, err)
-		return 1
+		return fmt.Errorf("Failed to initialize machine %q: %s", B2D.VM, err)
 	}
-	return 0
+	return nil
 }
 
 // Bring up the VM from all possible states.
-func cmdUp() int {
+func cmdUp() error {
 	m, err := driver.GetMachine(&B2D)
 	if err != nil {
-		logf("Failed to get machine %q: %s", B2D.VM, err)
-		return 2
+		return fmt.Errorf("Failed to get machine %q: %s", B2D.VM, err)
 	}
 	if err := m.Start(); err != nil {
-		logf("Failed to start machine %q: %s", B2D.VM, err)
-		return 1
+		return fmt.Errorf("Failed to start machine %q: %s", B2D.VM, err)
 	}
 
 	if err := m.Refresh(); err != nil {
-		logf("Failed to start machine %q: %s", B2D.VM, err)
-		return 1
+		return fmt.Errorf("Failed to start machine %q: %s", B2D.VM, err)
 	}
 	if m.GetState() != driver.Running {
-		logf("Failed to start machine %q (run again with -v for details)", B2D.VM)
-		return 1
+		return fmt.Errorf("Failed to start machine %q (run again with -v for details)", B2D.VM)
 	}
 
-	logf("Waiting for VM to be started...")
+	fmt.Printf("Waiting for VM to be started...")
 	//give the VM a little time to start, so we don't kill the Serial Pipe/Socket
 	time.Sleep(600 * time.Millisecond)
 	natSSH := fmt.Sprintf("localhost:%d", m.GetSSHPort())
@@ -66,102 +61,95 @@ func cmdUp() int {
 	}
 	print("\n")
 
-	logf("Started.")
+	fmt.Printf("Started.")
 
 	if IP == "" {
 		// lets try one more time
 		time.Sleep(600 * time.Millisecond)
-		logf("  Trying to get IP one more time")
+		fmt.Printf("  Trying to get IP one more time")
 
 		IP = RequestIPFromSSH(m)
 	}
 	switch runtime.GOOS {
 	case "windows":
-		logf("Docker client does not run on Windows for now. Please use")
-		logf("    \"%s\" ssh", os.Args[0])
-		logf("to SSH into the VM instead.")
+		fmt.Printf("Docker client does not run on Windows for now. Please use")
+		fmt.Printf("    \"%s\" ssh", os.Args[0])
+		fmt.Printf("to SSH into the VM instead.")
 	default:
 		if IP == "" {
-			logf("Auto detection of the VM's IP address failed.")
-			logf("Please run `boot2docker -v up` to diagnose.")
+			fmt.Fprintf(os.Stderr, "Auto detection of the VM's IP address failed.")
+			fmt.Fprintf(os.Stderr, "Please run `boot2docker -v up` to diagnose.")
 		} else {
 			// Check if $DOCKER_HOST ENV var is properly configured.
 			if os.Getenv("DOCKER_HOST") != fmt.Sprintf("tcp://%s:%d", IP, driver.DockerPort) {
-				logf("To connect the Docker client to the Docker daemon, please set:")
-				logf("    export DOCKER_HOST=tcp://%s:%d", IP, driver.DockerPort)
+				fmt.Printf("To connect the Docker client to the Docker daemon, please set:")
+				fmt.Printf("    export DOCKER_HOST=tcp://%s:%d", IP, driver.DockerPort)
 			} else {
-				logf("Your DOCKER_HOST env variable is already set correctly.")
+				fmt.Printf("Your DOCKER_HOST env variable is already set correctly.")
 			}
 		}
 	}
-	return 0
+	return nil
 }
 
 // Tell the user the config (and later let them set it?)
-func cmdConfig() int {
+func cmdConfig() error {
 	dir, err := getCfgDir(".boot2docker")
 	if err != nil {
-		logf("Error working out Profile file location: %s", err)
-		return 1
+		return fmt.Errorf("Error working out Profile file location: %s", err)
 	}
 	filename := getCfgFilename(dir)
-	logf("boot2docker profile filename: %s", filename)
+	fmt.Printf("boot2docker profile filename: %s", filename)
 	fmt.Println(printConfig())
-	return 0
+	return nil
 }
 
 // Suspend and save the current state of VM on disk.
-func cmdSave() int {
+func cmdSave() error {
 	m, err := driver.GetMachine(&B2D)
 	if err != nil {
-		logf("Failed to get machine %q: %s", B2D.VM, err)
-		return 2
+		return fmt.Errorf("Failed to get machine %q: %s", B2D.VM, err)
 	}
 	if err := m.Save(); err != nil {
-		logf("Failed to save machine %q: %s", B2D.VM, err)
-		return 1
+		return fmt.Errorf("Failed to save machine %q: %s", B2D.VM, err)
 	}
-	return 0
+	return nil
 }
 
 // Gracefully stop the VM by sending ACPI shutdown signal.
-func cmdStop() int {
+func cmdStop() error {
 	m, err := driver.GetMachine(&B2D)
 	if err != nil {
-		logf("Failed to get machine %q: %s", B2D.VM, err)
-		return 2
+		return fmt.Errorf("Failed to get machine %q: %s", B2D.VM, err)
 	}
 	if err := m.Stop(); err != nil {
-		logf("Failed to stop machine %q: %s", B2D.VM, err)
-		return 1
+		return fmt.Errorf("Failed to stop machine %q: %s", B2D.VM, err)
 	}
-	return 0
+	return nil
 }
 
 // Forcefully power off the VM (equivalent to unplug power). Might corrupt disk
 // image.
-func cmdPoweroff() int {
+func cmdPoweroff() error {
 	m, err := driver.GetMachine(&B2D)
 	if err != nil {
-		logf("Failed to get machine %q: %s", B2D.VM, err)
-		return 2
+		return fmt.Errorf("Failed to get machine %q: %s", B2D.VM, err)
 	}
 	if err := m.Poweroff(); err != nil {
-		logf("Failed to poweroff machine %q: %s", B2D.VM, err)
-		return 1
+		return fmt.Errorf("Failed to poweroff machine %q: %s", B2D.VM, err)
 	}
-	return 0
+	return nil
 }
 
 // Upgrade the boot2docker ISO - preserving server state
-func cmdUpgrade() int {
+func cmdUpgrade() error {
 	m, err := driver.GetMachine(&B2D)
 	if err == nil && m.GetState() == driver.Running {
 		// Windows won't let us move the ISO aside while it's in use
-		if cmdStop() == 0 && cmdDownload() == 0 {
+		if cmdStop() == nil && cmdDownload() == nil {
 			return cmdUp()
 		} else {
-			return 0
+			return nil
 		}
 	} else {
 		return cmdDownload()
@@ -169,87 +157,75 @@ func cmdUpgrade() int {
 }
 
 // Gracefully stop and then start the VM.
-func cmdRestart() int {
+func cmdRestart() error {
 	m, err := driver.GetMachine(&B2D)
 	if err != nil {
-		logf("Failed to get machine %q: %s", B2D.VM, err)
-		return 2
+		return fmt.Errorf("Failed to get machine %q: %s", B2D.VM, err)
 	}
 	if err := m.Restart(); err != nil {
-		logf("Failed to restart machine %q: %s", B2D.VM, err)
-		return 1
+		return fmt.Errorf("Failed to restart machine %q: %s", B2D.VM, err)
 	}
-	return 0
+	return nil
 }
 
 // Forcefully reset (equivalent to cold boot) the VM. Might corrupt disk image.
-func cmdReset() int {
+func cmdReset() error {
 	m, err := driver.GetMachine(&B2D)
 	if err != nil {
-		logf("Failed to get machine %q: %s", B2D.VM, err)
-		return 2
+		return fmt.Errorf("Failed to get machine %q: %s", B2D.VM, err)
 	}
 	if err := m.Reset(); err != nil {
-		logf("Failed to reset machine %q: %s", B2D.VM, err)
-		return 1
+		return fmt.Errorf("Failed to reset machine %q: %s", B2D.VM, err)
 	}
-	return 0
+	return nil
 }
 
 // Delete the VM and associated disk image.
-func cmdDelete() int {
+func cmdDelete() error {
 	m, err := driver.GetMachine(&B2D)
 	if err != nil {
 		if err == driver.ErrMachineNotExist {
-			logf("Machine %q does not exist.", B2D.VM)
-			return 0
+			return fmt.Errorf("Machine %q does not exist.", B2D.VM)
 		}
-		logf("Failed to get machine %q: %s", B2D.VM, err)
-		return 2
+		return fmt.Errorf("Failed to get machine %q: %s", B2D.VM, err)
 	}
 	if err := m.Delete(); err != nil {
-		logf("Failed to delete machine %q: %s", B2D.VM, err)
-		return 1
+		return fmt.Errorf("Failed to delete machine %q: %s", B2D.VM, err)
 	}
-	return 0
+	return nil
 }
 
 // Show detailed info of the VM.
-func cmdInfo() int {
+func cmdInfo() error {
 	m, err := driver.GetMachine(&B2D)
 	if err != nil {
-		logf("Failed to get machine %q: %s", B2D.VM, err)
-		return 2
+		return fmt.Errorf("Failed to get machine %q: %s", B2D.VM, err)
 	}
 	if err := json.NewEncoder(os.Stdout).Encode(m); err != nil {
-		logf("Failed to encode machine %q info: %s", B2D.VM, err)
-		return 1
+		return fmt.Errorf("Failed to encode machine %q info: %s", B2D.VM, err)
 	}
-	return 0
+	return nil
 }
 
 // Show the current state of the VM.
-func cmdStatus() int {
+func cmdStatus() error {
 	m, err := driver.GetMachine(&B2D)
 	if err != nil {
-		logf("Failed to get machine %q: %s", B2D.VM, err)
-		return 2
+		return fmt.Errorf("Failed to get machine %q: %s", B2D.VM, err)
 	}
 	fmt.Println(m.GetState())
-	return 0
+	return nil
 }
 
 // Call the external SSH command to login into boot2docker VM.
-func cmdSSH() int {
+func cmdSSH() error {
 	m, err := driver.GetMachine(&B2D)
 	if err != nil {
-		logf("Failed to get machine %q: %s", B2D.VM, err)
-		return 2
+		return fmt.Errorf("Failed to get machine %q: %s", B2D.VM, err)
 	}
 
 	if m.GetState() != driver.Running {
-		logf("VM %q is not running.", B2D.VM)
-		return 1
+		return fmt.Errorf("VM %q is not running.", B2D.VM)
 	}
 
 	// find the ssh cmd string and then pass any remaining strings to ssh
@@ -271,22 +247,19 @@ func cmdSSH() int {
 	}, os.Args[i:]...)
 
 	if err := cmdInteractive(B2D.SSH, sshArgs...); err != nil {
-		logf("%s", err)
-		return 1
+		return fmt.Errorf("%s", err)
 	}
-	return 0
+	return nil
 }
 
-func cmdIP() int {
+func cmdIP() error {
 	m, err := driver.GetMachine(&B2D)
 	if err != nil {
-		logf("Failed to get machine %q: %s", B2D.VM, err)
-		return 2
+		return fmt.Errorf("Failed to get machine %q: %s", B2D.VM, err)
 	}
 
 	if m.GetState() != driver.Running {
-		logf("VM %q is not running.", B2D.VM)
-		return 1
+		return fmt.Errorf("VM %q is not running.", B2D.VM)
 	}
 
 	IP := ""
@@ -311,7 +284,7 @@ func cmdIP() int {
 		fmt.Fprintf(os.Stderr, "\nFailed to get VM Host only IP address.\n")
 		fmt.Fprintf(os.Stderr, "\tWas the VM initilized using boot2docker?\n")
 	}
-	return 0
+	return nil
 }
 
 func RequestIPFromSSH(m driver.Machine) string {
@@ -328,10 +301,10 @@ func RequestIPFromSSH(m driver.Machine) string {
 	)
 	IP := ""
 	if err != nil {
-		logf("%s", err)
+		fmt.Fprintf(os.Stderr, "request ip from ssh error: %v", err)
 	} else {
 		if B2D.Verbose {
-			logf("SSH returned: %s\nEND SSH\n", out)
+			fmt.Printf("SSH returned: %s\nEND SSH\n", out)
 		}
 		// parse to find: inet 192.168.59.103/24 brd 192.168.59.255 scope global eth1
 		lines := strings.Split(out, "\n")
@@ -347,21 +320,19 @@ func RequestIPFromSSH(m driver.Machine) string {
 }
 
 // Download the boot2docker ISO image.
-func cmdDownload() int {
-	logf("Downloading boot2docker ISO image...")
+func cmdDownload() error {
+	fmt.Printf("Downloading boot2docker ISO image...")
 	url := "https://api.github.com/repos/boot2docker/boot2docker/releases"
 	tag, err := getLatestReleaseName(url)
 	if err != nil {
-		logf("Failed to get latest release: %s", err)
-		return 1
+		return fmt.Errorf("Failed to get latest release: %s", err)
 	}
-	logf("Latest release is %s", tag)
+	fmt.Printf("Latest release is %s", tag)
 
 	url = fmt.Sprintf("https://github.com/boot2docker/boot2docker/releases/download/%s/boot2docker.iso", tag)
 	if err := download(B2D.ISO, url); err != nil {
-		logf("Failed to download ISO image: %s", err)
-		return 1
+		return fmt.Errorf("Failed to download ISO image: %s", err)
 	}
-	logf("Success: downloaded %s\n\tto %s", url, B2D.ISO)
-	return 0
+	fmt.Printf("Success: downloaded %s\n\tto %s", url, B2D.ISO)
+	return nil
 }
