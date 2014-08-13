@@ -14,6 +14,7 @@ var (
 type unknownCommandError struct {
 	cmd string
 }
+
 func (e unknownCommandError) Error() string {
 	return fmt.Sprintf("Unknown command: %s", e.cmd)
 }
@@ -25,9 +26,7 @@ func main() {
 	// wrapper. Be careful not to indirectly trigger os.Exit() in the program,
 	// notably via log.Fatal() and on flag.Parse() where the default behavior
 	// is ExitOnError.
-	if err := run(); err == nil {
-		os.Exit(0)
-	} else {
+	if err := run(); err != nil {
 		fmt.Fprintf(os.Stderr, "error in run: %v\n", err)
 		if _, ok := err.(unknownCommandError); ok {
 			usageShort()
