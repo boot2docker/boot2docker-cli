@@ -203,6 +203,11 @@ func (m *Machine) Delete() error {
 }
 
 // Get current state
+func (m *Machine) GetName() string {
+	return m.Name
+}
+
+// Get current state
 func (m *Machine) GetState() driver.MachineState {
 	return m.State
 }

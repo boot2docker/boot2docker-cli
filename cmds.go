@@ -60,36 +60,40 @@ func cmdUp() error {
 	}
 	print("\n")
 
-	fmt.Printf("Started.")
+	fmt.Printf("Started.\n")
 
 	if IP == "" {
 		// lets try one more time
 		time.Sleep(600 * time.Millisecond)
-		fmt.Printf("  Trying to get IP one more time")
+		fmt.Printf("  Trying to get IP one more time\n")
 
 		IP = RequestIPFromSSH(m)
 	}
-	_ = RequestCertsUsingSSH(m)
+	// Copying the certs here - someone might have have written a Windows API client.
+	certPath := RequestCertsUsingSSH(m)
 	switch runtime.GOOS {
 	case "windows":
-		fmt.Printf("Docker client does not run on Windows for now. Please use")
-		fmt.Printf("    \"%s\" ssh", os.Args[0])
-		fmt.Printf("to SSH into the VM instead.")
+		fmt.Printf("Docker client does not run on Windows for now. Please use\n")
+		fmt.Printf("    \"%s\" ssh\n", os.Args[0])
+		fmt.Printf("to SSH into the VM instead.\n")
 	default:
 		if IP == "" {
-			fmt.Fprintf(os.Stderr, "Auto detection of the VM's IP address failed.")
-			fmt.Fprintf(os.Stderr, "Please run `boot2docker -v up` to diagnose.")
+			fmt.Fprintf(os.Stderr, "Auto detection of the VM's IP address failed.\n")
+			fmt.Fprintf(os.Stderr, "Please run `boot2docker -v up` to diagnose.\n")
 		} else {
 			// Check if $DOCKER_HOST ENV var is properly configured.
 			socket := RequestSocketFromSSH(m)
-			if os.Getenv("DOCKER_HOST") != socket {
-				fmt.Printf("To connect the Docker client to the Docker daemon, please set:")
-				fmt.Printf("    export DOCKER_HOST=%s", socket)
+			if os.Getenv("DOCKER_HOST") != socket || os.Getenv("DOCKER_CERT_PATH") != certPath {
+				fmt.Printf("\nTo connect the Docker client to the Docker daemon, please set:\n")
+				fmt.Printf("    export DOCKER_HOST=%s\n", socket)
+				// Assume Docker 1.2.0 with TLS on...
+				fmt.Printf("    export DOCKER_CERT_PATH=%s\n", certPath)
 			} else {
-				fmt.Printf("Your DOCKER_HOST env variable is already set correctly.")
+				fmt.Printf("Your DOCKER_HOST env variable is already set correctly.\n")
 			}
 		}
 	}
+	fmt.Printf("\n")
 	return nil
 }
 

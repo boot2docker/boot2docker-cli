@@ -287,6 +287,8 @@ func RequestIPFromSerialPort(socket string) string {
 func RequestCertsUsingSSH(m driver.Machine) string {
 	cmd := getSSHCommand(m, "tar c /home/docker/.docker/*.pem")
 
+	certDir := ""
+
 	b, err := cmd.Output()
 	if err != nil {
 		fmt.Printf("%s", err)
@@ -312,11 +314,14 @@ func RequestCertsUsingSSH(m driver.Machine) string {
 				return ""
 			}
 			filename := filepath.Base(hdr.Name)
-			certpath := filepath.Join(dir, filename)
-			fmt.Printf("Writing %s:\n", certpath)
-			// TODO: this is unsafe - would be better to put in ~/.docker/boot2docker/
-			// sadly, last time i tested the CERT_PATH setting also wasn't reliable.
-			f, err := os.Create(certpath)
+			certDir = filepath.Join(dir, m.GetName())
+			if err := os.MkdirAll(certDir, 0755); err != nil {
+				fmt.Printf("%s", err)
+				return ""
+			}
+			certFile := filepath.Join(certDir, filename)
+			fmt.Printf("Writing %s:\n", certFile)
+			f, err := os.Create(certFile)
 			if err != nil {
 				fmt.Printf("%s", err)
 				return ""
@@ -329,5 +334,5 @@ func RequestCertsUsingSSH(m driver.Machine) string {
 			w.Flush()
 		}
 	}
-	return "OK"
+	return certDir
 }
