@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -106,8 +107,20 @@ func getLatestReleaseName(url string) (string, error) {
 	var t []struct {
 		TagName string `json:"tag_name"`
 	}
-	if err := json.NewDecoder(rsp.Body).Decode(&t); err != nil {
+	body, err := ioutil.ReadAll(rsp.Body)
+	if err != nil {
 		return "", err
+	}
+
+	if err := json.Unmarshal(body, &t); err != nil {
+		var e struct {
+			Message          string
+			DocumentationUrl string
+		}
+		if err := json.Unmarshal(body, &e); err != nil {
+			return "", fmt.Errorf("Error decoding %s\nbody: %s", err, body)
+		}
+		return "", fmt.Errorf("Error getting releases: %s\n see %s", e.Message, e.DocumentationUrl)
 	}
 	if len(t) == 0 {
 		return "", fmt.Errorf("no releases found")
