@@ -170,15 +170,19 @@ func reader(r io.Reader) {
 func getSSHCommand(m driver.Machine, args ...string) *exec.Cmd {
 
 	DefaultSSHArgs := []string{
-		"-o", "IdentitiesOnly=yes",
 		"-o", "StrictHostKeyChecking=no",
 		"-o", "UserKnownHostsFile=/dev/null",
 		"-o", "LogLevel=quiet", // suppress "Warning: Permanently added '[localhost]:2022' (ECDSA) to the list of known hosts."
 		"-p", fmt.Sprintf("%d", m.GetSSHPort()),
-		"-i", B2D.SSHKey,
-		"docker@localhost",
+		fmt.Sprintf("%s@%s", m.GetSSHUser(), m.GetSSHHost()),
 	}
 
+	if B2D.SSHKey != "" {
+		DefaultSSHArgs = append(DefaultSSHArgs, "-i", B2D.SSHKey, "-o", "IdentitiesOnly=yes")
+	}
+	if B2D.Verbose {
+		DefaultSSHArgs = append(DefaultSSHArgs, "-v")
+	}
 	sshArgs := append(DefaultSSHArgs, args...)
 	cmd := exec.Command(B2D.SSH, sshArgs...)
 	if B2D.Verbose {
@@ -190,7 +194,7 @@ func getSSHCommand(m driver.Machine, args ...string) *exec.Cmd {
 }
 
 func RequestIPFromSSH(m driver.Machine) (string, error) {
-	cmd := getSSHCommand(m, "ip addr show dev eth1")
+	cmd := getSSHCommand(m, "ip addr show dev "+m.GetEthDev())
 
 	b, err := cmd.Output()
 	if err != nil {

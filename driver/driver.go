@@ -14,6 +14,9 @@ const (
 	SSHPort    = 22
 	DockerPort = 2375
 
+	// Default Port forwarded hostname to ssh bootstrap
+	SSHHost = "localhost"
+
 	// VM states
 	Poweroff = MachineState("poweroff")
 	Running  = MachineState("running")
@@ -44,7 +47,10 @@ type Machine interface {
 	GetName() string
 	GetSerialFile() string
 	GetDockerPort() uint
+	GetSSHUser() string
 	GetSSHPort() uint
+	GetSSHHost() string
+	GetEthDev() string
 }
 
 var (
