@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	"strings"
 	"time"
 
 	_ "github.com/boot2docker/boot2docker-cli/dummy"
@@ -61,44 +60,50 @@ func cmdUp() error {
 	}
 	print("\n")
 
-	fmt.Printf("Started.")
+	fmt.Printf("Started.\n")
 
 	if IP == "" {
 		// lets try one more time
 		time.Sleep(600 * time.Millisecond)
-		fmt.Printf("  Trying to get IP one more time")
+		fmt.Printf("  Trying to get IP one more time\n")
 
 		IP = RequestIPFromSSH(m)
 	}
+	// Copying the certs here - someone might have have written a Windows API client.
+	certPath := RequestCertsUsingSSH(m)
 	switch runtime.GOOS {
 	case "windows":
-		fmt.Printf("Docker client does not run on Windows for now. Please use")
-		fmt.Printf("    \"%s\" ssh", os.Args[0])
-		fmt.Printf("to SSH into the VM instead.")
+		fmt.Printf("Docker client does not run on Windows for now. Please use\n")
+		fmt.Printf("    \"%s\" ssh\n", os.Args[0])
+		fmt.Printf("to SSH into the VM instead.\n")
 	default:
 		if IP == "" {
-			fmt.Fprintf(os.Stderr, "Auto detection of the VM's IP address failed.")
-			fmt.Fprintf(os.Stderr, "Please run `boot2docker -v up` to diagnose.")
+			fmt.Fprintf(os.Stderr, "Auto detection of the VM's IP address failed.\n")
+			fmt.Fprintf(os.Stderr, "Please run `boot2docker -v up` to diagnose.\n")
 		} else {
 			// Check if $DOCKER_HOST ENV var is properly configured.
-			if os.Getenv("DOCKER_HOST") != fmt.Sprintf("tcp://%s:%d", IP, driver.DockerPort) {
-				fmt.Printf("To connect the Docker client to the Docker daemon, please set:")
-				fmt.Printf("    export DOCKER_HOST=tcp://%s:%d", IP, driver.DockerPort)
+			socket := RequestSocketFromSSH(m)
+			if os.Getenv("DOCKER_HOST") != socket || os.Getenv("DOCKER_CERT_PATH") != certPath {
+				fmt.Printf("\nTo connect the Docker client to the Docker daemon, please set:\n")
+				fmt.Printf("    export DOCKER_HOST=%s\n", socket)
+				// Assume Docker 1.2.0 with TLS on...
+				fmt.Printf("    export DOCKER_CERT_PATH=%s\n", certPath)
 			} else {
-				fmt.Printf("Your DOCKER_HOST env variable is already set correctly.")
+				fmt.Printf("Your DOCKER_HOST env variable is already set correctly.\n")
 			}
 		}
 	}
+	fmt.Printf("\n")
 	return nil
 }
 
 // Tell the user the config (and later let them set it?)
 func cmdConfig() error {
-	dir, err := getCfgDir(".boot2docker")
+	dir, err := cfgDir(".boot2docker")
 	if err != nil {
 		return fmt.Errorf("Error working out Profile file location: %s", err)
 	}
-	filename := getCfgFilename(dir)
+	filename := cfgFilename(dir)
 	fmt.Printf("boot2docker profile filename: %s", filename)
 	fmt.Println(printConfig())
 	return nil
@@ -217,6 +222,26 @@ func cmdStatus() error {
 	return nil
 }
 
+// tell the User the Docker socket to connect to
+func cmdSocket() error {
+	m, err := driver.GetMachine(&B2D)
+	if err != nil {
+		return fmt.Errorf("Failed to get machine %q: %s", B2D.VM, err)
+	}
+
+	if m.GetState() != driver.Running {
+		return fmt.Errorf("VM %q is not running.", B2D.VM)
+	}
+
+	Socket := RequestSocketFromSSH(m)
+
+	fmt.Fprintf(os.Stderr, "\n\t export DOCKER_HOST=")
+	fmt.Printf("%s", Socket)
+	fmt.Fprintf(os.Stderr, "\n\n")
+
+	return nil
+}
+
 // Call the external SSH command to login into boot2docker VM.
 func cmdSSH() error {
 	m, err := driver.GetMachine(&B2D)
@@ -236,17 +261,7 @@ func cmdSSH() error {
 		i++
 	}
 
-	sshArgs := append([]string{
-		"-o", "IdentitiesOnly=yes",
-		"-o", "StrictHostKeyChecking=no",
-		"-o", "UserKnownHostsFile=/dev/null",
-		"-o", "LogLevel=quiet", // suppress "Warning: Permanently added '[localhost]:2022' (ECDSA) to the list of known hosts."
-		"-p", fmt.Sprintf("%d", m.GetSSHPort()),
-		"-i", B2D.SSHKey,
-		"docker@localhost",
-	}, os.Args[i:]...)
-
-	if err := cmdInteractive(B2D.SSH, sshArgs...); err != nil {
+	if err := cmdInteractive(m, os.Args[i:]...); err != nil {
 		return fmt.Errorf("%s", err)
 	}
 	return nil
@@ -285,38 +300,6 @@ func cmdIP() error {
 		fmt.Fprintf(os.Stderr, "\tWas the VM initilized using boot2docker?\n")
 	}
 	return nil
-}
-
-func RequestIPFromSSH(m driver.Machine) string {
-	// fall back to using the NAT port forwarded ssh
-	out, err := cmd(B2D.SSH,
-		"-v", // please leave in - this seems to improve the chance of success
-		"-o", "IdentitiesOnly=yes",
-		"-o", "StrictHostKeyChecking=no",
-		"-o", "UserKnownHostsFile=/dev/null",
-		"-p", fmt.Sprintf("%d", m.GetSSHPort()),
-		"-i", B2D.SSHKey,
-		"docker@localhost",
-		"ip addr show dev eth1",
-	)
-	IP := ""
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "request ip from ssh error: %v", err)
-	} else {
-		if B2D.Verbose {
-			fmt.Printf("SSH returned: %s\nEND SSH\n", out)
-		}
-		// parse to find: inet 192.168.59.103/24 brd 192.168.59.255 scope global eth1
-		lines := strings.Split(out, "\n")
-		for _, line := range lines {
-			vals := strings.Split(strings.TrimSpace(line), " ")
-			if len(vals) >= 2 && vals[0] == "inet" {
-				IP = vals[1][:strings.Index(vals[1], "/")]
-				break
-			}
-		}
-	}
-	return IP
 }
 
 // Download the boot2docker ISO image.

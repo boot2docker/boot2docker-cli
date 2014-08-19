@@ -92,6 +92,11 @@ func (m *Machine) Reset() error {
 	return nil
 }
 
+// Get current name
+func (m *Machine) GetName() string {
+	return m.Name
+}
+
 // Get current state
 func (m *Machine) GetState() driver.MachineState {
 	return m.State

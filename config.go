@@ -20,11 +20,7 @@ var (
 	B2D        = driver.MachineConfig{}
 )
 
-func getCfgDir(name string) (string, error) {
-	if b2dDir := os.Getenv("BOOT2DOCKER_DIR"); b2dDir != "" {
-		return b2dDir, nil
-	}
-
+func homeDir() (string, error) {
 	dir := ""
 
 	// *nix and MSYS Windows
@@ -35,6 +31,21 @@ func getCfgDir(name string) (string, error) {
 	if _, err := os.Stat(dir); err != nil {
 		return "", err
 	}
+
+	return dir, nil
+}
+
+func cfgDir(name string) (string, error) {
+	if name == ".boot2docker" {
+		if b2dDir := os.Getenv("BOOT2DOCKER_DIR"); b2dDir != "" {
+			return b2dDir, nil
+		}
+	}
+
+	dir, err := homeDir()
+	if err != nil {
+		return "", err
+	}
 	dir = filepath.Join(dir, name)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return "", err
@@ -42,7 +53,7 @@ func getCfgDir(name string) (string, error) {
 	return dir, nil
 }
 
-func getCfgFilename(dir string) string {
+func cfgFilename(dir string) string {
 	filename := os.Getenv("BOOT2DOCKER_PROFILE")
 	if filename == "" {
 		filename = filepath.Join(dir, "profile")
@@ -64,7 +75,7 @@ func printConfig() string {
 
 // Read configuration from both profile and flags. Flags override profile.
 func config() (*flag.FlagSet, error) {
-	dir, err := getCfgDir(".boot2docker")
+	dir, err := cfgDir(".boot2docker")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get boot2docker directory: %s", err)
 	}
@@ -95,7 +106,7 @@ func config() (*flag.FlagSet, error) {
 	flags.StringVar(&B2D.SSH, "ssh", "ssh", "path to SSH client utility.")
 	flags.StringVar(&B2D.SSHGen, "ssh-keygen", "ssh-keygen", "path to ssh-keygen utility.")
 
-	sshdir, _ := getCfgDir(".ssh")
+	sshdir, _ := cfgDir(".ssh")
 	flags.StringVar(&B2D.SSHKey, "sshkey", filepath.Join(sshdir, "id_boot2docker"), "path to SSH key to use.")
 	flags.UintVarP(&B2D.DiskSize, "disksize", "s", 20000, "boot2docker disk image size (in MB).")
 	flags.UintVarP(&B2D.Memory, "memory", "m", 2048, "virtual machine memory size (in MB).")
@@ -121,7 +132,7 @@ func config() (*flag.FlagSet, error) {
 		return nil, err
 	}
 	// Over-ride from the profile file
-	filename := getCfgFilename(B2D.Dir)
+	filename := cfgFilename(B2D.Dir)
 	if _, err := os.Lstat(filename); err == nil {
 		if _, err := toml.DecodeFile(filename, &B2D); err != nil {
 			return nil, err
@@ -153,7 +164,7 @@ func config() (*flag.FlagSet, error) {
 }
 
 func usageShort() {
-	fmt.Fprintf(os.Stderr, "Usage: %s [<options>] {help|init|up|ssh|save|down|poweroff|reset|restart|config|status|info|ip|delete|destroy|download|version} [<args>]\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "Usage: %s [<options>] {help|init|up|ssh|save|down|poweroff|reset|restart|config|status|info|ip|socket|delete|destroy|download|version} [<args>]\n", os.Args[0])
 }
 
 func usageLong(flags *flag.FlagSet) {
@@ -175,6 +186,7 @@ Commands:
     config|cfg              Show selected profile file settings.
     info                    Display detailed information of VM.
     ip                      Display the IP address of the VM's Host-only network.
+    socket                  Display the DOCKER_HOST socket to connect to.
     status                  Display current state of VM.
     download                Download boot2docker ISO image.
     upgrade                 Upgrade the boot2docker ISO image (if vm is running it will be stopped and started).
