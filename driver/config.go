@@ -2,8 +2,8 @@ package driver
 
 import (
 	"fmt"
-	"net"
 	flag "github.com/ogier/pflag"
+	"net"
 )
 
 // Machine config.
@@ -40,12 +40,9 @@ type MachineConfig struct {
 	SerialFile string
 }
 
-type ConfigFunc func(B2D *MachineConfig, flags *flag.FlagSet) (error)
+type ConfigFunc func(B2D *MachineConfig, flags *flag.FlagSet) error
 
-var (
-	// All registred machines
-	configs map[string]ConfigFunc
-)
+var configs map[string]ConfigFunc // optional map of driver ConfigFunc
 
 func init() {
 	configs = make(map[string]ConfigFunc)

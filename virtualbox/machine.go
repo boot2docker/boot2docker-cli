@@ -41,8 +41,8 @@ const (
 
 var (
 	VBM     string // Path to VBoxManage utility.
-	VMDK     string // base VMDK to use as persistent disk.
-	Verbose bool   // Verbose mode (Local copy of B2D.Verbose).
+	VMDK    string // base VMDK to use as persistent disk.
+	verbose bool   // Verbose mode (Local copy of B2D.Verbose).
 )
 
 func init() {
@@ -58,7 +58,7 @@ func init() {
 
 // Initialize the Machine.
 func InitFunc(mc *driver.MachineConfig) (driver.Machine, error) {
-	Verbose = mc.Verbose
+	verbose = mc.Verbose
 
 	m, err := GetMachine(mc.VM)
 	if err != nil && mc.Init {
@@ -417,7 +417,7 @@ func CreateMachine(mc *driver.MachineConfig) (*Machine, error) {
 	// Set NIC #1 to use NAT
 	m.SetNIC(1, driver.NIC{Network: driver.NICNetNAT, Hardware: driver.VirtIO})
 	pfRules := map[string]driver.PFRule{
-		"ssh":    {Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: mc.SSHPort, GuestPort: driver.SSHPort},
+		"ssh": {Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: mc.SSHPort, GuestPort: driver.SSHPort},
 	}
 	if mc.DockerPort > 0 {
 		pfRules["docker"] = driver.PFRule{Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: mc.DockerPort, GuestPort: driver.DockerPort}
