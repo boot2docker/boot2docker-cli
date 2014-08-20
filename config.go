@@ -83,26 +83,45 @@ func config() (*flag.FlagSet, error) {
 	flags := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	flags.Usage = func() { usageLong(flags) }
 
+	// Find out which driver we're usng and add its flags
+	flags.StringVar(&B2D.Driver, "driver", "virtualbox", "hypervisor driver.")
+	flags.BoolVarP(&B2D.Verbose, "verbose", "v", false, "display verbose command invocations.")
+
+	if err := flags.Parse([]string{}); err != nil {
+		return nil, err
+	}
+	// Over-ride from the profile file
+	filename := cfgFilename(B2D.Dir)
+	if _, err := os.Lstat(filename); err == nil {
+		if _, err := toml.DecodeFile(filename, &B2D); err != nil {
+			return nil, err
+		}
+	}
+	// for cmd==ssh only:
+	// only pass the params up to and including the `ssh` command - after that,
+	// there might be other -flags that are destined for the ssh cmd
+	sshIdx := 1
+	for sshIdx < len(os.Args) && os.Args[sshIdx-1] != "ssh" {
+		sshIdx++
+	}
+	// Command-line overrides profile config.
+	if err := flags.Parse(os.Args[1:sshIdx]); err != nil {
+		return nil, err
+	}
+	if B2D.Verbose {
+		fmt.Printf("Using %s driver\n", B2D.Driver)
+	}
+	driver.ConfigFlags(&B2D, flags)
+
+	// Add the generic flags
+
 	flags.StringVar(&B2D.VM, "vm", "boot2docker-vm", "virtual machine name.")
 	// removed for now, requires re-parsing a new config file which is too messy
 	//flags.StringVarP(&B2D.Dir, "dir", "d", dir, "boot2docker config directory.")
 	B2D.Dir = dir
 	flags.StringVar(&B2D.ISO, "iso", filepath.Join(dir, "boot2docker.iso"), "path to boot2docker ISO image.")
-	flags.StringVar(&B2D.VMDK, "basevmdk", "", "Path to VMDK to use as base for persistent partition")
-	vbm := "VBoxManage"
-	if runtime.GOOS == "windows" {
-		p := "C:\\Program Files\\Oracle\\VirtualBox"
-		if t := os.Getenv("VBOX_INSTALL_PATH"); t != "" {
-			p = t
-		} else if t = os.Getenv("VBOX_MSI_INSTALL_PATH"); t != "" {
-			p = t
-		}
-		vbm = filepath.Join(p, "VBoxManage.exe")
-	}
+
 	flags.BoolVarP(&B2D.Init, "init", "i", false, "auto initialize vm instance.")
-	flags.StringVar(&B2D.VBM, "vbm", vbm, "path to VirtualBox management utility.")
-	flags.BoolVarP(&B2D.Verbose, "verbose", "v", false, "display verbose command invocations.")
-	flags.StringVar(&B2D.Driver, "driver", "virtualbox", "hypervisor driver.")
 	flags.StringVar(&B2D.SSH, "ssh", "ssh", "path to SSH client utility.")
 	flags.StringVar(&B2D.SSHGen, "ssh-keygen", "ssh-keygen", "path to ssh-keygen utility.")
 
@@ -132,22 +151,15 @@ func config() (*flag.FlagSet, error) {
 		return nil, err
 	}
 	// Over-ride from the profile file
-	filename := cfgFilename(B2D.Dir)
+	//filename := cfgFilename(B2D.Dir)
 	if _, err := os.Lstat(filename); err == nil {
 		if _, err := toml.DecodeFile(filename, &B2D); err != nil {
 			return nil, err
 		}
 	}
 
-	// for cmd==ssh only:
-	// only pass the params up to and including the `ssh` command - after that,
-	// there might be other -flags that are destined for the ssh cmd
-	i := 1
-	for i < len(os.Args) && os.Args[i-1] != "ssh" {
-		i++
-	}
 	// Command-line overrides profile config.
-	if err := flags.Parse(os.Args[1:i]); err != nil {
+	if err := flags.Parse(os.Args[1:sshIdx]); err != nil {
 		return nil, err
 	}
 

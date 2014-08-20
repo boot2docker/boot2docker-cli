@@ -75,3 +75,4 @@ func GetMachine(mc *MachineConfig) (Machine, error) {
 	}
 	return nil, ErrNotSupported
 }
+

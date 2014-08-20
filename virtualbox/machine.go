@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/boot2docker/boot2docker-cli/driver"
+	flag "github.com/ogier/pflag"
 )
 
 type Flag int
@@ -40,7 +41,8 @@ const (
 
 var (
 	VBM     string // Path to VBoxManage utility.
-	Verbose bool   // Verbose mode.
+	VMDK     string // base VMDK to use as persistent disk.
+	Verbose bool   // Verbose mode (Local copy of B2D.Verbose).
 )
 
 func init() {
@@ -48,11 +50,14 @@ func init() {
 		fmt.Fprintf(os.Stderr, "Failed to initialize driver. Error : %s", err.Error())
 		os.Exit(1)
 	}
+	if err := driver.RegisterConfig("virtualbox", ConfigFlags); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to initialize driver config. Error : %s", err.Error())
+		os.Exit(1)
+	}
 }
 
 // Initialize the Machine.
 func InitFunc(mc *driver.MachineConfig) (driver.Machine, error) {
-	VBM = mc.VBM
 	Verbose = mc.Verbose
 
 	m, err := GetMachine(mc.VM)
@@ -60,6 +65,23 @@ func InitFunc(mc *driver.MachineConfig) (driver.Machine, error) {
 		return CreateMachine(mc)
 	}
 	return m, err
+}
+
+func ConfigFlags(B2D *driver.MachineConfig, flags *flag.FlagSet) error {
+	flags.StringVar(&VMDK, "basevmdk", "", "Path to VMDK to use as base for persistent partition")
+	vbm := "VBoxManage"
+	if runtime.GOOS == "windows" {
+		p := "C:\\Program Files\\Oracle\\VirtualBox"
+		if t := os.Getenv("VBOX_INSTALL_PATH"); t != "" {
+			p = t
+		} else if t = os.Getenv("VBOX_MSI_INSTALL_PATH"); t != "" {
+			p = t
+		}
+		vbm = filepath.Join(p, "VBoxManage.exe")
+	}
+	flags.StringVar(&VBM, "vbm", vbm, "path to VirtualBox management utility.")
+
+	return nil
 }
 
 // Convert bool to "on"/"off"
@@ -433,8 +455,8 @@ func CreateMachine(mc *driver.MachineConfig) (*Machine, error) {
 			return m, err
 		}
 
-		if mc.VMDK != "" {
-			if err := copyDiskImage(diskImg, mc.VMDK); err != nil {
+		if VMDK != "" {
+			if err := copyDiskImage(diskImg, VMDK); err != nil {
 				return m, err
 			}
 		} else {
