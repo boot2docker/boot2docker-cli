@@ -151,7 +151,6 @@ func config() (*flag.FlagSet, error) {
 		return nil, err
 	}
 	// Over-ride from the profile file
-	//filename := cfgFilename(B2D.Dir)
 	if _, err := os.Lstat(filename); err == nil {
 		if _, err := toml.DecodeFile(filename, &B2D); err != nil {
 			return nil, err
