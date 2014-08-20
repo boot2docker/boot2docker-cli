@@ -38,6 +38,11 @@ const (
 	F_accelerate3d
 )
 
+var (
+	VBM     string // Path to VBoxManage utility.
+	Verbose bool   // Verbose mode.
+)
+
 func init() {
 	if err := driver.Register("virtualbox", InitFunc); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize driver. Error : %s", err.Error())
@@ -47,6 +52,9 @@ func init() {
 
 // Initialize the Machine.
 func InitFunc(mc *driver.MachineConfig) (driver.Machine, error) {
+	VBM = mc.VBM
+	Verbose = mc.Verbose
+
 	m, err := GetMachine(mc.VM)
 	if err != nil && mc.Init {
 		return CreateMachine(mc)

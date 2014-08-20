@@ -9,22 +9,13 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strings"
 
 	"github.com/boot2docker/boot2docker-cli/driver"
 )
 
-var (
-	VBM     string // Path to VBoxManage utility.
-	Verbose bool   // Verbose mode.
-)
 
 func init() {
-	VBM = "VBoxManage"
-	if p := os.Getenv("VBOX_INSTALL_PATH"); p != "" && runtime.GOOS == "windows" {
-		VBM = filepath.Join(p, "VBoxManage.exe")
-	}
 }
 
 var (
