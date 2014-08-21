@@ -182,27 +182,27 @@ func usageLong(flags *flag.FlagSet) {
 	// NOTE: the help message uses spaces, not tabs for indentation!
 	fmt.Fprintf(os.Stderr, `Usage: %s [<options>] <command> [<args>]
 
-boot2docker management utility.
+Boot2Docker management utility.
 
 Commands:
-    init                    Create a new boot2docker VM.
-    up|start|boot           Start VM from any states.
-    ssh [ssh-command]       Login to VM via SSH.
-    save|suspend            Suspend VM and save state to disk.
-    down|stop|halt          Gracefully shutdown the VM.
-    restart                 Gracefully reboot the VM.
-    poweroff                Forcefully power off the VM (might corrupt disk image).
-    reset                   Forcefully power cycle the VM (might corrupt disk image).
-    delete|destroy          Delete boot2docker VM and its disk image.
-    config|cfg              Show selected profile file settings.
-    info                    Display detailed information of VM.
-    ip                      Display the IP address of the VM's Host-only network.
-    socket                  Display the DOCKER_HOST socket to connect to.
-    shellinit               Display the Environment export shell command needed to set up the Docker client.
-    status                  Display current state of VM.
-    download                Download boot2docker ISO image.
-    upgrade                 Upgrade the boot2docker ISO image (if vm is running it will be stopped and started).
-    version                 Display version information.
+   init                Create a new Boot2Docker VM.
+   up|start|boot       Start VM from any states.
+   ssh [ssh-command]   Login to VM via SSH.
+   save|suspend        Suspend VM and save state to disk.
+   down|stop|halt      Gracefully shutdown the VM.
+   restart             Gracefully reboot the VM.
+   poweroff            Forcefully power off the VM (may corrupt disk image).
+   reset               Forcefully power cycle the VM (may corrupt disk image).
+   delete|destroy      Delete Boot2Docker VM and its disk image.
+   config|cfg          Show selected profile file settings.
+   info                Display detailed information of VM.
+   ip                  Display the IP address of the VM's Host-only network.
+   socket              Display the DOCKER_HOST socket to connect to.
+   shellinit           Display the shell command to set up the Docker client.
+   status              Display current state of VM.
+   download            Download Boot2Docker ISO image.
+   upgrade             Upgrade the Boot2Docker ISO image (restart if running).
+   version             Display version information.
 
 Options:
 `, os.Args[0])
