@@ -4,8 +4,9 @@ set -e
 
 # Set version to latest unless set by user
 if [ -z "$VERSION" ]; then
-  VERSION="1.0.1"
+  VERSION="1.1.2"
 fi
+EXTENSION=""
 
 echo "Downloading version ${VERSION}..."
 
@@ -14,13 +15,15 @@ UNAME=`uname -a`
 # Determine platform
 if [[ $UNAME == *"Darwin"* ]]; then
   PLATFORM="darwin"
-elif [[ $UNAME == *"Cygwin"* ]]; then
+elif [[ ($UNAME == *MINGW*) || ($UNAME == *Cygwin*) ]]; then
   PLATFORM="windows"
+  EXTENSION=".exe"
+  UNAME="${PROCESSOR_ARCHITEW6432}"
 else
   PLATFORM="linux"
 fi
 # Determine architecture
-if [[ ($UNAME == *x86_64*) || ($UNAME == *amd64*) ]]
+if [[ ($UNAME == *x86_64*) || ($UNAME == *amd64*) || ($UNAME == *AMD64*) ]]
 then
   ARCH="amd64"
 else
@@ -30,9 +33,11 @@ else
 fi
 
 # Download binary
-curl -L -o boot2docker "https://github.com/boot2docker/boot2docker-cli/releases/download/v${VERSION}/boot2docker-v${VERSION}-${PLATFORM}_${ARCH}"
+URL="https://github.com/boot2docker/boot2docker-cli/releases/download/v${VERSION}/boot2docker-v${VERSION}-${PLATFORM}-${ARCH}${EXTENSION}"
+echo "Downloading $URL"
+curl -L -o "boot2docker${EXTENSION}" "$URL"
 
 # Make binary executable
-chmod +x boot2docker
+chmod +x "boot2docker${EXTENSION}"
 
 echo "Done."
