@@ -73,7 +73,7 @@ func cmdUp() error {
 	certPath, err := RequestCertsUsingSSH(m)
 	if err != nil && B2D.Verbose {
 		// These errors are not fatal
-		fmt.Printf("Error copying Certificates: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Error copying Certificates: %s\n", err)
 	}
 	switch runtime.GOOS {
 	case "windows":
@@ -89,15 +89,7 @@ func cmdUp() error {
 			socket := RequestSocketFromSSH(m)
 			if os.Getenv("DOCKER_HOST") != socket || os.Getenv("DOCKER_CERT_PATH") != certPath {
 				fmt.Printf("\nTo connect the Docker client to the Docker daemon, please set:\n")
-				fmt.Printf("    export DOCKER_HOST=%s\n", socket)
-				if certPath == "" {
-					if os.Getenv("DOCKER_CERT_PATH") != "" {
-						fmt.Println("    unset DOCKER_CERT_PATH")
-					}
-				} else {
-					// Assume Docker 1.2.0 with TLS on...
-					fmt.Printf("    export DOCKER_CERT_PATH=%s\n", certPath)
-				}
+				printExport(socket, certPath)
 			} else {
 				fmt.Printf("Your DOCKER_HOST env variable is already set correctly.\n")
 			}
@@ -105,6 +97,41 @@ func cmdUp() error {
 	}
 	fmt.Printf("\n")
 	return nil
+}
+
+// Give the user the exact command to run to set the env.
+func cmdShellInit() error {
+	m, err := driver.GetMachine(&B2D)
+	if err != nil {
+		return fmt.Errorf("Failed to get machine %q: %s", B2D.VM, err)
+	}
+
+	if m.GetState() != driver.Running {
+		return fmt.Errorf("VM %q is not running.", B2D.VM)
+	}
+
+	socket := RequestSocketFromSSH(m)
+
+	certPath, err := RequestCertsUsingSSH(m)
+	if err != nil && B2D.Verbose {
+		// These errors are not fatal
+		fmt.Fprintf(os.Stderr, "Error copying Certificates: %s\n", err)
+	}
+	printExport(socket, certPath)
+
+	return nil
+}
+
+func printExport(socket, certPath string) {
+	fmt.Printf("    export DOCKER_HOST=%s\n", socket)
+	if certPath == "" {
+		if os.Getenv("DOCKER_CERT_PATH") != "" {
+			fmt.Println("    unset DOCKER_CERT_PATH")
+		}
+	} else {
+		// Assume Docker 1.2.0 with TLS on...
+		fmt.Printf("    export DOCKER_CERT_PATH=%s\n", certPath)
+	}
 }
 
 // Tell the user the config (and later let them set it?)
@@ -243,10 +270,10 @@ func cmdSocket() error {
 		return fmt.Errorf("VM %q is not running.", B2D.VM)
 	}
 
-	Socket := RequestSocketFromSSH(m)
+	socket := RequestSocketFromSSH(m)
 
 	fmt.Fprintf(os.Stderr, "\n\t export DOCKER_HOST=")
-	fmt.Printf("%s", Socket)
+	fmt.Printf("%s", socket)
 	fmt.Fprintf(os.Stderr, "\n\n")
 
 	return nil
