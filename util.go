@@ -297,6 +297,11 @@ func RequestIPFromSerialPort(socket string) string {
 }
 
 // TODO: need to add or abstract to get a Serial coms version
+// RequestCertsUsingSSH requests certs using SSH. 
+// The assumption is that if the certs are in b2d:/home/docker/.docker
+// then the daemon is using TLS. We can't assume that because there are
+// certs in the local host's user dir, that the server is using them, so
+// for now, make sure things are updated from the server. (for `docker shellinit`)
 func RequestCertsUsingSSH(m driver.Machine) (string, error) {
 	cmd := getSSHCommand(m, "tar c /home/docker/.docker/*.pem")
 

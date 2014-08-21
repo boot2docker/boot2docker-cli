@@ -67,6 +67,8 @@ func run() error {
 		return cmdInfo()
 	case "socket":
 		return cmdSocket()
+	case "shellinit":
+		return cmdShellInit()
 	case "status":
 		return cmdStatus()
 	case "ssh":
