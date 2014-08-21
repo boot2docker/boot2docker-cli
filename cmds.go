@@ -40,7 +40,7 @@ func cmdUp() error {
 		return fmt.Errorf("Failed to start machine %q (run again with -v for details)", B2D.VM)
 	}
 
-	fmt.Printf("Waiting for VM to be started...")
+	fmt.Println("Waiting for VM to be started...")
 	//give the VM a little time to start, so we don't kill the Serial Pipe/Socket
 	time.Sleep(600 * time.Millisecond)
 	natSSH := fmt.Sprintf("localhost:%d", m.GetSSHPort())
@@ -70,7 +70,11 @@ func cmdUp() error {
 		IP = RequestIPFromSSH(m)
 	}
 	// Copying the certs here - someone might have have written a Windows API client.
-	certPath := RequestCertsUsingSSH(m)
+	certPath, err := RequestCertsUsingSSH(m)
+	if err != nil && B2D.Verbose {
+		// These errors are not fatal
+		fmt.Printf("Error copying Certificates: %s\n", err)
+	}
 	switch runtime.GOOS {
 	case "windows":
 		fmt.Printf("Docker client does not run on Windows for now. Please use\n")
@@ -86,8 +90,14 @@ func cmdUp() error {
 			if os.Getenv("DOCKER_HOST") != socket || os.Getenv("DOCKER_CERT_PATH") != certPath {
 				fmt.Printf("\nTo connect the Docker client to the Docker daemon, please set:\n")
 				fmt.Printf("    export DOCKER_HOST=%s\n", socket)
-				// Assume Docker 1.2.0 with TLS on...
-				fmt.Printf("    export DOCKER_CERT_PATH=%s\n", certPath)
+				if certPath == "" {
+					if os.Getenv("DOCKER_CERT_PATH") != "" {
+						fmt.Println("    unset DOCKER_CERT_PATH")
+					}
+				} else {
+					// Assume Docker 1.2.0 with TLS on...
+					fmt.Printf("    export DOCKER_CERT_PATH=%s\n", certPath)
+				}
 			} else {
 				fmt.Printf("Your DOCKER_HOST env variable is already set correctly.\n")
 			}
@@ -104,7 +114,7 @@ func cmdConfig() error {
 		return fmt.Errorf("Error working out Profile file location: %s", err)
 	}
 	filename := cfgFilename(dir)
-	fmt.Printf("boot2docker profile filename: %s", filename)
+	fmt.Printf("boot2docker profile filename: %s\n", filename)
 	fmt.Println(printConfig())
 	return nil
 }
@@ -304,18 +314,18 @@ func cmdIP() error {
 
 // Download the boot2docker ISO image.
 func cmdDownload() error {
-	fmt.Printf("Downloading boot2docker ISO image...")
+	fmt.Println("Downloading boot2docker ISO image...")
 	url := "https://api.github.com/repos/boot2docker/boot2docker/releases"
 	tag, err := getLatestReleaseName(url)
 	if err != nil {
 		return fmt.Errorf("Failed to get latest release: %s", err)
 	}
-	fmt.Printf("Latest release is %s", tag)
+	fmt.Printf("Latest release is %s\n", tag)
 
 	url = fmt.Sprintf("https://github.com/boot2docker/boot2docker/releases/download/%s/boot2docker.iso", tag)
 	if err := download(B2D.ISO, url); err != nil {
 		return fmt.Errorf("Failed to download ISO image: %s", err)
 	}
-	fmt.Printf("Success: downloaded %s\n\tto %s", url, B2D.ISO)
+	fmt.Printf("Success: downloaded %s\n\tto %s\n", url, B2D.ISO)
 	return nil
 }

@@ -297,18 +297,16 @@ func RequestIPFromSerialPort(socket string) string {
 }
 
 // TODO: need to add or abstract to get a Serial coms version
-func RequestCertsUsingSSH(m driver.Machine) string {
+func RequestCertsUsingSSH(m driver.Machine) (string, error) {
 	cmd := getSSHCommand(m, "tar c /home/docker/.docker/*.pem")
 
 	certDir := ""
 
 	b, err := cmd.Output()
-	if err != nil {
-		fmt.Printf("%s", err)
-	} else {
+	if err == nil {
 		dir, err := cfgDir(".docker")
 		if err != nil {
-			return ""
+			return "", err
 		}
 
 		// Open the tar archive for reading.
@@ -323,29 +321,25 @@ func RequestCertsUsingSSH(m driver.Machine) string {
 				break
 			}
 			if err != nil {
-				fmt.Printf("%s", err)
-				return ""
+				return "", err
 			}
 			filename := filepath.Base(hdr.Name)
 			certDir = filepath.Join(dir, m.GetName())
 			if err := os.MkdirAll(certDir, 0755); err != nil {
-				fmt.Printf("%s", err)
-				return ""
+				return "", err
 			}
 			certFile := filepath.Join(certDir, filename)
 			fmt.Printf("Writing %s:\n", certFile)
 			f, err := os.Create(certFile)
 			if err != nil {
-				fmt.Printf("%s", err)
-				return ""
+				return "", err
 			}
 			w := bufio.NewWriter(f)
 			if _, err := io.Copy(w, tr); err != nil {
-				fmt.Printf("%s", err)
-				return ""
+				return "", err
 			}
 			w.Flush()
 		}
 	}
-	return certDir
+	return certDir, nil
 }
