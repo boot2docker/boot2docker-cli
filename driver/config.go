@@ -1,13 +1,16 @@
 package driver
 
-import "net"
+import (
+	"fmt"
+	flag "github.com/ogier/pflag"
+	"net"
+)
 
 // Machine config.
 type MachineConfig struct {
 	// Gereral flags.
 	Init    bool
 	Verbose bool
-	VBM     string
 	Driver  string
 
 	// basic config
@@ -17,7 +20,6 @@ type MachineConfig struct {
 	VM       string // virtual machine name
 	Dir      string // boot2docker directory
 	ISO      string // boot2docker ISO image path
-	VMDK     string // base VMDK to use as persistent disk
 	DiskSize uint   // VM disk image size (MB)
 	Memory   uint   // VM memory size (MB)
 
@@ -36,4 +38,29 @@ type MachineConfig struct {
 	// Serial console pipe/socket
 	Serial     bool
 	SerialFile string
+}
+
+type ConfigFunc func(B2D *MachineConfig, flags *flag.FlagSet) error
+
+var configs map[string]ConfigFunc // optional map of driver ConfigFunc
+
+func init() {
+	configs = make(map[string]ConfigFunc)
+}
+
+// optional - allows a driver to add its own commandline parameters
+func RegisterConfig(driver string, configFunc ConfigFunc) error {
+	if _, exists := configs[driver]; exists {
+		return fmt.Errorf("Driver already registered %s", driver)
+	}
+	configs[driver] = configFunc
+
+	return nil
+}
+
+func ConfigFlags(B2D *MachineConfig, flags *flag.FlagSet) error {
+	if configFunc, exists := configs[B2D.Driver]; exists {
+		return configFunc(B2D, flags)
+	}
+	return nil
 }

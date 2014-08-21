@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/boot2docker/boot2docker-cli/driver"
+	flag "github.com/ogier/pflag"
 )
 
 type Flag int
@@ -38,20 +39,49 @@ const (
 	F_accelerate3d
 )
 
+var (
+	VBM     string // Path to VBoxManage utility.
+	VMDK    string // base VMDK to use as persistent disk.
+	verbose bool   // Verbose mode (Local copy of B2D.Verbose).
+)
+
 func init() {
 	if err := driver.Register("virtualbox", InitFunc); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize driver. Error : %s", err.Error())
+		os.Exit(1)
+	}
+	if err := driver.RegisterConfig("virtualbox", ConfigFlags); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to initialize driver config. Error : %s", err.Error())
 		os.Exit(1)
 	}
 }
 
 // Initialize the Machine.
 func InitFunc(mc *driver.MachineConfig) (driver.Machine, error) {
+	verbose = mc.Verbose
+
 	m, err := GetMachine(mc.VM)
 	if err != nil && mc.Init {
 		return CreateMachine(mc)
 	}
 	return m, err
+}
+
+func ConfigFlags(B2D *driver.MachineConfig, flags *flag.FlagSet) error {
+	flags.StringVar(&VMDK, "basevmdk", "", "Path to VMDK to use as base for persistent partition")
+	vbm := "VBoxManage"
+	if runtime.GOOS == "windows" {
+		p := "C:\\Program Files\\Oracle\\VirtualBox"
+		if t := os.Getenv("VBOX_INSTALL_PATH"); t != "" {
+			p = t
+		} else if t = os.Getenv("VBOX_MSI_INSTALL_PATH"); t != "" {
+			p = t
+		}
+		vbm = filepath.Join(p, "VBoxManage.exe")
+	}
+	flags.StringVar(&VBM, "vbm", vbm, "path to VirtualBox management utility.")
+
+	return nil
 }
 
 // Convert bool to "on"/"off"
@@ -387,7 +417,7 @@ func CreateMachine(mc *driver.MachineConfig) (*Machine, error) {
 	// Set NIC #1 to use NAT
 	m.SetNIC(1, driver.NIC{Network: driver.NICNetNAT, Hardware: driver.VirtIO})
 	pfRules := map[string]driver.PFRule{
-		"ssh":    {Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: mc.SSHPort, GuestPort: driver.SSHPort},
+		"ssh": {Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: mc.SSHPort, GuestPort: driver.SSHPort},
 	}
 	if mc.DockerPort > 0 {
 		pfRules["docker"] = driver.PFRule{Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: mc.DockerPort, GuestPort: driver.DockerPort}
@@ -425,8 +455,8 @@ func CreateMachine(mc *driver.MachineConfig) (*Machine, error) {
 			return m, err
 		}
 
-		if mc.VMDK != "" {
-			if err := copyDiskImage(diskImg, mc.VMDK); err != nil {
+		if VMDK != "" {
+			if err := copyDiskImage(diskImg, VMDK); err != nil {
 				return m, err
 			}
 		} else {

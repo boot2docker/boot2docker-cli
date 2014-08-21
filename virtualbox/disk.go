@@ -15,7 +15,7 @@ func MakeDiskImage(dest string, size uint, r io.Reader) error {
 	cmd := exec.Command(VBM, "convertfromraw", "stdin", dest,
 		fmt.Sprintf("%d", sizeBytes), "--format", "VMDK")
 
-	if Verbose {
+	if verbose {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 	}

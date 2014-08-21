@@ -101,10 +101,10 @@ func cmdUp() error {
 func cmdConfig() error {
 	dir, err := cfgDir(".boot2docker")
 	if err != nil {
-		return fmt.Errorf("Error working out Profile file location: %s", err)
+		return fmt.Errorf("Error working out Profile file location: %s\n", err)
 	}
 	filename := cfgFilename(dir)
-	fmt.Printf("boot2docker profile filename: %s", filename)
+	fmt.Printf("boot2docker profile filename: %s\n", filename)
 	fmt.Println(printConfig())
 	return nil
 }
@@ -113,10 +113,10 @@ func cmdConfig() error {
 func cmdSave() error {
 	m, err := driver.GetMachine(&B2D)
 	if err != nil {
-		return fmt.Errorf("Failed to get machine %q: %s", B2D.VM, err)
+		return fmt.Errorf("Failed to get machine %q: %s\n", B2D.VM, err)
 	}
 	if err := m.Save(); err != nil {
-		return fmt.Errorf("Failed to save machine %q: %s", B2D.VM, err)
+		return fmt.Errorf("Failed to save machine %q: %s\n", B2D.VM, err)
 	}
 	return nil
 }

@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Verbose = true
+	verbose = true
 }
 
 func TestVBMOut(t *testing.T) {

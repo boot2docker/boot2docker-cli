@@ -9,22 +9,12 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strings"
 
 	"github.com/boot2docker/boot2docker-cli/driver"
 )
 
-var (
-	VBM     string // Path to VBoxManage utility.
-	Verbose bool   // Verbose mode.
-)
-
 func init() {
-	VBM = "VBoxManage"
-	if p := os.Getenv("VBOX_INSTALL_PATH"); p != "" && runtime.GOOS == "windows" {
-		VBM = filepath.Join(p, "VBoxManage.exe")
-	}
 }
 
 var (
@@ -42,7 +32,7 @@ var (
 
 func vbm(args ...string) error {
 	cmd := exec.Command(VBM, args...)
-	if Verbose {
+	if verbose {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		log.Printf("executing: %v %v", VBM, strings.Join(args, " "))
@@ -58,7 +48,7 @@ func vbm(args ...string) error {
 
 func vbmOut(args ...string) (string, error) {
 	cmd := exec.Command(VBM, args...)
-	if Verbose {
+	if verbose {
 		cmd.Stderr = os.Stderr
 		log.Printf("executing: %v %v", VBM, strings.Join(args, " "))
 	}
@@ -74,7 +64,7 @@ func vbmOut(args ...string) (string, error) {
 
 func vbmOutErr(args ...string) (string, string, error) {
 	cmd := exec.Command(VBM, args...)
-	if Verbose {
+	if verbose {
 		log.Printf("executing: %v %v", VBM, strings.Join(args, " "))
 	}
 	var stdout bytes.Buffer
