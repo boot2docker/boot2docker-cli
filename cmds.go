@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"runtime"
+	"strings"
 	"time"
 
 	_ "github.com/boot2docker/boot2docker-cli/dummy"
@@ -15,6 +17,28 @@ import (
 
 // Initialize the boot2docker VM from scratch.
 func cmdInit() error {
+
+	if _, err := os.Stat(B2D.SSHKey); err != nil {
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("Something wrong with SSH Key file %q: %s", B2D.SSHKey, err)
+		}
+
+		cmd := exec.Command(B2D.SSHGen, "-t", "rsa", "-N", "", "-f", B2D.SSHKey)
+		if B2D.Verbose {
+			cmd.Stderr = os.Stderr
+			fmt.Printf("executing: %v %v", cmd.Path, strings.Join(cmd.Args, " "))
+		}
+		b, err := cmd.Output()
+		if err != nil {
+			return fmt.Errorf("Error generating new SSH Key into %s: %s", B2D.SSHKey, err)
+		}
+		out := string(b)
+		if B2D.Verbose {
+			fmt.Printf("%s returned: %s\nEND\n", B2D.SSHKey, out)
+		}
+	}
+	//TODO: print a ~/.ssh/config entry for our b2d connection that the user can c&p
+
 	B2D.Init = true
 	_, err := driver.GetMachine(&B2D)
 	if err != nil {

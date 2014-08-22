@@ -183,7 +183,7 @@ func getSSHCommand(m driver.Machine, args ...string) *exec.Cmd {
 	cmd := exec.Command(B2D.SSH, sshArgs...)
 	if B2D.Verbose {
 		cmd.Stderr = os.Stderr
-		log.Printf("executing: %v %v", B2D.SSH, strings.Join(sshArgs, " "))
+		log.Printf("executing: %v %v", cmd.Path, strings.Join(cmd.Args, " "))
 	}
 
 	return cmd
