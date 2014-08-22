@@ -121,7 +121,12 @@ func config() (*flag.FlagSet, error) {
 	B2D.Dir = dir
 	flags.StringVar(&B2D.ISO, "iso", filepath.Join(dir, "boot2docker.iso"), "path to boot2docker ISO image.")
 
-	flags.BoolVarP(&B2D.Init, "init", "i", false, "auto initialize vm instance.")
+	// Sven disabled this, as it is broken - if I user with a fresh computer downloads
+	// just the boot2docker-cli, and then runs `boot2docker --init ip`, we create a vm
+	// which cannot run, because it fails to have have the boot2docker.iso and the ssh keys
+	B2D.Init = false
+	//flags.BoolVarP(&B2D.Init, "init", "i", false, "auto initialize vm instance.")
+
 	flags.StringVar(&B2D.SSH, "ssh", "ssh", "path to SSH client utility.")
 	flags.StringVar(&B2D.SSHGen, "ssh-keygen", "ssh-keygen", "path to ssh-keygen utility.")
 
