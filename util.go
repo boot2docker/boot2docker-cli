@@ -189,60 +189,62 @@ func getSSHCommand(m driver.Machine, args ...string) *exec.Cmd {
 	return cmd
 }
 
-func RequestIPFromSSH(m driver.Machine) string {
+func RequestIPFromSSH(m driver.Machine) (string, error) {
 	cmd := getSSHCommand(m, "ip addr show dev eth1")
 
 	b, err := cmd.Output()
-	IP := ""
 	if err != nil {
-		fmt.Printf("%s", err)
-	} else {
-		out := string(b)
-		if B2D.Verbose {
-			fmt.Printf("SSH returned: %s\nEND SSH\n", out)
-		}
-		// parse to find: inet 192.168.59.103/24 brd 192.168.59.255 scope global eth1
-		lines := strings.Split(out, "\n")
-		for _, line := range lines {
-			vals := strings.Split(strings.TrimSpace(line), " ")
-			if len(vals) >= 2 && vals[0] == "inet" {
-				IP = vals[1][:strings.Index(vals[1], "/")]
-				break
-			}
+		return "", err
+	}
+	out := string(b)
+	if B2D.Verbose {
+		fmt.Printf("SSH returned: %s\nEND SSH\n", out)
+	}
+	// parse to find: inet 192.168.59.103/24 brd 192.168.59.255 scope global eth1
+	lines := strings.Split(out, "\n")
+	for _, line := range lines {
+		vals := strings.Split(strings.TrimSpace(line), " ")
+		if len(vals) >= 2 && vals[0] == "inet" {
+			return vals[1][:strings.Index(vals[1], "/")], nil
 		}
 	}
-	return IP
+
+	return "", fmt.Errorf("No IP address found %s", out)
 }
 
-func RequestSocketFromSSH(m driver.Machine) string {
+func RequestSocketFromSSH(m driver.Machine) (string, error) {
 	cmd := getSSHCommand(m, "grep tcp:// /proc/$(cat /var/run/docker.pid)/cmdline")
 
 	b, err := cmd.Output()
 	if err != nil {
-		fmt.Printf("%s", err)
-	} else {
-		out := string(b)
-		if B2D.Verbose {
-			fmt.Printf("SSH returned: %s\nEND SSH\n", out)
-		}
-		// Lets only use the first one - its possible to specify more than one...
-		lines := strings.Split(out, "\n")
-		tcpRE := regexp.MustCompile(`^(tcp://)(0.0.0.0)(:.*)`)
-		if s := tcpRE.FindStringSubmatch(lines[0]); s != nil {
-			IP := RequestIPFromSSH(m)
-			return s[1] + IP + s[3]
-		}
-		return lines[0]
+		return "", err
 	}
-	return ""
+	out := string(b)
+	if B2D.Verbose {
+		fmt.Printf("SSH returned: %s\nEND SSH\n", out)
+	}
+	// Lets only use the first one - its possible to specify more than one...
+	lines := strings.Split(out, "\n")
+	tcpRE := regexp.MustCompile(`^(tcp://)(0.0.0.0)(:.*)`)
+	if s := tcpRE.FindStringSubmatch(lines[0]); s != nil {
+		IP, err := RequestIPFromSSH(m)
+		if err != nil {
+			return "", err
+		}
+		return s[1] + IP + s[3], nil
+	}
+	if !strings.HasPrefix(lines[0], "tcp://") {
+		return "", fmt.Errorf("Error requesting Docker Socket: %s", lines[0])
+	}
+	return lines[0], nil
 }
 
 // use the serial port socket to ask what the VM's host only IP is
-func RequestIPFromSerialPort(socket string) string {
+func RequestIPFromSerialPort(socket string) (string, error) {
 	c, err := net.Dial("unix", socket)
 
 	if err != nil {
-		return ""
+		return "", err
 	}
 	defer c.Close()
 	c.SetDeadline(time.Now().Add(time.Second))
@@ -257,15 +259,14 @@ func RequestIPFromSerialPort(socket string) string {
 	for IP == "" {
 		_, err := c.Write([]byte("ip addr show dev eth1\r"))
 		if err != nil {
-			println(err)
-			break
+			return "", err
 		}
 		time.Sleep(1 * time.Second)
 		buf := make([]byte, 1024)
 		for {
 			n, err := c.Read(buf[:])
 			if err != nil {
-				return IP
+				return "", err
 			}
 			line = line + string(buf[0:n])
 			fullLog += string(buf[0:n])
@@ -293,11 +294,11 @@ func RequestIPFromSerialPort(socket string) string {
 		fmt.Printf(fullLog)
 	}
 
-	return IP
+	return IP, nil
 }
 
 // TODO: need to add or abstract to get a Serial coms version
-// RequestCertsUsingSSH requests certs using SSH. 
+// RequestCertsUsingSSH requests certs using SSH.
 // The assumption is that if the certs are in b2d:/home/docker/.docker
 // then the daemon is using TLS. We can't assume that because there are
 // certs in the local host's user dir, that the server is using them, so

@@ -40,34 +40,51 @@ func cmdUp() error {
 		return fmt.Errorf("Failed to start machine %q (run again with -v for details)", B2D.VM)
 	}
 
-	fmt.Println("Waiting for VM to be started...")
+	fmt.Println("Waiting for VM and Docker daemon to start...")
 	//give the VM a little time to start, so we don't kill the Serial Pipe/Socket
 	time.Sleep(600 * time.Millisecond)
 	natSSH := fmt.Sprintf("localhost:%d", m.GetSSHPort())
 	IP := ""
 	for i := 1; i < 30; i++ {
+		print(".")
 		if B2D.Serial && runtime.GOOS != "windows" {
-			if IP = RequestIPFromSerialPort(m.GetSerialFile()); IP != "" {
+			if IP, err = RequestIPFromSerialPort(m.GetSerialFile()); err == nil {
 				break
 			}
 		}
-		if err := read(natSSH, 1, 2*time.Second); err == nil {
-			IP = RequestIPFromSSH(m)
+		if err := read(natSSH, 1, 300*time.Millisecond); err == nil {
+			if IP, err = RequestIPFromSSH(m); err == nil {
+				break
+			}
+		}
+	}
+	if B2D.Verbose {
+		fmt.Printf("VM Host-only IP address: %s", IP)
+		fmt.Printf("\nWaiting for Docker daemon to start...\n")
+	}
+
+	time.Sleep(300 * time.Millisecond)
+	socket := ""
+	for i := 1; i < 30; i++ {
+		print(".")
+		if socket, err = RequestSocketFromSSH(m); err == nil {
 			break
 		}
-
-		print(".")
+		if B2D.Verbose {
+			fmt.Printf("Error requesting socket: %s\n", err)
+		}
+		time.Sleep(300 * time.Millisecond)
 	}
-	print("\n")
+	fmt.Printf("\nStarted.\n")
 
-	fmt.Printf("Started.\n")
-
-	if IP == "" {
+	if socket == "" {
 		// lets try one more time
 		time.Sleep(600 * time.Millisecond)
-		fmt.Printf("  Trying to get IP one more time\n")
+		fmt.Printf("  Trying to get Docker socket one more time\n")
 
-		IP = RequestIPFromSSH(m)
+		if socket, err = RequestSocketFromSSH(m); err != nil {
+			fmt.Printf("Error requesting socket: %s\n", err)
+		}
 	}
 	// Copying the certs here - someone might have have written a Windows API client.
 	certPath, err := RequestCertsUsingSSH(m)
@@ -81,12 +98,11 @@ func cmdUp() error {
 		fmt.Printf("    \"%s\" ssh\n", os.Args[0])
 		fmt.Printf("to SSH into the VM instead.\n")
 	default:
-		if IP == "" {
-			fmt.Fprintf(os.Stderr, "Auto detection of the VM's IP address failed.\n")
+		if socket == "" {
+			fmt.Fprintf(os.Stderr, "Auto detection of the VM's Docker socket failed.\n")
 			fmt.Fprintf(os.Stderr, "Please run `boot2docker -v up` to diagnose.\n")
 		} else {
 			// Check if $DOCKER_HOST ENV var is properly configured.
-			socket := RequestSocketFromSSH(m)
 			if os.Getenv("DOCKER_HOST") != socket || os.Getenv("DOCKER_CERT_PATH") != certPath {
 				fmt.Printf("\nTo connect the Docker client to the Docker daemon, please set:\n")
 				printExport(socket, certPath)
@@ -110,7 +126,10 @@ func cmdShellInit() error {
 		return fmt.Errorf("VM %q is not running.", B2D.VM)
 	}
 
-	socket := RequestSocketFromSSH(m)
+	socket, err := RequestSocketFromSSH(m)
+	if err != nil {
+		return fmt.Errorf("Error requesting socket: %s\n", err)
+	}
 
 	certPath, err := RequestCertsUsingSSH(m)
 	if err != nil && B2D.Verbose {
@@ -270,7 +289,10 @@ func cmdSocket() error {
 		return fmt.Errorf("VM %q is not running.", B2D.VM)
 	}
 
-	socket := RequestSocketFromSSH(m)
+	socket, err := RequestSocketFromSSH(m)
+	if err != nil {
+		return fmt.Errorf("Error requesting socket: %s\n", err)
+	}
 
 	fmt.Fprintf(os.Stderr, "\n\t export DOCKER_HOST=")
 	fmt.Printf("%s", socket)
@@ -316,17 +338,21 @@ func cmdIP() error {
 
 	IP := ""
 	if B2D.Serial {
-		for i := 1; i < 20; i++ {
-			if runtime.GOOS != "windows" {
-				if IP = RequestIPFromSerialPort(m.GetSerialFile()); IP != "" {
-					break
+		if runtime.GOOS != "windows" {
+			if IP, err = RequestIPFromSerialPort(m.GetSerialFile()); err != nil {
+				if B2D.Verbose {
+					fmt.Printf("Error getting IP via Serial: %s\n", err)
 				}
 			}
 		}
 	}
 
 	if IP == "" {
-		IP = RequestIPFromSSH(m)
+		if IP, err = RequestIPFromSSH(m); err != nil {
+			if B2D.Verbose {
+				fmt.Printf("Error getting IP via SSH: %s\n", err)
+			}
+		}
 	}
 	if IP != "" {
 		fmt.Fprintf(os.Stderr, "\nThe VM's Host only interface IP address is: ")
