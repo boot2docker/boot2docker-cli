@@ -503,6 +503,10 @@ func CreateMachine(mc *driver.MachineConfig) (*Machine, error) {
 			if err := makeDiskImage(diskImg, mc.DiskSize, buf.Bytes()); err != nil {
 				return m, err
 			}
+			if verbose {
+				fmt.Println("Initializing disk with ssh keys")
+				fmt.Printf("WRITING: %s\n-----\n", buf)
+			}
 		}
 	}
 

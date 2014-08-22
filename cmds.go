@@ -17,6 +17,22 @@ import (
 
 // Initialize the boot2docker VM from scratch.
 func cmdInit() error {
+	B2D.Init = false
+	_, err := driver.GetMachine(&B2D)
+	if err == nil {
+		fmt.Printf("Virtual machine %s already exists\n", B2D.VM)
+		return nil
+	}
+
+	if _, err := os.Stat(B2D.ISO); err != nil {
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("Failed to open ISO image %q: %s", B2D.ISO, err)
+		}
+
+		if err := cmdDownload(); err != nil {
+			return err
+		}
+	}
 
 	if _, err := os.Stat(B2D.SSHKey); err != nil {
 		if !os.IsNotExist(err) {
@@ -24,23 +40,22 @@ func cmdInit() error {
 		}
 
 		cmd := exec.Command(B2D.SSHGen, "-t", "rsa", "-N", "", "-f", B2D.SSHKey)
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
 		if B2D.Verbose {
 			cmd.Stderr = os.Stderr
-			fmt.Printf("executing: %v %v", cmd.Path, strings.Join(cmd.Args, " "))
+			fmt.Printf("executing: %v %v\n", cmd.Path, strings.Join(cmd.Args, " "))
 		}
-		b, err := cmd.Output()
-		if err != nil {
+
+		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("Error generating new SSH Key into %s: %s", B2D.SSHKey, err)
-		}
-		out := string(b)
-		if B2D.Verbose {
-			fmt.Printf("%s returned: %s\nEND\n", B2D.SSHKey, out)
 		}
 	}
 	//TODO: print a ~/.ssh/config entry for our b2d connection that the user can c&p
 
 	B2D.Init = true
-	_, err := driver.GetMachine(&B2D)
+	_, err = driver.GetMachine(&B2D)
 	if err != nil {
 		return fmt.Errorf("Failed to initialize machine %q: %s", B2D.VM, err)
 	}
