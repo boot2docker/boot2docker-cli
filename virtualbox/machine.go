@@ -393,7 +393,11 @@ func CreateMachine(mc *driver.MachineConfig) (*Machine, error) {
 	// Configure VM for Boot2docker
 	SetExtra(mc.VM, "VBoxInternal/CPUM/EnableHVP", "1")
 	m.OSType = "Linux26_64"
-	m.CPUs = uint(runtime.NumCPU())
+	cpus := uint(runtime.NumCPU())
+	if cpus > 32 {
+		cpus = 32
+	}
+	m.CPUs = cpus
 	m.Memory = mc.Memory
 	m.SerialFile = mc.SerialFile
 
