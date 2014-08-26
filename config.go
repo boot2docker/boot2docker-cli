@@ -90,13 +90,6 @@ func config() (*flag.FlagSet, error) {
 	if err := flags.Parse([]string{}); err != nil {
 		return nil, err
 	}
-	// Over-ride from the profile file
-	filename := cfgFilename(B2D.Dir)
-	if _, err := os.Lstat(filename); err == nil {
-		if _, err := toml.DecodeFile(filename, &B2D); err != nil {
-			return nil, err
-		}
-	}
 	if B2D.Verbose {
 		fmt.Printf("Using %s driver\n", B2D.Driver)
 	}
@@ -145,6 +138,7 @@ func config() (*flag.FlagSet, error) {
 		return nil, err
 	}
 	// Over-ride from the profile file
+	filename := cfgFilename(B2D.Dir)
 	if _, err := os.Lstat(filename); err == nil {
 		if _, err := toml.DecodeFile(filename, &B2D); err != nil {
 			return nil, err
