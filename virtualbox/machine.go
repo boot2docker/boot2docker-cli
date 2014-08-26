@@ -394,6 +394,9 @@ func CreateMachine(mc *driver.MachineConfig) (*Machine, error) {
 	SetExtra(mc.VM, "VBoxInternal/CPUM/EnableHVP", "1")
 	m.OSType = "Linux26_64"
 	m.CPUs = uint(runtime.NumCPU())
+	if m.CPUs > 32 {
+		m.CPUs = 32
+	}
 	m.Memory = mc.Memory
 	m.SerialFile = mc.SerialFile
 
