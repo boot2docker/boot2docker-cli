@@ -93,6 +93,14 @@ func config() (*flag.FlagSet, error) {
 	B2D.Dir = dir
 	flags.StringVar(&B2D.ISOURL, "iso-url", "https://api.github.com/repos/boot2docker/boot2docker/releases", "source URL to provision the boot2docker ISO image.")
 	flags.StringVar(&B2D.ISO, "iso", filepath.Join(dir, "boot2docker.iso"), "path to boot2docker ISO image.")
+	if runtime.GOOS == "darwin" {
+		// clobber by default
+		flags.BoolVar(&B2D.Clobber, "clobber", true, "overwrite Docker client binary on boot2docker upgrade")
+	} else {
+		flags.BoolVar(&B2D.Clobber, "clobber", false, "overwrite Docker client binary on boot2docker upgrade")
+	}
+
+	flags.BoolVar(&B2D.ForceUpgradeDownload, "force-upgrade-download", false, "always download on boot2docker upgrade, never skip")
 
 	// Sven disabled this, as it is broken - if I user with a fresh computer downloads
 	// just the boot2docker-cli, and then runs `boot2docker --init ip`, we create a vm

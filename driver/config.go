@@ -2,8 +2,9 @@ package driver
 
 import (
 	"fmt"
-	flag "github.com/ogier/pflag"
 	"net"
+
+	flag "github.com/ogier/pflag"
 )
 
 // Machine config.
@@ -14,15 +15,17 @@ type MachineConfig struct {
 	Driver  string
 
 	// basic config
-	SSH      string // SSH client executable
-	SSHGen   string // SSH keygen executable
-	SSHKey   string // SSH key to send to the vm
-	VM       string // virtual machine name
-	Dir      string // boot2docker directory
-	ISOURL   string // Source URL to retrieve the ISO from
-	ISO      string // boot2docker ISO image path
-	DiskSize uint   // VM disk image size (MB)
-	Memory   uint   // VM memory size (MB)
+	Clobber              bool
+	ForceUpgradeDownload bool
+	SSH                  string // SSH client executable
+	SSHGen               string // SSH keygen executable
+	SSHKey               string // SSH key to send to the vm
+	VM                   string // virtual machine name
+	Dir                  string // boot2docker directory
+	ISOURL               string // Source URL to retrieve the ISO from
+	ISO                  string // boot2docker ISO image path
+	DiskSize             uint   // VM disk image size (MB)
+	Memory               uint   // VM memory size (MB)
 
 	// NAT network: port forwarding
 	SSHPort    uint16 // host SSH port (forward to port 22 in VM)
