@@ -97,17 +97,6 @@ func config() (*flag.FlagSet, error) {
 			return nil, err
 		}
 	}
-	// for cmd==ssh only:
-	// only pass the params up to and including the `ssh` command - after that,
-	// there might be other -flags that are destined for the ssh cmd
-	sshIdx := 1
-	for sshIdx < len(os.Args) && os.Args[sshIdx-1] != "ssh" {
-		sshIdx++
-	}
-	// Command-line overrides profile config.
-	if err := flags.Parse(os.Args[1:sshIdx]); err != nil {
-		return nil, err
-	}
 	if B2D.Verbose {
 		fmt.Printf("Using %s driver\n", B2D.Driver)
 	}
@@ -162,11 +151,6 @@ func config() (*flag.FlagSet, error) {
 		}
 	}
 
-	// Command-line overrides profile config.
-	if err := flags.Parse(os.Args[1:sshIdx]); err != nil {
-		return nil, err
-	}
-
 	if B2D.SerialFile == "" {
 		if runtime.GOOS == "windows" {
 			//SerialFile ~~ filepath.Join(dir, B2D.vm+".sock")
@@ -174,6 +158,17 @@ func config() (*flag.FlagSet, error) {
 		} else {
 			B2D.SerialFile = filepath.Join(dir, B2D.VM+".sock")
 		}
+	}
+	// for cmd==ssh only:
+	// only pass the params up to and including the `ssh` command - after that,
+	// there might be other -flags that are destined for the ssh cmd
+	sshIdx := 1
+	for sshIdx < len(os.Args) && os.Args[sshIdx-1] != "ssh" {
+		sshIdx++
+	}
+	// Command-line overrides profile config.
+	if err := flags.Parse(os.Args[1:sshIdx]); err != nil {
+		return nil, err
 	}
 
 	return flags, nil
