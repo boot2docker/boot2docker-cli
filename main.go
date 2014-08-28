@@ -46,7 +46,7 @@ func run() error {
 	case "download":
 		return cmdDownload()
 	case "config", "cfg":
-		return cmdConfig()
+		return cmdConfig(flags)
 	case "init":
 		return cmdInit()
 	case "up", "start", "boot", "resume":

@@ -2,7 +2,7 @@ package driver
 
 import (
 	"fmt"
-	flag "github.com/ogier/pflag"
+	flag "github.com/docker/docker/pkg/mflag"
 	"net"
 )
 
@@ -24,8 +24,8 @@ type MachineConfig struct {
 	Memory   uint   // VM memory size (MB)
 
 	// NAT network: port forwarding
-	SSHPort    uint16 // host SSH port (forward to port 22 in VM)
-	DockerPort uint16 // host Docker port (forward to port 2375 in VM)
+	SSHPort    uint // host SSH port (forward to port 22 in VM)
+	DockerPort uint // host Docker port (forward to port 2375 in VM)
 
 	// host-only network
 	HostIP      net.IP
@@ -59,8 +59,10 @@ func RegisterConfig(driver string, configFunc ConfigFunc) error {
 }
 
 func ConfigFlags(B2D *MachineConfig, flags *flag.FlagSet) error {
-	if configFunc, exists := configs[B2D.Driver]; exists {
-		return configFunc(B2D, flags)
+	for _, configFunc := range configs {
+		if err := configFunc(B2D, flags); err != nil {
+			return err
+		}
 	}
 	return nil
 }

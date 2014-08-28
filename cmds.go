@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	flag "github.com/docker/docker/pkg/mflag"
+
 	_ "github.com/boot2docker/boot2docker-cli/dummy"
 	_ "github.com/boot2docker/boot2docker-cli/virtualbox"
 
@@ -193,14 +195,14 @@ func printExport(socket, certPath string) {
 }
 
 // Tell the user the config (and later let them set it?)
-func cmdConfig() error {
+func cmdConfig(flags *flag.FlagSet) error {
 	dir, err := cfgDir(".boot2docker")
 	if err != nil {
 		return fmt.Errorf("Error working out Profile file location: %s\n", err)
 	}
 	filename := cfgFilename(dir)
-	fmt.Printf("boot2docker profile filename: %s\n", filename)
-	fmt.Println(printConfig())
+	fmt.Fprintf(os.Stderr, "boot2docker profile filename: %s\n", filename)
+	fmt.Println(printConfig(flags))
 	return nil
 }
 

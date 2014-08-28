@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/boot2docker/boot2docker-cli/driver"
-	flag "github.com/ogier/pflag"
+	flag "github.com/docker/docker/pkg/mflag"
 )
 
 type Flag int
@@ -68,7 +68,7 @@ func InitFunc(mc *driver.MachineConfig) (driver.Machine, error) {
 }
 
 func ConfigFlags(B2D *driver.MachineConfig, flags *flag.FlagSet) error {
-	flags.StringVar(&VMDK, "basevmdk", "", "Path to VMDK to use as base for persistent partition")
+	flags.StringVar(&VMDK, []string{"-basevmdk"}, "", "Path to VMDK to use as base for persistent partition")
 	vbm := "VBoxManage"
 	if runtime.GOOS == "windows" {
 		p := "C:\\Program Files\\Oracle\\VirtualBox"
@@ -79,7 +79,7 @@ func ConfigFlags(B2D *driver.MachineConfig, flags *flag.FlagSet) error {
 		}
 		vbm = filepath.Join(p, "VBoxManage.exe")
 	}
-	flags.StringVar(&VBM, "vbm", vbm, "path to VirtualBox management utility.")
+	flags.StringVar(&VBM, []string{"-vbm"}, vbm, "path to VirtualBox management utility.")
 
 	return nil
 }
@@ -420,10 +420,10 @@ func CreateMachine(mc *driver.MachineConfig) (*Machine, error) {
 	// Set NIC #1 to use NAT
 	m.SetNIC(1, driver.NIC{Network: driver.NICNetNAT, Hardware: driver.VirtIO})
 	pfRules := map[string]driver.PFRule{
-		"ssh": {Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: mc.SSHPort, GuestPort: driver.SSHPort},
+		"ssh": {Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: uint16(mc.SSHPort), GuestPort: driver.SSHPort},
 	}
 	if mc.DockerPort > 0 {
-		pfRules["docker"] = driver.PFRule{Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: mc.DockerPort, GuestPort: driver.DockerPort}
+		pfRules["docker"] = driver.PFRule{Proto: driver.PFTCP, HostIP: net.ParseIP("127.0.0.1"), HostPort: uint16(mc.DockerPort), GuestPort: driver.DockerPort}
 	}
 
 	for name, rule := range pfRules {
