@@ -38,6 +38,8 @@ type MachineConfig struct {
 	// Serial console pipe/socket
 	Serial     bool
 	SerialFile string
+
+	DriverCfg map[string]interface{}
 }
 
 type ConfigFunc func(B2D *MachineConfig, flags *flag.FlagSet) error
@@ -59,8 +61,10 @@ func RegisterConfig(driver string, configFunc ConfigFunc) error {
 }
 
 func ConfigFlags(B2D *MachineConfig, flags *flag.FlagSet) error {
-	if configFunc, exists := configs[B2D.Driver]; exists {
-		return configFunc(B2D, flags)
+	for _, configFunc := range configs {
+		if err := configFunc(B2D, flags); err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -83,16 +83,6 @@ func config() (*flag.FlagSet, error) {
 	flags := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	flags.Usage = func() { usageLong(flags) }
 
-	// Find out which driver we're usng and add its flags
-	flags.StringVar(&B2D.Driver, "driver", "virtualbox", "hypervisor driver.")
-	flags.BoolVarP(&B2D.Verbose, "verbose", "v", false, "display verbose command invocations.")
-
-	if err := flags.Parse([]string{}); err != nil {
-		return nil, err
-	}
-	if B2D.Verbose {
-		fmt.Printf("Using %s driver\n", B2D.Driver)
-	}
 	driver.ConfigFlags(&B2D, flags)
 
 	// Add the generic flags
@@ -109,6 +99,8 @@ func config() (*flag.FlagSet, error) {
 	B2D.Init = false
 	//flags.BoolVarP(&B2D.Init, "init", "i", false, "auto initialize vm instance.")
 
+	flags.BoolVarP(&B2D.Verbose, "verbose", "v", false, "display verbose command invocations.")
+	flags.StringVar(&B2D.Driver, "driver", "virtualbox", "hypervisor driver.")
 	flags.StringVar(&B2D.SSH, "ssh", "ssh", "path to SSH client utility.")
 	flags.StringVar(&B2D.SSHGen, "ssh-keygen", "ssh-keygen", "path to ssh-keygen utility.")
 
