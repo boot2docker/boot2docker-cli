@@ -78,7 +78,7 @@ func run() error {
 	case "upgrade":
 		return cmdUpgrade()
 	case "version":
-		fmt.Printf("Client version: %s\nGit commit: %s\n", Version, GitSHA)
+		// Version is now printed by the call to config()
 		return nil
 	case "help":
 		flags.Usage()

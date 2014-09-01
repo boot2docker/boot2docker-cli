@@ -176,6 +176,12 @@ func config() (*flag.FlagSet, error) {
 		}
 	}
 
+	leftovers := flags.Args()
+
+	if B2D.Verbose || (len(leftovers) > 0 && leftovers[0] == "version") {
+		fmt.Printf("Boot2Docker-cli version: %s\nGit commit: %s\n", Version, GitSHA)
+	}
+
 	return flags, nil
 }
 
