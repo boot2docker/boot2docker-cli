@@ -124,6 +124,7 @@ func config() (*flag.FlagSet, error) {
 	} else {
 		B2D.Serial = false
 	}
+	flags.StringVar(&B2D.ShareDriver, "share", "sshfs", "Share local dir with remote Docker machine.")
 
 	// Set the defaults
 	if err := flags.Parse([]string{}); err != nil {
