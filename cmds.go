@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/user"
 	"runtime"
 	"strings"
 	"time"
@@ -401,6 +402,79 @@ func cmdIP() error {
 		fmt.Fprintf(os.Stderr, "\nFailed to get VM Host only IP address.\n")
 		fmt.Fprintf(os.Stderr, "\tWas the VM initilized using boot2docker?\n")
 	}
+	return nil
+}
+
+// Share the current dir into the remote B2D filesystem.
+// TODO: this is risky - as you may be over-writing some other session's dir
+//       and worse, some other user's dir.
+func cmdShare() error {
+	m, err := driver.GetMachine(&B2D)
+	if err != nil {
+		return fmt.Errorf("Failed to get machine %q: %s", B2D.VM, err)
+	}
+
+	if m.GetState() != driver.Running {
+		return fmt.Errorf("VM %q is not running.", B2D.VM)
+	}
+
+	// Make sure there's an rsync on the tinymce end.
+	cmd := getSSHCommand(m, "tce-load -wi rsync")
+	b, err := cmd.Output()
+	if err != nil {
+		return err
+	}
+	out := string(b)
+	if B2D.Verbose {
+		fmt.Printf("SSH returned: %s\nEND SSH\n", out)
+	}
+
+	// Make the destination dir.
+	pwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	cmd = getSSHCommand(m, "sudo mkdir -p '"+pwd+"' && sudo chown docker '"+pwd+"'")
+	b, err = cmd.Output()
+	if err != nil {
+		return err
+	}
+	out = string(b)
+	if B2D.Verbose {
+		fmt.Printf("SSH returned: %s\nEND SSH\n", out)
+	}
+
+	sshkey := B2D.SSHKey
+	if sshkey[:2] == "~/" {
+		usr, _ := user.Current()
+		dir := usr.HomeDir
+		sshkey = strings.Replace(sshkey, "~/", dir, 1)
+	}
+	// And then push the files to the remote.
+	IP, err := RequestIPFromSSH(m)
+	if err != nil {
+		return err
+	}
+
+	cmd = exec.Command("sh", "-c",
+		"rsync -avz --chmod=ugo=rwX -e 'ssh -vv -l docker -i "+sshkey+" -o StrictHostKeyChecking=no -o IdentitiesOnly=yes' ./ docker@"+IP+":"+pwd+"")
+	b, err = cmd.Output()
+
+	if B2D.Verbose {
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		fmt.Printf("executing: %v %v\n", cmd.Path, strings.Join(cmd.Args, " "))
+	}
+
+	if err != nil {
+		return err
+	}
+	out = string(b)
+	if B2D.Verbose {
+		fmt.Printf("rsync returned: %s\nEND \n", out)
+	}
+
 	return nil
 }
 
