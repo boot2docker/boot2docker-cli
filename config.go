@@ -83,34 +83,6 @@ func config() (*flag.FlagSet, error) {
 	flags := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	flags.Usage = func() { usageLong(flags) }
 
-	// Find out which driver we're usng and add its flags
-	flags.StringVar(&B2D.Driver, "driver", "virtualbox", "hypervisor driver.")
-	flags.BoolVarP(&B2D.Verbose, "verbose", "v", false, "display verbose command invocations.")
-
-	if err := flags.Parse([]string{}); err != nil {
-		return nil, err
-	}
-	// Over-ride from the profile file
-	filename := cfgFilename(B2D.Dir)
-	if _, err := os.Lstat(filename); err == nil {
-		if _, err := toml.DecodeFile(filename, &B2D); err != nil {
-			return nil, err
-		}
-	}
-	// for cmd==ssh only:
-	// only pass the params up to and including the `ssh` command - after that,
-	// there might be other -flags that are destined for the ssh cmd
-	sshIdx := 1
-	for sshIdx < len(os.Args) && os.Args[sshIdx-1] != "ssh" {
-		sshIdx++
-	}
-	// Command-line overrides profile config.
-	if err := flags.Parse(os.Args[1:sshIdx]); err != nil {
-		return nil, err
-	}
-	if B2D.Verbose {
-		fmt.Printf("Using %s driver\n", B2D.Driver)
-	}
 	driver.ConfigFlags(&B2D, flags)
 
 	// Add the generic flags
@@ -127,6 +99,8 @@ func config() (*flag.FlagSet, error) {
 	B2D.Init = false
 	//flags.BoolVarP(&B2D.Init, "init", "i", false, "auto initialize vm instance.")
 
+	flags.BoolVarP(&B2D.Verbose, "verbose", "v", false, "display verbose command invocations.")
+	flags.StringVar(&B2D.Driver, "driver", "virtualbox", "hypervisor driver.")
 	flags.StringVar(&B2D.SSH, "ssh", "ssh", "path to SSH client utility.")
 	flags.StringVar(&B2D.SSHGen, "ssh-keygen", "ssh-keygen", "path to ssh-keygen utility.")
 
@@ -156,15 +130,11 @@ func config() (*flag.FlagSet, error) {
 		return nil, err
 	}
 	// Over-ride from the profile file
+	filename := cfgFilename(B2D.Dir)
 	if _, err := os.Lstat(filename); err == nil {
 		if _, err := toml.DecodeFile(filename, &B2D); err != nil {
 			return nil, err
 		}
-	}
-
-	// Command-line overrides profile config.
-	if err := flags.Parse(os.Args[1:sshIdx]); err != nil {
-		return nil, err
 	}
 
 	if B2D.SerialFile == "" {
@@ -174,6 +144,17 @@ func config() (*flag.FlagSet, error) {
 		} else {
 			B2D.SerialFile = filepath.Join(dir, B2D.VM+".sock")
 		}
+	}
+	// for cmd==ssh only:
+	// only pass the params up to and including the `ssh` command - after that,
+	// there might be other -flags that are destined for the ssh cmd
+	sshIdx := 1
+	for sshIdx < len(os.Args) && os.Args[sshIdx-1] != "ssh" {
+		sshIdx++
+	}
+	// Command-line overrides profile config.
+	if err := flags.Parse(os.Args[1:sshIdx]); err != nil {
+		return nil, err
 	}
 
 	return flags, nil

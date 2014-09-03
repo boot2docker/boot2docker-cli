@@ -12,7 +12,7 @@ import (
 func MakeDiskImage(dest string, size uint, r io.Reader) error {
 	// Convert a raw image from stdin to the dest VMDK image.
 	sizeBytes := int64(size) << 20 // usually won't fit in 32-bit int (max 2GB)
-	cmd := exec.Command(VBM, "convertfromraw", "stdin", dest,
+	cmd := exec.Command(cfg.VBM, "convertfromraw", "stdin", dest,
 		fmt.Sprintf("%d", sizeBytes), "--format", "VMDK")
 
 	if verbose {

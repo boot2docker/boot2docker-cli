@@ -5,6 +5,17 @@ import (
 	"os"
 
 	"github.com/boot2docker/boot2docker-cli/driver"
+	flag "github.com/ogier/pflag"
+)
+
+type DriverCfg struct {
+	DummyParam  string // Example string for dummy driver
+	hiddenParam string
+}
+
+var (
+	verbose bool // Verbose mode (Local copy of B2D.Verbose).
+	cfg     DriverCfg
 )
 
 func init() {
@@ -12,12 +23,26 @@ func init() {
 		fmt.Fprintf(os.Stderr, "Failed to initialize driver. Error : %s", err.Error())
 		os.Exit(1)
 	}
+	if err := driver.RegisterConfig("dummy", ConfigFlags); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to initialize driver config. Error : %s", err.Error())
+		os.Exit(1)
+	}
 }
 
 // Initialize the Machine.
 func InitFunc(i *driver.MachineConfig) (driver.Machine, error) {
+	verbose = i.Verbose
+
 	fmt.Printf("Init dummy %s\n", i.VM)
 	return &Machine{Name: i.VM, State: driver.Poweroff}, nil
+}
+
+// Add cmdline params for this driver
+func ConfigFlags(B2D *driver.MachineConfig, flags *flag.FlagSet) error {
+	//B2D.DriverCfg["dummy"] = cfg
+	flags.StringVar(&cfg.DummyParam, "no-dummy", "", "Example parameter for the dummy driver.")
+
+	return nil
 }
 
 // Machine information.

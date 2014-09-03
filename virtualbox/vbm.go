@@ -31,11 +31,11 @@ var (
 )
 
 func vbm(args ...string) error {
-	cmd := exec.Command(VBM, args...)
+	cmd := exec.Command(cfg.VBM, args...)
 	if verbose {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		log.Printf("executing: %v %v", VBM, strings.Join(args, " "))
+		log.Printf("executing: %v %v", cfg.VBM, strings.Join(args, " "))
 	}
 	if err := cmd.Run(); err != nil {
 		if ee, ok := err.(*exec.Error); ok && ee == exec.ErrNotFound {
@@ -47,10 +47,10 @@ func vbm(args ...string) error {
 }
 
 func vbmOut(args ...string) (string, error) {
-	cmd := exec.Command(VBM, args...)
+	cmd := exec.Command(cfg.VBM, args...)
 	if verbose {
 		cmd.Stderr = os.Stderr
-		log.Printf("executing: %v %v", VBM, strings.Join(args, " "))
+		log.Printf("executing: %v %v", cfg.VBM, strings.Join(args, " "))
 	}
 
 	b, err := cmd.Output()
@@ -63,9 +63,9 @@ func vbmOut(args ...string) (string, error) {
 }
 
 func vbmOutErr(args ...string) (string, string, error) {
-	cmd := exec.Command(VBM, args...)
+	cmd := exec.Command(cfg.VBM, args...)
 	if verbose {
-		log.Printf("executing: %v %v", VBM, strings.Join(args, " "))
+		log.Printf("executing: %v %v", cfg.VBM, strings.Join(args, " "))
 	}
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer

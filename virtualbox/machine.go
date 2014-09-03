@@ -39,10 +39,14 @@ const (
 	F_accelerate3d
 )
 
+type DriverCfg struct {
+	VBM  string // Path to VBoxManage utility.
+	VMDK string // base VMDK to use as persistent disk.
+}
+
 var (
-	VBM     string // Path to VBoxManage utility.
-	VMDK    string // base VMDK to use as persistent disk.
-	verbose bool   // Verbose mode (Local copy of B2D.Verbose).
+	verbose bool // Verbose mode (Local copy of B2D.Verbose).
+	cfg     DriverCfg
 )
 
 func init() {
@@ -67,9 +71,13 @@ func InitFunc(mc *driver.MachineConfig) (driver.Machine, error) {
 	return m, err
 }
 
+// Add cmdline params for this driver
 func ConfigFlags(B2D *driver.MachineConfig, flags *flag.FlagSet) error {
-	flags.StringVar(&VMDK, "basevmdk", "", "Path to VMDK to use as base for persistent partition")
-	vbm := "VBoxManage"
+	//B2D.DriverCfg["virtualbox"] = cfg
+
+	flags.StringVar(&cfg.VMDK, "basevmdk", "", "Path to VMDK to use as base for persistent partition")
+
+	cfg.VBM = "VBoxManage"
 	if runtime.GOOS == "windows" {
 		p := "C:\\Program Files\\Oracle\\VirtualBox"
 		if t := os.Getenv("VBOX_INSTALL_PATH"); t != "" {
@@ -77,9 +85,9 @@ func ConfigFlags(B2D *driver.MachineConfig, flags *flag.FlagSet) error {
 		} else if t = os.Getenv("VBOX_MSI_INSTALL_PATH"); t != "" {
 			p = t
 		}
-		vbm = filepath.Join(p, "VBoxManage.exe")
+		cfg.VBM = filepath.Join(p, "VBoxManage.exe")
 	}
-	flags.StringVar(&VBM, "vbm", vbm, "path to VirtualBox management utility.")
+	flags.StringVar(&cfg.VBM, "vbm", cfg.VBM, "path to VirtualBox management utility.")
 
 	return nil
 }
@@ -458,8 +466,8 @@ func CreateMachine(mc *driver.MachineConfig) (*Machine, error) {
 			return m, err
 		}
 
-		if VMDK != "" {
-			if err := copyDiskImage(diskImg, VMDK); err != nil {
+		if cfg.VMDK != "" {
+			if err := copyDiskImage(diskImg, cfg.VMDK); err != nil {
 				return m, err
 			}
 		} else {
