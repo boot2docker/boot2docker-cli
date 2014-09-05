@@ -4,7 +4,7 @@ set -e
 
 # Set version to latest unless set by user
 if [ -z "$VERSION" ]; then
-  VERSION="1.1.2"
+  VERSION=$(<VERSION)
 fi
 EXTENSION=""
 
