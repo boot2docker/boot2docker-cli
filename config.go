@@ -124,7 +124,13 @@ func config() (*flag.FlagSet, error) {
 	} else {
 		B2D.Serial = false
 	}
-	flags.StringVar(&B2D.ShareDriver, "share", "sshfs", "Share local dir with remote Docker machine.")
+
+	defaultShareDriver := "sshfs"
+	if runtime.GOOS == "windows" {
+		//because I don't want to have to install an ssh daemon on windows.
+		defaultShareDriver = "rsync"
+	}
+	flags.StringVar(&B2D.ShareDriver, "share", defaultShareDriver, "Share local dir with remote Docker machine.")
 
 	// Set the defaults
 	if err := flags.Parse([]string{}); err != nil {
