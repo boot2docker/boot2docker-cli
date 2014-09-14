@@ -25,7 +25,7 @@ Refer to the installation instructions for [Mac OS X](http://docs.docker.io/inst
 
 ### Pre-compiled binaries
 
-You can dowload binary releases at https://github.com/boot2docker/boot2docker-cli/releases
+You can download binary releases at https://github.com/boot2docker/boot2docker-cli/releases
 
 ### Docker container build
 
@@ -122,7 +122,7 @@ The `boot2docker` binary reads configuration from `$BOOT2DOCKER_PROFILE` if set,
 `$BOOT2DOCKER_DIR/profile` or `$HOME/.boot2docker/profile` or (on Windows) 
 `%USERPROFILE%/.boot2docker/profile`.  `boot2docker config` will
 tell you where it is looking for the file, and will also output the settings that 
-are in use, so you can initialise a default file to customise using 
+are in use, so you can initialise a default file to customize using 
 `boot2docker config > /home/sven/.boot2docker/profile`.
 
 Currently you can configure the following options (undefined options take 
