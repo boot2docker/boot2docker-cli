@@ -42,7 +42,13 @@ const (
 type DriverCfg struct {
 	VBM  string // Path to VBoxManage utility.
 	VMDK string // base VMDK to use as persistent disk.
+
+	shares shareSlice
+
+	// see also func ConfigFlags later in this file
 }
+
+var shareDefault string // set in ConfigFlags - this is what gets filled in for "shares" if it's empty
 
 var (
 	verbose bool // Verbose mode (Local copy of B2D.Verbose).
@@ -71,6 +77,37 @@ func InitFunc(mc *driver.MachineConfig) (driver.Machine, error) {
 	return m, err
 }
 
+type shareSlice map[string]string
+
+const shareSliceSep = "="
+
+func (s shareSlice) String() string {
+	var ret []string
+	for name, dir := range s {
+		ret = append(ret, fmt.Sprintf("%s%s%s", dir, shareSliceSep, name))
+	}
+	return fmt.Sprintf("[%s]", strings.Join(ret, " "))
+}
+
+func (s *shareSlice) Set(shareDir string) error {
+	var shareName string
+	if i := strings.Index(shareDir, shareSliceSep); i >= 0 {
+		shareName = shareDir[i+1:]
+		shareDir = shareDir[:i]
+	}
+	if shareName == "" {
+		// parts of the VBox internal code are buggy with share names that start with "/"
+		shareName = strings.TrimLeft(shareDir, "/")
+		// TODO do some basic Windows -> MSYS path conversion
+		// ie, s!^([a-z]+):[/\\]+!\1/!; s!\\!/!g
+	}
+	if *s == nil {
+		*s = shareSlice{}
+	}
+	(*s)[shareName] = shareDir
+	return nil
+}
+
 // Add cmdline params for this driver
 func ConfigFlags(B2D *driver.MachineConfig, flags *flag.FlagSet) error {
 	//B2D.DriverCfg["virtualbox"] = cfg
@@ -88,6 +125,21 @@ func ConfigFlags(B2D *driver.MachineConfig, flags *flag.FlagSet) error {
 		cfg.VBM = filepath.Join(p, "VBoxManage.exe")
 	}
 	flags.StringVar(&cfg.VBM, "vbm", cfg.VBM, "path to VirtualBox management utility.")
+
+	// TODO once boot2docker improves, replace this all with homeDir() from config.go so we only share the current user's HOME by default
+	shareDefault = "disable"
+	switch runtime.GOOS {
+	case "darwin":
+		shareDefault = "/Users" + shareSliceSep + "Users"
+	case "windows":
+		shareDefault = "C:\\Users" + shareSliceSep + "c/Users"
+	}
+
+	var defaultText string
+	if shareDefault != "disable" {
+		defaultText = "(defaults to '" + shareDefault + "' if no shares are specified; use 'disable' to explicitly prevent any shares from being created) "
+	}
+	flags.Var(&cfg.shares, "vbox-share", fmt.Sprintf("%sList of directories to share during 'init' via VirtualBox Guest Additions, with optional labels", defaultText))
 
 	return nil
 }
@@ -523,6 +575,37 @@ func CreateMachine(mc *driver.MachineConfig) (*Machine, error) {
 
 	if err := m.AttachStorage("SATA", driver.StorageMedium{Port: 1, Device: 0, DriveType: driver.DriveHDD, Medium: diskImg}); err != nil {
 		return m, err
+	}
+
+	// let VBoxService do nice magic automounting (when it's used)
+	if err := vbm("guestproperty", "set", mc.VM, "/VirtualBox/GuestAdd/SharedFolders/MountPrefix", "/"); err != nil {
+		return nil, err
+	}
+	if err := vbm("guestproperty", "set", mc.VM, "/VirtualBox/GuestAdd/SharedFolders/MountDir", "/"); err != nil {
+		return nil, err
+	}
+
+	// set up some shared folders as appropriate
+	if len(cfg.shares) == 0 {
+		cfg.shares.Set(shareDefault)
+	}
+	for shareName, shareDir := range cfg.shares {
+		if shareDir == "disable" {
+			continue
+		}
+		if _, err := os.Stat(shareDir); err != nil {
+			return nil, err
+		}
+
+		// woo, shareDir exists!  let's carry on!
+		if err := vbm("sharedfolder", "add", mc.VM, "--name", shareName, "--hostpath", shareDir, "--automount"); err != nil {
+			return nil, err
+		}
+
+		// enable symlinks
+		if err := vbm("setextradata", mc.VM, "VBoxInternal2/SharedFoldersEnableSymlinksCreate/"+shareName, "1"); err != nil {
+			return nil, err
+		}
 	}
 
 	return m, nil
