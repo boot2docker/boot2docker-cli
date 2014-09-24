@@ -199,7 +199,7 @@ func cmdConfig() error {
 		return fmt.Errorf("Error working out Profile file location: %s\n", err)
 	}
 	filename := cfgFilename(dir)
-	fmt.Printf("boot2docker profile filename: %s\n", filename)
+	fmt.Printf("# boot2docker profile filename: %s\n", filename)
 	fmt.Println(printConfig())
 	return nil
 }
