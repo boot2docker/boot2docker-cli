@@ -125,6 +125,13 @@ func config() (*flag.FlagSet, error) {
 		B2D.Serial = false
 	}
 
+	defaultShareDriver := "sshfs"
+	if runtime.GOOS == "windows" {
+		//because I don't want to have to install an ssh daemon on windows.
+		defaultShareDriver = "rsync"
+	}
+	flags.StringVar(&B2D.ShareDriver, "share", defaultShareDriver, "Share local dir with remote Docker machine.")
+
 	// Set the defaults
 	if err := flags.Parse([]string{}); err != nil {
 		return nil, err
@@ -161,7 +168,7 @@ func config() (*flag.FlagSet, error) {
 }
 
 func usageShort() {
-	fmt.Fprintf(os.Stderr, "Usage: %s [<options>] {help|init|up|ssh|save|down|poweroff|reset|restart|config|status|info|ip|socket|shellinit|delete|destroy|download|version} [<args>]\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "Usage: %s [<options>] {help|init|up|ssh|save|down|poweroff|reset|restart|config|status|info|ip|socket|shellinit|delete|destroy|download|version|share} [<args>]\n", os.Args[0])
 }
 
 func usageLong(flags *flag.FlagSet) {
@@ -184,6 +191,7 @@ Commands:
    info                Display detailed information of VM.
    ip                  Display the IP address of the VM's Host-only network.
    socket              Display the DOCKER_HOST socket to connect to.
+   share               Share the current directory to the remote Docker host.
    shellinit           Display the shell command to set up the Docker client.
    status              Display current state of VM.
    download            Download Boot2Docker ISO image.

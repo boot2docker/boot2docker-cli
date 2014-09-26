@@ -39,7 +39,8 @@ type MachineConfig struct {
 	Serial     bool
 	SerialFile string
 
-	DriverCfg map[string]interface{}
+	// Share local FS with remote Docker server
+	ShareDriver string
 }
 
 type ConfigFunc func(B2D *MachineConfig, flags *flag.FlagSet) error

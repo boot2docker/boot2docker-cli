@@ -404,6 +404,27 @@ func cmdIP() error {
 	return nil
 }
 
+// Share the current dir into the remote B2D filesystem.
+// TODO: this is risky - as you may be over-writing some other session's dir
+//       and worse, some other user's dir.
+func cmdShare() error {
+	m, err := driver.GetMachine(&B2D)
+	if err != nil {
+		return fmt.Errorf("Failed to get machine %q: %s", B2D.VM, err)
+	}
+
+	if m.GetState() != driver.Running {
+		return fmt.Errorf("VM %q is not running.", B2D.VM)
+	}
+
+	pwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	return shareDir(pwd, m)
+}
+
 // Download the boot2docker ISO image.
 func cmdDownload() error {
 	fmt.Println("Downloading boot2docker ISO image...")
@@ -419,5 +440,6 @@ func cmdDownload() error {
 		return fmt.Errorf("Failed to download ISO image: %s", err)
 	}
 	fmt.Printf("Success: downloaded %s\n\tto %s\n", url, B2D.ISO)
+
 	return nil
 }
