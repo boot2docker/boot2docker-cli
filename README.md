@@ -1,4 +1,5 @@
 # boot2docker command line management tool
+[![Build Status](https://travis-ci.org/kevinbin/boot2docker-cli.svg?branch=master)](https://travis-ci.org/kevinbin/boot2docker-cli)
 
 This tool downloads the boot2docker ISO image, creates a VirtualBox virtual
 machine, sets up two networks for that virtual machine (one NAT to allow the VM
