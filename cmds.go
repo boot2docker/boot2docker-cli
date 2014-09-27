@@ -189,11 +189,19 @@ func printExport(socket, certPath string) {
 	}
 	if certPath == "" {
 		if os.Getenv("DOCKER_CERT_PATH") != "" {
-			fmt.Println("    unset DOCKER_CERT_PATH")
+			if filepath.Base(os.Getenv("SHELL")) == "fish" {
+				fmt.Println("    set -e DOCKER_CERT_PATH")
+			} else {
+				fmt.Println("    unset DOCKER_CERT_PATH")
+			}
 		}
 	} else {
 		// Assume Docker 1.2.0 with TLS on...
-		fmt.Printf("    export DOCKER_CERT_PATH=%s\n", certPath)
+		if filepath.Base(os.Getenv("SHELL")) == "fish" {
+			fmt.Printf("    set -x DOCKER_CERT_PATH %s\n", certPath)
+		} else {
+			fmt.Printf("    export DOCKER_CERT_PATH=%s\n", certPath)
+		}
 	}
 }
 
