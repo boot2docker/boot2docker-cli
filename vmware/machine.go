@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"text/template"
 
 	"github.com/boot2docker/boot2docker-cli/driver"
@@ -12,13 +11,13 @@ import (
 )
 
 var (
-	verbose bool // Verbose mode (Local copy of B2D.Verbose).
+	verbose bool // Verbose mode.
 	cfg     DriverCfg
 )
 
 type DriverCfg struct {
-	VMRUN string // Path to VBoxManage utility.
-	VMDK  string // base VMDK to use as persistent disk.
+	VMRUN    string // Path to vmrun utility.
+	VDISKMAN string // Path to vdiskmanager utility.
 }
 
 func init() {
@@ -46,7 +45,10 @@ func InitFunc(mc *driver.MachineConfig) (driver.Machine, error) {
 // Add cmdline params for this driver
 func ConfigFlags(mc *driver.MachineConfig, flags *pflag.FlagSet) error {
 	cfg.VMRUN = "/Applications/VMware Fusion.app/Contents/Library/vmrun"
-	flags.StringVar(&cfg.VMRUN, "vmrun", cfg.VMRUN, "path to vmrun management utility.")
+	flags.StringVar(&cfg.VMRUN, "vmrun", cfg.VMRUN, "path to vmrun utility.")
+
+	cfg.VDISKMAN = "/Applications/VMware Fusion.app/Contents/Library/vmware-vdiskmanager"
+	flags.StringVar(&cfg.VDISKMAN, "vmdiskman", cfg.VDISKMAN, "path to vdiskmanager utility.")
 
 	return nil
 }
@@ -67,7 +69,7 @@ type Machine struct {
 
 // Refresh reloads the machine information.
 func (m *Machine) Refresh() error {
-	mm, err := GetMachine(m.Name)
+	mm, err := GetMachine(m.VMX)
 	mm.State = driver.Running
 	if err != nil {
 		return err
@@ -217,12 +219,26 @@ func CreateMachine(mc *driver.MachineConfig) (*Machine, error) {
 		return nil, ErrMachineExist
 	}
 
+	// Generate vmx config file from template
 	vmxt := template.Must(template.New("vmx").Parse(vmx))
 	vmxfile, err := os.Create(getVMX(mc))
 	if err != nil {
 		return nil, err
 	}
 	vmxt.Execute(vmxfile, mc)
+
+	// Generate vmdk file
+	diskImg := filepath.Join(getBaseFolder(mc), fmt.Sprintf("%s.vmdk", mc.VM))
+	if _, err := os.Stat(diskImg); err != nil {
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+
+		if err := vdiskmanager(diskImg, mc.DiskSize); err != nil {
+			return nil, err
+		}
+	}
+
 	return nil, nil
 }
 
@@ -230,5 +246,5 @@ func getBaseFolder(mc *driver.MachineConfig) string {
 	return filepath.Join(mc.Dir, mc.VM)
 }
 func getVMX(mc *driver.MachineConfig) string {
-	return filepath.Join(getBaseFolder(mc), strings.Join([]string{mc.VM, "vmx"}, "."))
+	return filepath.Join(getBaseFolder(mc), fmt.Sprintf("%s.vmx", mc.VM))
 }
