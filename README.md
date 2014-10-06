@@ -142,6 +142,13 @@ SSHKey = "/Users/sven/.ssh/id_boot2docker"
 # name of boot2docker virtual machine
 VM = "boot2docker-vm"
 
+# URL pointing either to a Github "/releases" API endpoint to automatically
+# retrieve the `boot2docker.iso` asset from the latest released version of a
+# repo, or directly to an ISO image
+ISOURL = "https://api.github.com/repos/boot2docker/boot2docker/releases"
+#ISOURL = "https://github.com/boot2docker/boot2docker/releases/download/v1.0.0/boot2docker.iso"
+#ISOURL = "https://internal.corp.org/b2d.iso"
+
 # path to boot2docker ISO image
 ISO = "/Users/sven/.boot2docker/boot2docker.iso"
 

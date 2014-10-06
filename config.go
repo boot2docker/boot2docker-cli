@@ -91,6 +91,7 @@ func config() (*flag.FlagSet, error) {
 	// removed for now, requires re-parsing a new config file which is too messy
 	//flags.StringVarP(&B2D.Dir, "dir", "d", dir, "boot2docker config directory.")
 	B2D.Dir = dir
+	flags.StringVar(&B2D.ISOURL, "iso-url", "https://api.github.com/repos/boot2docker/boot2docker/releases", "source URL to provision the boot2docker ISO image.")
 	flags.StringVar(&B2D.ISO, "iso", filepath.Join(dir, "boot2docker.iso"), "path to boot2docker ISO image.")
 
 	// Sven disabled this, as it is broken - if I user with a fresh computer downloads

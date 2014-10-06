@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -406,15 +407,21 @@ func cmdIP() error {
 
 // Download the boot2docker ISO image.
 func cmdDownload() error {
-	fmt.Println("Downloading boot2docker ISO image...")
-	url := "https://api.github.com/repos/boot2docker/boot2docker/releases"
-	tag, err := getLatestReleaseName(url)
-	if err != nil {
-		return fmt.Errorf("Failed to get latest release: %s", err)
-	}
-	fmt.Printf("Latest release is %s\n", tag)
+	url := B2D.ISOURL
 
-	url = fmt.Sprintf("https://github.com/boot2docker/boot2docker/releases/download/%s/boot2docker.iso", tag)
+	re := regexp.MustCompile("https://api.github.com/repos/([^/]+)/([^/]+)/releases")
+	if matches := re.FindStringSubmatch(url); len(matches) == 3 {
+		tag, err := getLatestReleaseName(url)
+		if err != nil {
+			return fmt.Errorf("Failed to get latest release: %s", err)
+		}
+		org := matches[1]
+		repo := matches[2]
+		fmt.Printf("Latest release for %s/%s is %s\n", org, repo, tag)
+		url = fmt.Sprintf("https://github.com/%s/%s/releases/download/%s/boot2docker.iso", org, repo, tag)
+	}
+
+	fmt.Println("Downloading boot2docker ISO image...")
 	if err := download(B2D.ISO, url); err != nil {
 		return fmt.Errorf("Failed to download ISO image: %s", err)
 	}
