@@ -1,9 +1,12 @@
-package vmware
+package fusion
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"text/template"
 
 	"github.com/boot2docker/boot2docker-cli/driver"
@@ -55,22 +58,17 @@ func ConfigFlags(mc *driver.MachineConfig, flags *pflag.FlagSet) error {
 
 // Machine information.
 type Machine struct {
-	Name       string
-	State      driver.MachineState
-	CPUs       uint
-	Memory     uint // main memory (in MB)
-	VRAM       uint // video memory (in MB)
-	VMX        string
-	OSType     string
-	BootOrder  []string // max 4 slots, each in {none|floppy|dvd|disk|net}
-	DockerPort uint
-	SSHPort    uint
+	Name   string
+	State  driver.MachineState
+	CPUs   uint64
+	Memory uint64 // main memory (in MB)
+	VMX    string
+	OSType string
 }
 
 // Refresh reloads the machine information.
 func (m *Machine) Refresh() error {
 	mm, err := GetMachine(m.VMX)
-	mm.State = driver.Running
 	if err != nil {
 		return err
 	}
@@ -80,56 +78,55 @@ func (m *Machine) Refresh() error {
 
 // Start starts the machine.
 func (m *Machine) Start() error {
-	m.State = driver.Running
 	vmrun("start", m.VMX, "nogui")
 	return nil
 }
 
 // Suspend suspends the machine and saves its state to disk.
 func (m *Machine) Save() error {
-	m.State = driver.Saved
-	fmt.Printf("Save %s: %s\n", m.Name, m.State)
+	vmrun("suspend", m.VMX, "nogui")
 	return nil
 }
 
 // Pause pauses the execution of the machine.
 func (m *Machine) Pause() error {
-	m.State = driver.Paused
-	fmt.Printf("Pause %s: %s\n", m.Name, m.State)
+	vmrun("pause", m.VMX, "nogui")
 	return nil
 }
 
 // Stop gracefully stops the machine.
 func (m *Machine) Stop() error {
-	m.State = driver.Poweroff
 	vmrun("stop", m.VMX, "nogui")
 	return nil
 }
 
 // Poweroff forcefully stops the machine. State is lost and might corrupt the disk image.
 func (m *Machine) Poweroff() error {
-	m.State = driver.Poweroff
-	fmt.Printf("Poweroff %s: %s\n", m.Name, m.State)
+	vmrun("stop", m.VMX, "nogui")
 	return nil
 }
 
 // Restart gracefully restarts the machine.
 func (m *Machine) Restart() error {
-	m.State = driver.Running
-	fmt.Printf("Restart %s: %s\n", m.Name, m.State)
+	vmrun("reset", m.VMX, "nogui")
 	return nil
 }
 
 // Reset forcefully restarts the machine. State is lost and might corrupt the disk image.
 func (m *Machine) Reset() error {
-	m.State = driver.Running
-	fmt.Printf("Reset %s: %s\n", m.Name, m.State)
+	vmrun("reset", m.VMX, "nogui")
 	return nil
 }
 
 // Get vm name
 func (m *Machine) GetName() string {
 	return m.Name
+}
+
+// Get vm hostname
+func (m *Machine) GetHostname() string {
+	stdout, _, _ := vmrun("getGuestIPAddress", m.VMX)
+	return strings.TrimSpace(stdout)
 }
 
 // Get current state
@@ -144,23 +141,23 @@ func (m *Machine) GetSerialFile() string {
 
 // Get Docker port
 func (m *Machine) GetDockerPort() uint {
-	return m.DockerPort
+	return 2375
 }
 
 // Get SSH port
 func (m *Machine) GetSSHPort() uint {
-	return m.SSHPort
+	return 22
 }
 
 // Delete deletes the machine and associated disk images.
 func (m *Machine) Delete() error {
-	fmt.Printf("Delete %s: %s\n", m.Name, m.State)
+	vmrun("deleteVM", m.VMX, "nogui")
 	return nil
 }
 
 // Modify changes the settings of the machine.
 func (m *Machine) Modify() error {
-	fmt.Printf("Modify %s: %s\n", m.Name, m.State)
+	fmt.Printf("Hot modify not supported")
 	return m.Refresh()
 }
 
@@ -205,7 +202,38 @@ func GetMachine(vmx string) (*Machine, error) {
 	if _, err := os.Stat(vmx); os.IsNotExist(err) {
 		return nil, ErrMachineNotExist
 	}
-	m := &Machine{VMX: vmx}
+
+	m := &Machine{VMX: vmx, State: driver.Poweroff}
+
+	// VMRUN only tells use if the vm is running or not
+	if stdout, _, _ := vmrun("list"); strings.Contains(stdout, m.VMX) {
+		m.State = driver.Running
+	}
+
+	// Parse the vmx file
+	vmxfile, err := os.Open(vmx)
+	if err != nil {
+		return m, err
+	}
+	defer vmxfile.Close()
+
+	vmxscan := bufio.NewScanner(vmxfile)
+	for vmxscan.Scan() {
+		if vmxtokens := strings.Split(vmxscan.Text(), " = "); len(vmxtokens) > 1 {
+			vmxkey := strings.TrimSpace(vmxtokens[0])
+			vmxvalue, _ := strconv.Unquote(vmxtokens[1])
+			switch vmxkey {
+			case "displayName":
+				m.Name = vmxvalue
+			case "guestOS":
+				m.OSType = vmxvalue
+			case "memsize":
+				m.Memory, _ = strconv.ParseUint(vmxvalue, 10, 0)
+			case "numvcpus":
+				m.CPUs, _ = strconv.ParseUint(vmxvalue, 10, 0)
+			}
+		}
+	}
 	return m, nil
 }
 

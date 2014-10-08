@@ -1,10 +1,10 @@
-package vmware
+package fusion
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"os/exec"
 	"strings"
 )
@@ -15,19 +15,24 @@ var (
 	ErrVMRUNNotFound   = errors.New("VMRUN not found")
 )
 
-func vmrun(args ...string) error {
+func vmrun(args ...string) (string, string, error) {
 	cmd := exec.Command(cfg.VMRUN, args...)
 	if verbose {
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
 		log.Printf("executing: %v %v", cfg.VMRUN, strings.Join(args, " "))
 	}
-	if stdout := cmd.Run(); stdout != nil {
-		if ee, ok := stdout.(*exec.Error); ok && ee == exec.ErrNotFound {
-			return ErrVMRUNNotFound
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		if ee, ok := err.(*exec.Error); ok && ee == exec.ErrNotFound {
+			err = ErrVMRUNNotFound
 		}
 	}
-	return nil
+
+	return stdout.String(), stderr.String(), err
 }
 
 // Make a vmdk disk image with the given size (in MB).

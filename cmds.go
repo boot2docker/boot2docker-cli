@@ -11,8 +11,8 @@ import (
 	"time"
 
 	_ "github.com/boot2docker/boot2docker-cli/dummy"
+	_ "github.com/boot2docker/boot2docker-cli/fusion"
 	_ "github.com/boot2docker/boot2docker-cli/virtualbox"
-	_ "github.com/boot2docker/boot2docker-cli/vmware"
 
 	"github.com/boot2docker/boot2docker-cli/driver"
 )

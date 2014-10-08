@@ -1,4 +1,4 @@
-package vmware
+package fusion
 
 const vmx = `
 .encoding = "UTF-8"
