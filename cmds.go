@@ -244,16 +244,18 @@ func cmdPoweroff() error {
 // Upgrade the boot2docker ISO - preserving server state
 func cmdUpgrade() error {
 	m, err := driver.GetMachine(&B2D)
-	if err == nil && m.GetState() == driver.Running {
-		// Windows won't let us move the ISO aside while it's in use
-		if cmdStop() == nil && cmdDownload() == nil {
-			return cmdUp()
-		} else {
-			return nil
+	if err == nil {
+		if m.GetState() == driver.Running || m.GetState() == driver.Saved || m.GetState() == driver.Paused {
+			// Windows won't let us move the ISO aside while it's in use
+			if err = cmdStop(); err == nil {
+				if err = cmdDownload(); err == nil {
+					err = cmdUp()
+				}
+			}
+			return err
 		}
-	} else {
-		return cmdDownload()
 	}
+	return cmdDownload()
 }
 
 // Gracefully stop and then start the VM.
