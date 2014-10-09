@@ -19,6 +19,7 @@ type MachineConfig struct {
 	SSHKey   string // SSH key to send to the vm
 	VM       string // virtual machine name
 	Dir      string // boot2docker directory
+	ISOURL   string // Source URL to retrieve the ISO from
 	ISO      string // boot2docker ISO image path
 	DiskSize uint   // VM disk image size (MB)
 	Memory   uint   // VM memory size (MB)
