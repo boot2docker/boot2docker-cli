@@ -1,48 +1,28 @@
-package dummy
+package raw
 
 import (
 	"fmt"
 	"os"
 
 	"github.com/boot2docker/boot2docker-cli/driver"
-	flag "github.com/ogier/pflag"
-)
-
-type DriverCfg struct {
-	DummyParam  string // Example string for dummy driver
-	hiddenParam string
-}
-
-var (
-	verbose bool // Verbose mode (Local copy of B2D.Verbose).
-	cfg     DriverCfg
 )
 
 func init() {
-	if err := driver.Register("dummy", InitFunc); err != nil {
+	if err := driver.Register("raw", InitFunc); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize driver. Error : %s", err.Error())
-		os.Exit(1)
-	}
-	if err := driver.RegisterConfig("dummy", ConfigFlags); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to initialize driver config. Error : %s", err.Error())
 		os.Exit(1)
 	}
 }
 
 // Initialize the Machine.
 func InitFunc(i *driver.MachineConfig) (driver.Machine, error) {
-	verbose = i.Verbose
+	fmt.Printf("Init raw %s\n", i.VM)
 
-	fmt.Printf("Init dummy %s\n", i.VM)
-	return &Machine{Name: i.VM, State: driver.Poweroff}, nil
-}
+	fmt.Print("The 'raw' driver can be used to interact with any already running Boot2Docker based system:\n\t")
+	fmt.Print(`./boot2docker-v1.1.2-darwin-amd64 --driver=raw --sshhost=10.10.10.19 --sshport=22 --sshkey="" socket`)
+	fmt.Print("\n (it does assume that the vm has 2 connected ethernet ports)\n")
 
-// Add cmdline params for this driver
-func ConfigFlags(B2D *driver.MachineConfig, flags *flag.FlagSet) error {
-	//B2D.DriverCfg["dummy"] = cfg
-	flags.StringVar(&cfg.DummyParam, "no-dummy", "", "Example parameter for the dummy driver.")
-
-	return nil
+	return &Machine{Name: i.VM, State: driver.Running, SSHPort: uint(i.SSHPort), SSHUser: i.SSHUser, SSHHost: i.SSHHost, EthDev: i.EthDev}, nil
 }
 
 // Machine information.
@@ -59,8 +39,8 @@ type Machine struct {
 	BootOrder  []string // max 4 slots, each in {none|floppy|dvd|disk|net}
 	DockerPort uint
 	SSHUser    string
-	SSHPort    uint
 	SSHHost    string
+	SSHPort    uint
 	SerialFile string
 	EthDev     string
 }
@@ -145,14 +125,14 @@ func (m *Machine) GetSSHPort() uint {
 	return m.SSHPort
 }
 
-// Get SSH hostname
-func (m *Machine) GetSSHHost() string {
-	return m.SSHHost
-}
-
 // Get SSH username
 func (m *Machine) GetSSHUser() string {
 	return m.SSHUser
+}
+
+// Get SSH hostname
+func (m *Machine) GetSSHHost() string {
+	return m.SSHHost
 }
 
 // Get Eth device to probe for IP address

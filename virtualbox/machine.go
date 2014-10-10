@@ -171,8 +171,11 @@ type Machine struct {
 	Flag       Flag
 	BootOrder  []string // max 4 slots, each in {none|floppy|dvd|disk|net}
 	DockerPort uint
+	SSHUser    string
 	SSHPort    uint
+	SSHHost    string
 	SerialFile string
+	EthDev     string
 }
 
 // Refresh reloads the machine information.
@@ -317,6 +320,21 @@ func (m *Machine) GetSSHPort() uint {
 	return m.SSHPort
 }
 
+// Get SSH hostname
+func (m *Machine) GetSSHHost() string {
+	return m.SSHHost
+}
+
+// Get SSH username
+func (m *Machine) GetSSHUser() string {
+	return m.SSHUser
+}
+
+// Get Eth device to probe for IP address
+func (m *Machine) GetEthDev() string {
+	return m.EthDev
+}
+
 // GetMachine finds a machine by its name or UUID.
 func GetMachine(id string) (*Machine, error) {
 	stdout, stderr, err := vbmOutErr("showvminfo", id, "--machinereadable")
@@ -327,7 +345,7 @@ func GetMachine(id string) (*Machine, error) {
 		return nil, err
 	}
 	s := bufio.NewScanner(strings.NewReader(stdout))
-	m := &Machine{}
+	m := &Machine{SSHHost: "localhost", SSHUser: "docker", EthDev: "eth1"}
 	for s.Scan() {
 		res := reVMInfoLine.FindStringSubmatch(s.Text())
 		if res == nil {
