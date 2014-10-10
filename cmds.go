@@ -402,7 +402,7 @@ func cmdIP() error {
 		fmt.Fprintf(os.Stderr, "\n\n")
 	} else {
 		fmt.Fprintf(os.Stderr, "\nFailed to get VM Host only IP address.\n")
-		fmt.Fprintf(os.Stderr, "\tWas the VM initilized using boot2docker?\n")
+		fmt.Fprintf(os.Stderr, "\tWas the VM initialized using boot2docker?\n")
 	}
 	return nil
 }
