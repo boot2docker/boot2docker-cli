@@ -190,6 +190,7 @@ func printExport(socket, certPath string) {
 	} else {
 		// Assume Docker 1.2.0 with TLS on...
 		fmt.Printf("    export DOCKER_CERT_PATH=%s\n", certPath)
+		fmt.Printf("    export DOCKER_TLS_VERIFY=1\n")
 	}
 }
 
