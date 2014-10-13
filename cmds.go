@@ -128,7 +128,7 @@ func cmdUp() error {
 	}
 	// Copying the certs here - someone might have have written a Windows API client.
 	certPath, err := RequestCertsUsingSSH(m)
-	if err != nil && B2D.Verbose {
+	if err != nil {
 		// These errors are not fatal
 		fmt.Fprintf(os.Stderr, "Error copying Certificates: %s\n", err)
 	}
@@ -172,7 +172,7 @@ func cmdShellInit() error {
 	}
 
 	certPath, err := RequestCertsUsingSSH(m)
-	if err != nil && B2D.Verbose {
+	if err != nil {
 		// These errors are not fatal
 		fmt.Fprintf(os.Stderr, "Error copying Certificates: %s\n", err)
 	}
