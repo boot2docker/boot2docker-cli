@@ -195,6 +195,9 @@ func (m *Machine) Start() error {
 	case driver.Paused:
 		return vbm("controlvm", m.Name, "resume")
 	case driver.Poweroff, driver.Saved, driver.Aborted:
+		if err := m.setUpShares(); err != nil {
+			return err
+		}
 		return vbm("startvm", m.Name, "--type", "headless")
 	}
 	if err := m.Refresh(); err == nil {
@@ -577,12 +580,16 @@ func CreateMachine(mc *driver.MachineConfig) (*Machine, error) {
 		return m, err
 	}
 
+	return m, nil
+}
+
+func (m *Machine) setUpShares() error {
 	// let VBoxService do nice magic automounting (when it's used)
-	if err := vbm("guestproperty", "set", mc.VM, "/VirtualBox/GuestAdd/SharedFolders/MountPrefix", "/"); err != nil {
-		return nil, err
+	if err := vbm("guestproperty", "set", m.Name, "/VirtualBox/GuestAdd/SharedFolders/MountPrefix", "/"); err != nil {
+		return err
 	}
-	if err := vbm("guestproperty", "set", mc.VM, "/VirtualBox/GuestAdd/SharedFolders/MountDir", "/"); err != nil {
-		return nil, err
+	if err := vbm("guestproperty", "set", m.Name, "/VirtualBox/GuestAdd/SharedFolders/MountDir", "/"); err != nil {
+		return err
 	}
 
 	// set up some shared folders as appropriate
@@ -594,21 +601,20 @@ func CreateMachine(mc *driver.MachineConfig) (*Machine, error) {
 			continue
 		}
 		if _, err := os.Stat(shareDir); err != nil {
-			return nil, err
+			return err
 		}
 
 		// woo, shareDir exists!  let's carry on!
-		if err := vbm("sharedfolder", "add", mc.VM, "--name", shareName, "--hostpath", shareDir, "--automount"); err != nil {
-			return nil, err
+		if err := vbm("sharedfolder", "add", m.Name, "--name", shareName, "--hostpath", shareDir, "--automount"); err != nil {
+			return err
 		}
 
 		// enable symlinks
-		if err := vbm("setextradata", mc.VM, "VBoxInternal2/SharedFoldersEnableSymlinksCreate/"+shareName, "1"); err != nil {
-			return nil, err
+		if err := vbm("setextradata", m.Name, "VBoxInternal2/SharedFoldersEnableSymlinksCreate/"+shareName, "1"); err != nil {
+			return err
 		}
 	}
-
-	return m, nil
+	return nil
 }
 
 // Modify changes the settings of the machine.
