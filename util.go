@@ -335,7 +335,7 @@ func RequestCertsUsingSSH(m driver.Machine) (string, error) {
 				return "", err
 			}
 			certFile := filepath.Join(certDir, filename)
-			fmt.Printf("Writing %s:\n", certFile)
+			fmt.Fprintf(os.Stderr, "Writing %s\n", certFile)
 			f, err := os.Create(certFile)
 			if err != nil {
 				return "", err
