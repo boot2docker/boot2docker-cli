@@ -103,7 +103,7 @@ func cmdUp() error {
 		fmt.Printf("\nWaiting for Docker daemon to start...\n")
 	}
 
-	time.Sleep(300 * time.Millisecond)
+	time.Sleep(600 * time.Millisecond)
 	socket := ""
 	for i := 1; i < 30; i++ {
 		print(".")
@@ -113,7 +113,7 @@ func cmdUp() error {
 		if B2D.Verbose {
 			fmt.Printf("Error requesting socket: %s\n", err)
 		}
-		time.Sleep(300 * time.Millisecond)
+		time.Sleep(600 * time.Millisecond)
 	}
 	fmt.Printf("\nStarted.\n")
 
