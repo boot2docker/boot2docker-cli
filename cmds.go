@@ -142,12 +142,12 @@ func cmdUp() error {
 			fmt.Fprintf(os.Stderr, "Auto detection of the VM's Docker socket failed.\n")
 			fmt.Fprintf(os.Stderr, "Please run `boot2docker -v up` to diagnose.\n")
 		} else {
-			// Check if $DOCKER_HOST ENV var is properly configured.
-			if os.Getenv("DOCKER_HOST") != socket || os.Getenv("DOCKER_CERT_PATH") != certPath {
+			// Check if $DOCKER_* ENV vars are properly configured.
+			if !checkEnvironment(socket, certPath) {
 				fmt.Printf("\nTo connect the Docker client to the Docker daemon, please set:\n")
 				printExport(socket, certPath)
 			} else {
-				fmt.Printf("Your DOCKER_HOST env variable is already set correctly.\n")
+				fmt.Printf("Your environment variables are already set correctly.\n")
 			}
 		}
 	}
@@ -181,17 +181,41 @@ func cmdShellInit() error {
 	return nil
 }
 
-func printExport(socket, certPath string) {
-	fmt.Printf("    export DOCKER_HOST=%s\n", socket)
-	if certPath == "" {
-		if os.Getenv("DOCKER_CERT_PATH") != "" {
-			fmt.Println("    unset DOCKER_CERT_PATH")
+func checkEnvironment(socket, certPath string) bool {
+	for name, value := range exports(socket, certPath) {
+		if os.Getenv(name) != value {
+			return false
 		}
-	} else {
-		// Assume Docker 1.2.0 with TLS on...
-		fmt.Printf("    export DOCKER_CERT_PATH=%s\n", certPath)
-		fmt.Printf("    export DOCKER_TLS_VERIFY=1\n")
 	}
+
+	return true
+}
+
+func printExport(socket, certPath string) {
+	for name, value := range exports(socket, certPath) {
+		if os.Getenv(name) != value {
+			if value == "" {
+				fmt.Printf("    unset %s\n", name)
+			} else {
+				fmt.Printf("    export %s=%s\n", name, value)
+			}
+		}
+	}
+}
+
+func exports(socket, certPath string) map[string]string {
+	out := make(map[string]string)
+
+	out["DOCKER_HOST"] = socket
+	out["DOCKER_CERT_PATH"] = certPath
+
+	if certPath == "" {
+		out["DOCKER_TLS_VERIFY"] = ""
+	} else {
+		out["DOCKER_TLS_VERIFY"] = "1"
+	}
+
+	return out
 }
 
 // Tell the user the config (and later let them set it?)
