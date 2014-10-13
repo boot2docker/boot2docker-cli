@@ -310,10 +310,12 @@ func RequestCertsUsingSSH(m driver.Machine) (string, error) {
 
 	b, err := cmd.Output()
 	if err == nil {
-		dir, err := cfgDir(".docker")
+		dir, err := cfgDir(".boot2docker")
 		if err != nil {
 			return "", err
 		}
+
+		certDir = filepath.Join(dir, "certs", m.GetName())
 
 		// Open the tar archive for reading.
 		r := bytes.NewReader(b)
@@ -330,7 +332,6 @@ func RequestCertsUsingSSH(m driver.Machine) (string, error) {
 				return "", err
 			}
 			filename := filepath.Base(hdr.Name)
-			certDir = filepath.Join(dir, m.GetName())
 			if err := os.MkdirAll(certDir, 0755); err != nil {
 				return "", err
 			}
