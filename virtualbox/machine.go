@@ -139,7 +139,7 @@ func ConfigFlags(B2D *driver.MachineConfig, flags *flag.FlagSet) error {
 	if shareDefault != "disable" {
 		defaultText = "(defaults to '" + shareDefault + "' if no shares are specified; use 'disable' to explicitly prevent any shares from being created) "
 	}
-	flags.Var(&cfg.shares, "vbox-share", fmt.Sprintf("%sList of directories to share during 'init' via VirtualBox Guest Additions, with optional labels", defaultText))
+	flags.Var(&cfg.shares, "vbox-share", fmt.Sprintf("%sList of directories to share during 'up|start|boot' via VirtualBox Guest Additions, with optional labels", defaultText))
 
 	return nil
 }
