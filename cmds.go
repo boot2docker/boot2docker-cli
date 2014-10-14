@@ -130,7 +130,7 @@ func cmdUp() error {
 	certPath, err := RequestCertsUsingSSH(m)
 	if err != nil {
 		// These errors are not fatal
-		fmt.Fprintf(os.Stderr, "Error copying Certificates: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Warning: error copying certificates: %s\n", err)
 	}
 	switch runtime.GOOS {
 	case "windows":
@@ -174,7 +174,7 @@ func cmdShellInit() error {
 	certPath, err := RequestCertsUsingSSH(m)
 	if err != nil {
 		// These errors are not fatal
-		fmt.Fprintf(os.Stderr, "Error copying Certificates: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Warning: error copying certificates: %s\n", err)
 	}
 	printExport(socket, certPath)
 
