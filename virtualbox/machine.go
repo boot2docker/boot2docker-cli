@@ -241,7 +241,8 @@ func (m *Machine) Stop() error {
 		}
 	}
 
-	for m.State != driver.Poweroff { // busy wait until the machine is stopped
+	// busy wait until the machine is stopped
+	for i := 0; i < 10; i++ {
 		if err := vbm("controlvm", m.Name, "acpipowerbutton"); err != nil {
 			return err
 		}
@@ -249,8 +250,12 @@ func (m *Machine) Stop() error {
 		if err := m.Refresh(); err != nil {
 			return err
 		}
+		if m.State == driver.Poweroff {
+			return nil
+		}
 	}
-	return nil
+
+	return fmt.Errorf("timed out waiting for VM to stop")
 }
 
 // Poweroff forcefully stops the machine. State is lost and might corrupt the disk image.
