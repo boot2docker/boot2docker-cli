@@ -103,7 +103,7 @@ func cmdUp() error {
 		fmt.Printf("\nWaiting for Docker daemon to start...\n")
 	}
 
-	time.Sleep(300 * time.Millisecond)
+	time.Sleep(600 * time.Millisecond)
 	socket := ""
 	for i := 1; i < 30; i++ {
 		print(".")
@@ -113,7 +113,7 @@ func cmdUp() error {
 		if B2D.Verbose {
 			fmt.Printf("Error requesting socket: %s\n", err)
 		}
-		time.Sleep(300 * time.Millisecond)
+		time.Sleep(600 * time.Millisecond)
 	}
 	fmt.Printf("\nStarted.\n")
 
@@ -128,7 +128,7 @@ func cmdUp() error {
 	}
 	// Copying the certs here - someone might have have written a Windows API client.
 	certPath, err := RequestCertsUsingSSH(m)
-	if err != nil && B2D.Verbose {
+	if err != nil {
 		// These errors are not fatal
 		fmt.Fprintf(os.Stderr, "Error copying Certificates: %s\n", err)
 	}
@@ -172,7 +172,7 @@ func cmdShellInit() error {
 	}
 
 	certPath, err := RequestCertsUsingSSH(m)
-	if err != nil && B2D.Verbose {
+	if err != nil {
 		// These errors are not fatal
 		fmt.Fprintf(os.Stderr, "Error copying Certificates: %s\n", err)
 	}
