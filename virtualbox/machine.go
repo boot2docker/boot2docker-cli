@@ -506,7 +506,7 @@ func CreateMachine(mc *driver.MachineConfig) (*Machine, error) {
 	}
 
 	// Set VM storage
-	if err := m.AddStorageCtl("SATA", driver.StorageController{SysBus: driver.SysBusSATA, HostIOCache: true, Bootable: true}); err != nil {
+	if err := m.AddStorageCtl("SATA", driver.StorageController{SysBus: driver.SysBusSATA, HostIOCache: true, Bootable: true, Ports: 4}); err != nil {
 		return m, err
 	}
 
