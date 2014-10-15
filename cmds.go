@@ -82,17 +82,17 @@ func cmdUp() error {
 
 	fmt.Println("Waiting for VM and Docker daemon to start...")
 	//give the VM a little time to start, so we don't kill the Serial Pipe/Socket
-	time.Sleep(600 * time.Millisecond)
+	time.Sleep(time.Duration(B2D.Waittime) * time.Millisecond)
 	natSSH := fmt.Sprintf("localhost:%d", m.GetSSHPort())
 	IP := ""
-	for i := 1; i < 30; i++ {
+	for i := 1; i < B2D.Retries; i++ {
 		print(".")
 		if B2D.Serial && runtime.GOOS != "windows" {
 			if IP, err = RequestIPFromSerialPort(m.GetSerialFile()); err == nil {
 				break
 			}
 		}
-		if err := read(natSSH, 1, 300*time.Millisecond); err == nil {
+		if err := read(natSSH, 1, time.Duration(B2D.Waittime)*time.Millisecond); err == nil {
 			if IP, err = RequestIPFromSSH(m); err == nil {
 				break
 			}
@@ -103,10 +103,10 @@ func cmdUp() error {
 		fmt.Printf("\nWaiting for Docker daemon to start...\n")
 	}
 
-	time.Sleep(600 * time.Millisecond)
+	time.Sleep(time.Duration(B2D.Waittime) * time.Millisecond)
 	socket := ""
-	for i := 1; i < 30; i++ {
-		print(".")
+	for i := 1; i < B2D.Retries; i++ {
+		print("o")
 		if socket, err = RequestSocketFromSSH(m); err == nil {
 			break
 		}
@@ -119,7 +119,7 @@ func cmdUp() error {
 
 	if socket == "" {
 		// lets try one more time
-		time.Sleep(600 * time.Millisecond)
+		time.Sleep(time.Duration(B2D.Waittime) * time.Millisecond)
 		fmt.Printf("  Trying to get Docker socket one more time\n")
 
 		if socket, err = RequestSocketFromSSH(m); err != nil {

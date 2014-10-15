@@ -118,6 +118,9 @@ func config() (*flag.FlagSet, error) {
 	flags.IPVar(&B2D.LowerIP, "lowerip", net.ParseIP("192.168.59.103"), "VirtualBox host-only network DHCP lower bound.")
 	flags.IPVar(&B2D.UpperIP, "upperip", net.ParseIP("192.168.59.254"), "VirtualBox host-only network DHCP upper bound.")
 
+	flags.IntVar(&B2D.Waittime, "waittime", 300, "Time in milliseconds to wait between port knocking retries during 'start'")
+	flags.IntVar(&B2D.Retries, "retries", 40, "number of port knocking retries during 'start'")
+
 	if runtime.GOOS != "windows" {
 		//SerialFile ~~ filepath.Join(dir, B2D.vm+".sock")
 		flags.StringVar(&B2D.SerialFile, "serialfile", "", "path to the serial socket/pipe.")

@@ -40,6 +40,10 @@ type MachineConfig struct {
 	Serial     bool
 	SerialFile string
 
+	// boot2docker init retry settings
+	Waittime int
+	Retries  int
+
 	DriverCfg map[string]interface{}
 }
 
