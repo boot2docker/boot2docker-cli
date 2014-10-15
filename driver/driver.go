@@ -12,7 +12,7 @@ type MachineState string
 const (
 	// Known ports
 	SSHPort    = 22
-	DockerPort = 2375
+	DockerPort = 2376
 
 	// VM states
 	Poweroff = MachineState("poweroff")
