@@ -26,7 +26,7 @@ type MachineConfig struct {
 
 	// NAT network: port forwarding
 	SSHPort    uint16 // host SSH port (forward to port 22 in VM)
-	DockerPort uint16 // host Docker port (forward to port 2375 in VM)
+	DockerPort uint16 // host Docker port (forward to port 2376 in VM)
 
 	// host-only network
 	HostIP      net.IP
