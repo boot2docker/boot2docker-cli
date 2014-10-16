@@ -2,9 +2,13 @@
 
 set -e
 
+:<<USAGE
+curl -sSL 'https://raw.githubusercontent.com/boot2docker/boot2docker-cli/master/download.sh' | sh
+USAGE
+
 # Set version to latest unless set by user
 if [ -z "$VERSION" ]; then
-  VERSION="1.1.2"
+  VERSION="$(curl -sL 'https://api.github.com/repos/boot2docker/boot2docker-cli/releases?per_page=1' | sed -n "/tag_name/ {s/.*\(v[0-9\.]\{5,\}\).*/\1/p;q;}")"
 fi
 EXTENSION=""
 
@@ -33,7 +37,7 @@ else
 fi
 
 # Download binary
-URL="https://github.com/boot2docker/boot2docker-cli/releases/download/v${VERSION}/boot2docker-v${VERSION}-${PLATFORM}-${ARCH}${EXTENSION}"
+URL="https://github.com/boot2docker/boot2docker-cli/releases/download/${VERSION}/boot2docker-${VERSION}-${PLATFORM}-${ARCH}${EXTENSION}"
 echo "Downloading $URL"
 curl -L -o "boot2docker${EXTENSION}" "$URL"
 
