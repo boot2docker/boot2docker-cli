@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -62,36 +61,6 @@ func cfgFilename(dir string) string {
 	return filename
 }
 
-func defaultIsoPath(dir string) string {
-	var err error
-
-	iso := filepath.Join(dir, "boot2docker.iso")
-
-	exe := os.Args[0]
-	if filepath.Base(exe) == exe {
-		// this logic borrowed from reexec/reexec.go in Docker itself :)
-		if lp, err := exec.LookPath(exe); err == nil {
-			exe = lp
-		}
-	}
-
-	if exe, err = filepath.Abs(exe); err != nil {
-		return iso
-	}
-
-	if exe, err = filepath.EvalSymlinks(exe); err != nil {
-		return iso
-	}
-
-	// if there's a "boot2docker.iso" next to our boot2docker-cli executable, let's prefer that one by default
-	exeIso := filepath.Join(filepath.Dir(exe), "boot2docker.iso")
-	if _, err = os.Stat(exeIso); err == nil {
-		return exeIso
-	}
-
-	return iso
-}
-
 // Write configuration set by the combination of profile and flags
 //    Should result in a format that can be piped into a profile file
 func printConfig() string {
@@ -123,7 +92,7 @@ func config() (*flag.FlagSet, error) {
 	//flags.StringVarP(&B2D.Dir, "dir", "d", dir, "boot2docker config directory.")
 	B2D.Dir = dir
 	flags.StringVar(&B2D.ISOURL, "iso-url", "https://api.github.com/repos/boot2docker/boot2docker/releases", "source URL to provision the boot2docker ISO image.")
-	flags.StringVar(&B2D.ISO, "iso", defaultIsoPath(dir), "path to boot2docker ISO image.")
+	flags.StringVar(&B2D.ISO, "iso", filepath.Join(dir, "boot2docker.iso"), "path to boot2docker ISO image.")
 
 	// Sven disabled this, as it is broken - if I user with a fresh computer downloads
 	// just the boot2docker-cli, and then runs `boot2docker --init ip`, we create a vm
