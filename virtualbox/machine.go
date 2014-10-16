@@ -443,7 +443,7 @@ func CreateMachine(mc *driver.MachineConfig) (*Machine, error) {
 	}
 	for _, m := range machineNames {
 		if m == mc.VM {
-			return nil, ErrMachineExist
+			return nil, driver.ErrMachineExist
 		}
 	}
 

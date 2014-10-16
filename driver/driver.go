@@ -53,6 +53,7 @@ var (
 
 	ErrNotSupported    = errors.New("machine not supported")
 	ErrMachineNotExist = errors.New("machine not exist")
+	ErrMachineExist    = errors.New("machine already exists")
 	ErrPrerequisites   = errors.New("prerequisites for machine not satisfied (hypervisor installed?)")
 )
 
