@@ -65,28 +65,33 @@ func cfgFilename(dir string) string {
 func defaultIsoPath(dir string) string {
 	var err error
 
-	iso := filepath.Join(dir, "boot2docker.iso")
+	isoFilename := "boot2docker.iso"
+	iso := filepath.Join(dir, isoFilename)
 
-	exe := os.Args[0]
-	if filepath.Base(exe) == exe {
-		// this logic borrowed from reexec/reexec.go in Docker itself :)
-		if lp, err := exec.LookPath(exe); err == nil {
-			exe = lp
+	// on OSX, the installer puts the iso here
+	isoDir := filepath.Join("/usr/local/share/boot2docker/", isoFilename)
+
+	if runtime.GOOS == "windows" {
+		isoDir = os.Args[0]
+		if filepath.Base(isoDir) == isoDir {
+			// this logic borrowed from reexec/reexec.go in Docker itself :)
+			if lp, err := exec.LookPath(isoDir); err == nil {
+				isoDir = lp
+			}
 		}
 	}
 
-	if exe, err = filepath.Abs(exe); err != nil {
+	if isoDir, err = filepath.Abs(isoDir); err != nil {
 		return iso
 	}
-
-	if exe, err = filepath.EvalSymlinks(exe); err != nil {
+	if isoDir, err = filepath.EvalSymlinks(isoDir); err != nil {
 		return iso
 	}
 
 	// if there's a "boot2docker.iso" next to our boot2docker-cli executable, let's prefer that one by default
-	exeIso := filepath.Join(filepath.Dir(exe), "boot2docker.iso")
-	if _, err = os.Stat(exeIso); err == nil {
-		return exeIso
+	isoPath := filepath.Join(filepath.Dir(isoDir), isoFilename)
+	if _, err = os.Stat(isoPath); err == nil {
+		return isoPath
 	}
 
 	return iso
