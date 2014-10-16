@@ -25,9 +25,8 @@ var (
 )
 
 var (
-	ErrMachineExist    = errors.New("machine already exists")
-	ErrMachineNotExist = errors.New("machine does not exist")
-	ErrVBMNotFound     = errors.New("VBoxManage not found")
+	ErrMachineExist = errors.New("machine already exists")
+	ErrVBMNotFound  = errors.New("VBoxManage not found")
 )
 
 func vbm(args ...string) error {

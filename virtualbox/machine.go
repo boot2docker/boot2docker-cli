@@ -330,7 +330,7 @@ func GetMachine(id string) (*Machine, error) {
 	stdout, stderr, err := vbmOutErr("showvminfo", id, "--machinereadable")
 	if err != nil {
 		if reMachineNotFound.FindString(stderr) != "" {
-			return nil, ErrMachineNotExist
+			return nil, driver.ErrMachineNotExist
 		}
 		return nil, err
 	}
