@@ -195,11 +195,14 @@ func (m *Machine) Start() error {
 	switch m.State {
 	case driver.Paused:
 		return vbm("controlvm", m.Name, "resume")
-	case driver.Poweroff, driver.Saved, driver.Aborted:
+	case driver.Poweroff, driver.Aborted:
 		if err := m.setUpShares(); err != nil {
 			return err
 		}
+		fallthrough
+	case driver.Saved:
 		return vbm("startvm", m.Name, "--type", "headless")
+
 	}
 	if err := m.Refresh(); err == nil {
 		if m.State != driver.Running {
