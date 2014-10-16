@@ -329,9 +329,13 @@ func cmdInfo() error {
 	if err != nil {
 		return fmt.Errorf("Failed to get machine %q: %s", B2D.VM, err)
 	}
-	if err := json.NewEncoder(os.Stdout).Encode(m); err != nil {
+	b, err := json.MarshalIndent(m, "", "\t")
+	if err != nil {
 		return fmt.Errorf("Failed to encode machine %q info: %s", B2D.VM, err)
 	}
+
+	os.Stdout.Write(b)
+
 	return nil
 }
 

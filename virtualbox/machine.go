@@ -161,6 +161,7 @@ func (f Flag) Get(o Flag) string {
 type Machine struct {
 	Name       string
 	UUID       string
+	Iso        string
 	State      driver.MachineState
 	CPUs       uint
 	Memory     uint // main memory (in MB)
@@ -355,6 +356,8 @@ func GetMachine(id string) (*Machine, error) {
 			m.Name = val
 		case "UUID":
 			m.UUID = val
+		case "SATA-0-0":
+			m.Iso = val
 		case "VMState":
 			m.State = driver.MachineState(val)
 		case "memory":
