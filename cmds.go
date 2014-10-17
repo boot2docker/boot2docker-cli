@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
@@ -195,9 +196,17 @@ func printExport(socket, certPath string) {
 	for name, value := range exports(socket, certPath) {
 		if os.Getenv(name) != value {
 			if value == "" {
-				fmt.Printf("    unset %s\n", name)
+				if filepath.Base(os.Getenv("SHELL")) == "fish" {
+					fmt.Printf("    set -e %s\n", name)
+				} else {
+					fmt.Printf("    unset %s\n", name)
+				}
 			} else {
-				fmt.Printf("    export %s=%s\n", name, value)
+				if filepath.Base(os.Getenv("SHELL")) == "fish" {
+					fmt.Printf("    set x %s\n", name)
+				} else {
+					fmt.Printf("    export %s=%s\n", name, value)
+				}
 			}
 		}
 	}
