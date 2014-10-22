@@ -26,6 +26,13 @@ var (
 	versionRe = regexp.MustCompile(`(\d+\.?){3}`)
 )
 
+const (
+	SSHCommGetIp      = "ip addr show dev eth1"
+	SSHCommGetTcp     = "grep tcp:// /proc/$(cat /var/run/docker.pid)/cmdline"
+	SSHCommTarPems    = "tar c /home/docker/.docker/*.pem"
+	SSHCommDaemonArgs = "xargs -0 <  /proc/$(cat /var/run/docker.pid)/cmdline"
+)
+
 // Try if addr tcp://addr is readable for n times at wait interval.
 func read(addr string, n int, wait time.Duration) error {
 	var lastErr error
@@ -155,10 +162,7 @@ func getLocalClientVersion() (string, error) {
 }
 
 func cmdInteractive(m driver.Machine, args ...string) error {
-	cmd := getSSHCommand(m, args...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd := getSSHCommandWithStd(m, args...)
 	return cmd.Run()
 }
 
@@ -193,7 +197,36 @@ func reader(r io.Reader) {
 	}
 }
 
-func getSSHCommand(m driver.Machine, args ...string) *exec.Cmd {
+type GetSSHCommandFunc func(m driver.Machine, args ...string) Outputer
+
+var sshProvider GetSSHCommandFunc
+
+func init() {
+
+	sshProvider = WrapperGetSSHCommand
+}
+
+func getSSHCommandWithStd(m driver.Machine, args ...string) *exec.Cmd {
+	cmd := DeafaultGetSSHCommand(m, args...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd
+}
+
+type Outputer interface {
+	Output() ([]byte, error)
+}
+
+func getSSHCommand(m driver.Machine, args ...string) Outputer {
+	return sshProvider(m, args...)
+}
+
+func WrapperGetSSHCommand(m driver.Machine, args ...string) Outputer {
+	return DeafaultGetSSHCommand(m, args...)
+}
+
+func DeafaultGetSSHCommand(m driver.Machine, args ...string) *exec.Cmd {
 
 	DefaultSSHArgs := []string{
 		"-o", "IdentitiesOnly=yes",
@@ -216,7 +249,7 @@ func getSSHCommand(m driver.Machine, args ...string) *exec.Cmd {
 }
 
 func RequestIPFromSSH(m driver.Machine) (string, error) {
-	cmd := getSSHCommand(m, "ip addr show dev eth1")
+	cmd := getSSHCommand(m, SSHCommGetIp)
 
 	b, err := cmd.Output()
 	if err != nil {
@@ -239,7 +272,7 @@ func RequestIPFromSSH(m driver.Machine) (string, error) {
 }
 
 func RequestSocketFromSSH(m driver.Machine) (string, error) {
-	cmd := getSSHCommand(m, "grep tcp:// /proc/$(cat /var/run/docker.pid)/cmdline")
+	cmd := getSSHCommand(m, SSHCommGetTcp)
 
 	b, err := cmd.Output()
 	if err != nil {
@@ -330,7 +363,7 @@ func RequestIPFromSerialPort(socket string) (string, error) {
 // certs in the local host's user dir, that the server is using them, so
 // for now, make sure things are updated from the server. (for `docker shellinit`)
 func RequestCertsUsingSSH(m driver.Machine) (string, error) {
-	cmd := getSSHCommand(m, "tar c /home/docker/.docker/*.pem")
+	cmd := getSSHCommand(m, SSHCommTarPems)
 
 	certDir := ""
 
@@ -375,4 +408,33 @@ func RequestCertsUsingSSH(m driver.Machine) (string, error) {
 		}
 	}
 	return certDir, nil
+}
+
+func getDaemonArgumentsUsingSSH(m driver.Machine) ([]string, error) {
+	cmd := getSSHCommand(m, SSHCommDaemonArgs)
+
+	b, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	out := string(b)
+	if B2D.Verbose {
+		fmt.Printf("SSH returned: %s\nEND SSH\n", out)
+	}
+	return strings.Split(out, " "), nil
+}
+
+func RequestTLSUsingSSH(m driver.Machine) (bool, error) {
+	args, err := getDaemonArgumentsUsingSSH(m)
+	if err != nil {
+		return false, err
+	}
+
+	for _, a := range args {
+		if a == "--tlsverify" || a == "--tls" {
+			return true, nil
+		}
+	}
+	return false, nil
 }

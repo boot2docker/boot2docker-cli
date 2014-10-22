@@ -171,10 +171,18 @@ func cmdShellInit() error {
 		return fmt.Errorf("Error requesting socket: %s\n", err)
 	}
 
-	certPath, err := RequestCertsUsingSSH(m)
+	tlsVerify, err := RequestTLSUsingSSH(m)
 	if err != nil {
-		// These errors are not fatal
-		fmt.Fprintf(os.Stderr, "Warning: error copying certificates: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Warning: error getting tlsVerify: %s\n", err)
+	}
+
+	certPath := ""
+	if tlsVerify {
+		certPath, err = RequestCertsUsingSSH(m)
+		if err != nil {
+			// These errors are not fatal
+			fmt.Fprintf(os.Stderr, "Warning: error copying certificates: %s\n", err)
+		}
 	}
 
 	// Check if $DOCKER_* ENV vars are properly configured.
