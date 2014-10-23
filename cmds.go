@@ -197,13 +197,13 @@ func printExport(socket, certPath string) {
 	for name, value := range exports(socket, certPath) {
 		switch shell {
 		case "fish":
-			if value = "" {
+			if value == "" {
 				fmt.Printf("    set -e %s\n", name)
 			} else {
 				fmt.Printf("    set -x %s\n", name)
 			}
 		default: // default command to export variables POSIX shells, like bash, zsh, etc.
-			if value = "" {
+			if value == "" {
 	 			fmt.Printf("    unset %s\n", name)
  			} else {
 	 			fmt.Printf("    export %s=%s\n", name, value)
