@@ -349,29 +349,6 @@ func cmdStatus() error {
 	return nil
 }
 
-// tell the User the Docker socket to connect to
-func cmdSocket() error {
-	m, err := driver.GetMachine(&B2D)
-	if err != nil {
-		return fmt.Errorf("Failed to get machine %q: %s", B2D.VM, err)
-	}
-
-	if m.GetState() != driver.Running {
-		return fmt.Errorf("VM %q is not running.", B2D.VM)
-	}
-
-	socket, err := RequestSocketFromSSH(m)
-	if err != nil {
-		return fmt.Errorf("Error requesting socket: %s\n", err)
-	}
-
-	fmt.Fprintf(os.Stderr, "\n\t export DOCKER_HOST=")
-	fmt.Printf("%s", socket)
-	fmt.Fprintf(os.Stderr, "\n\n")
-
-	return nil
-}
-
 // Call the external SSH command to login into boot2docker VM.
 func cmdSSH() error {
 	m, err := driver.GetMachine(&B2D)

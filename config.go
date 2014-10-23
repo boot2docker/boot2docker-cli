@@ -171,7 +171,7 @@ func config() (*flag.FlagSet, error) {
 }
 
 func usageShort() {
-	fmt.Fprintf(os.Stderr, "Usage: %s [<options>] {help|init|up|ssh|save|down|poweroff|reset|restart|config|status|info|ip|socket|shellinit|delete|download|upgrade|version} [<args>]\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "Usage: %s [<options>] {help|init|up|ssh|save|down|poweroff|reset|restart|config|status|info|ip|shellinit|delete|download|upgrade|version} [<args>]\n", os.Args[0])
 }
 
 func usageLong(flags *flag.FlagSet) {
@@ -193,8 +193,7 @@ Commands:
    config|cfg          Show selected profile file settings.
    info                Display detailed information of VM.
    ip                  Display the IP address of the VM's Host-only network.
-   socket              Display the DOCKER_HOST socket to connect to.
-   shellinit           Display the shell command to set up the Docker client.
+   shellinit           Display the shell commands to set up the Docker client.
    status              Display current state of VM.
    download            Download Boot2Docker ISO image.
    upgrade             Upgrade the Boot2Docker ISO image (restart if running).
