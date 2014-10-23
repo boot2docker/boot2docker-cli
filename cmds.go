@@ -193,9 +193,8 @@ func checkEnvironment(socket, certPath string) bool {
 }
 
 func printExport(socket, certPath string) {
-	shell = filepath.Base(os.Getenv("SHELL"))
 	for name, value := range exports(socket, certPath) {
-		switch shell {
+		switch filepath.Base(os.Getenv("SHELL")) {
 		case "fish":
 			if value == "" {
 				fmt.Printf("    set -e %s\n", name)
