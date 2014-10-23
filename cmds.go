@@ -199,7 +199,7 @@ func printExport(socket, certPath string) {
 			if value == "" {
 				fmt.Printf("    set -e %s\n", name)
 			} else {
-				fmt.Printf("    set -x %s\n", name)
+				fmt.Printf("    set -x %s %s\n", name, value)
 			}
 		default: // default command to export variables POSIX shells, like bash, zsh, etc.
 			if value == "" {
