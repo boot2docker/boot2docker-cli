@@ -334,7 +334,7 @@ func GetMachine(id string) (*Machine, error) {
 	stdout, stderr, err := vbmOutErr("showvminfo", id, "--machinereadable")
 	if err != nil {
 		if reMachineNotFound.FindString(stderr) != "" {
-			return nil, ErrMachineNotExist
+			return nil, driver.ErrMachineNotExist
 		}
 		return nil, err
 	}
@@ -449,7 +449,7 @@ func CreateMachine(mc *driver.MachineConfig) (*Machine, error) {
 	}
 	for _, m := range machineNames {
 		if m == mc.VM {
-			return nil, ErrMachineExist
+			return nil, driver.ErrMachineExist
 		}
 	}
 
