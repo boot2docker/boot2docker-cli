@@ -199,14 +199,14 @@ func printExport(socket, certPath string) {
 			switch shell {
 			case "fish":
 				fmt.Printf("    set -e %s\n", name)
-			case "bash": // default command to export variables POSIX shells, like bash, zsh, etc.
+			default: // default command to export variables POSIX shells, like bash, zsh, etc.
 	 			fmt.Printf("    unset %s\n", name)
 			}
 		} else { // setting vars
 			switch shell {
 			case "fish":
 				fmt.Printf("    set -x %s\n", name)
-			case "bash": // default command to export variables POSIX shells, like bash, zsh, etc.
+			default: // default command to export variables POSIX shells, like bash, zsh, etc.
 	 			fmt.Printf("    export %s=%s\n", name, value)
 			}
 		}
