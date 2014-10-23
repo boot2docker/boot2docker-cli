@@ -203,10 +203,10 @@ func printExport(socket, certPath string) {
 			}
 		default: // default command to export variables POSIX shells, like bash, zsh, etc.
 			if value == "" {
-	 			fmt.Printf("    unset %s\n", name)
- 			} else {
-	 			fmt.Printf("    export %s=%s\n", name, value)
- 			}
+				fmt.Printf("    unset %s\n", name)
+			} else {
+				fmt.Printf("    export %s=%s\n", name, value)
+			}
 		}
 	}
 }
