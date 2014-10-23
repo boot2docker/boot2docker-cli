@@ -65,9 +65,7 @@ func run() error {
 		return cmdDelete()
 	case "info":
 		return cmdInfo()
-	case "socket":
-		return cmdSocket()
-	case "shellinit":
+	case "shellinit", "socket":
 		return cmdShellInit()
 	case "status":
 		return cmdStatus()
