@@ -202,7 +202,6 @@ func (m *Machine) Start() error {
 		fallthrough
 	case driver.Saved:
 		return vbm("startvm", m.Name, "--type", "headless")
-
 	}
 	if err := m.Refresh(); err == nil {
 		if m.State != driver.Running {
