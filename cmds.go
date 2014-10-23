@@ -193,20 +193,21 @@ func checkEnvironment(socket, certPath string) bool {
 }
 
 func printExport(socket, certPath string) {
+	shell = filepath.Base(os.Getenv("SHELL"))
 	for name, value := range exports(socket, certPath) {
-		if os.Getenv(name) != value {
-			if value == "" {
-				if filepath.Base(os.Getenv("SHELL")) == "fish" {
-					fmt.Printf("    set -e %s\n", name)
-				} else {
-					fmt.Printf("    unset %s\n", name)
-				}
-			} else {
-				if filepath.Base(os.Getenv("SHELL")) == "fish" {
-					fmt.Printf("    set x %s\n", name)
-				} else {
-					fmt.Printf("    export %s=%s\n", name, value)
-				}
+		if value = "" { // unsetting vars
+			switch shell {
+			case "fish":
+				fmt.Printf("    set -e %s\n", name)
+			case "bash": // default command to export variables POSIX shells, like bash, zsh, etc.
+	 			fmt.Printf("    unset %s\n", name)
+			}
+		} else { // setting vars
+			switch shell {
+			case "fish":
+				fmt.Printf("    set -x %s\n", name)
+			case "bash": // default command to export variables POSIX shells, like bash, zsh, etc.
+	 			fmt.Printf("    export %s=%s\n", name, value)
 			}
 		}
 	}
