@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
@@ -193,12 +194,19 @@ func checkEnvironment(socket, certPath string) bool {
 
 func printExport(socket, certPath string) {
 	for name, value := range exports(socket, certPath) {
-		if os.Getenv(name) != value {
+		switch filepath.Base(os.Getenv("SHELL")) {
+		case "fish":
 			if value == "" {
-				fmt.Printf("    unset %s\n", name)
+				fmt.Printf("    set -e %s\n", name)
 			} else {
-				fmt.Printf("    export %s=%s\n", name, value)
+				fmt.Printf("    set -x %s %s\n", name, value)
 			}
+		default: // default command to export variables POSIX shells, like bash, zsh, etc.
+			if value == "" {
+	 			fmt.Printf("    unset %s\n", name)
+ 			} else {
+	 			fmt.Printf("    export %s=%s\n", name, value)
+ 			}
 		}
 	}
 }
