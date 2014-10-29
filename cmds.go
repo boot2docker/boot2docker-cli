@@ -61,6 +61,10 @@ func cmdInit() error {
 	if err != nil {
 		return fmt.Errorf("Failed to initialize machine %q: %s", B2D.VM, err)
 	}
+	err = runScript("boot-init.sh")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
 	return nil
 }
 
@@ -133,6 +137,11 @@ func cmdUp() error {
 		// These errors are not fatal
 		fmt.Fprintf(os.Stderr, "Warning: error copying certificates: %s\n", err)
 	}
+	err = runScript("boot-up.sh")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
+
 	switch runtime.GOOS {
 	case "windows":
 		fmt.Printf("Docker client does not run on Windows for now. Please use\n")
@@ -443,4 +452,40 @@ func cmdDownload() error {
 	}
 	fmt.Printf("Success: downloaded %s\n\tto %s\n", url, B2D.ISO)
 	return nil
+}
+
+func runScript(name string) error {
+	dir, err := cfgDir(".boot2docker")
+	if err != nil {
+		return fmt.Errorf("Failed to run %s: %s\n", name, err)
+	}
+	fname := filepath.Join(dir, name)
+	println(fname)
+	if _, err := os.Stat(fname); err != nil {
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("Failed to run %s: %s\n", name, err)
+		}
+		return nil
+	}
+
+	m, err := driver.GetMachine(&B2D)
+	if err != nil {
+		return fmt.Errorf("Failed to get machine %q: %s", B2D.VM, err)
+	}
+
+	if m.GetState() != driver.Running {
+		return fmt.Errorf("VM %q is not running.", B2D.VM)
+	}
+
+	f, err := os.Open(fname)
+	if err != nil {
+		return fmt.Errorf("Failed to run %s: %s\n", name, err)
+	}
+	defer f.Close()
+
+	cmd := getSSHCommand(m)
+	cmd.Stdin = f
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
