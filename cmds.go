@@ -61,10 +61,6 @@ func cmdInit() error {
 	if err != nil {
 		return fmt.Errorf("Failed to initialize machine %q: %s", B2D.VM, err)
 	}
-	err = runScript("boot-init.sh")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-	}
 	return nil
 }
 
