@@ -456,7 +456,6 @@ func runScript(name string) error {
 		return fmt.Errorf("Failed to run %s: %s\n", name, err)
 	}
 	fname := filepath.Join(dir, name)
-	println(fname)
 	if _, err := os.Stat(fname); err != nil {
 		if !os.IsNotExist(err) {
 			return fmt.Errorf("Failed to run %s: %s\n", name, err)
