@@ -96,11 +96,11 @@ func download(dest, url string) error {
 	return nil
 }
 
-// Get latest release tag name (e.g. "v0.6.0") from a repo on GitHub.
-func getLatestReleaseName(url string) (string, error) {
+// Get all release tag names (e.g. "v0.6.0") from a repo on GitHub.
+func getAllReleaseNames(url string) ([]string, error) {
 	rsp, err := http.Get(url)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer rsp.Body.Close()
 
@@ -109,7 +109,7 @@ func getLatestReleaseName(url string) (string, error) {
 	}
 	body, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if err := json.Unmarshal(body, &t); err != nil {
@@ -118,14 +118,18 @@ func getLatestReleaseName(url string) (string, error) {
 			DocumentationUrl string
 		}
 		if err := json.Unmarshal(body, &e); err != nil {
-			return "", fmt.Errorf("Error decoding %s\nbody: %s", err, body)
+			return nil, fmt.Errorf("Error decoding %s\nbody: %s", err, body)
 		}
-		return "", fmt.Errorf("Error getting releases: %s\n see %s", e.Message, e.DocumentationUrl)
+		return nil, fmt.Errorf("Error getting releases: %s\n see %s", e.Message, e.DocumentationUrl)
 	}
 	if len(t) == 0 {
-		return "", fmt.Errorf("no releases found")
+		return nil, fmt.Errorf("no releases found")
 	}
-	return t[0].TagName, nil
+	var names []string
+	for _, v := range t {
+		names = append(names, v.TagName)
+	}
+	return names, nil
 }
 
 func cmdInteractive(m driver.Machine, args ...string) error {

@@ -421,23 +421,44 @@ func cmdIP() error {
 	return nil
 }
 
-// Download the boot2docker ISO image.
+// requestedVersion matches a requested version (e.g. "1.3.0") with a release tag (e.g. "v1.3.0") and returns it or "".
+func requestedVersion(n string, tags []string) string {
+	vn := "v" + n
+	for _, t := range tags {
+		if n == t || vn == t {
+			return t
+		}
+	}
+	return ""
+}
+
+// Download the latest (or specified) boot2docker ISO image.
 func cmdDownload() error {
 	url := B2D.ISOURL
+	ver := ""
 
 	re := regexp.MustCompile("https://api.github.com/repos/([^/]+)/([^/]+)/releases")
 	if matches := re.FindStringSubmatch(url); len(matches) == 3 {
-		tag, err := getLatestReleaseName(url)
+		tags, err := getAllReleaseNames(url)
 		if err != nil {
 			return fmt.Errorf("Failed to get latest release: %s", err)
 		}
 		org := matches[1]
 		repo := matches[2]
-		fmt.Printf("Latest release for %s/%s is %s\n", org, repo, tag)
-		url = fmt.Sprintf("https://github.com/%s/%s/releases/download/%s/boot2docker.iso", org, repo, tag)
+		ver = tags[0]
+		fmt.Printf("Latest release for %s/%s is %s\n", org, repo, ver)
+		if len(os.Args) > 2 { // Check if user requested a specific version
+			req := requestedVersion(os.Args[2], tags)
+			if req == "" {
+				fmt.Printf("Requested version (%q) not found. Downloading latest instead.\n", os.Args[2])
+			} else {
+				ver = req
+			}
+		}
+		url = fmt.Sprintf("https://github.com/%s/%s/releases/download/%s/boot2docker.iso", org, repo, ver)
 	}
 
-	fmt.Println("Downloading boot2docker ISO image...")
+	fmt.Printf("Downloading boot2docker ISO image %v...\n", ver)
 	if err := download(B2D.ISO, url); err != nil {
 		return fmt.Errorf("Failed to download ISO image: %s", err)
 	}
