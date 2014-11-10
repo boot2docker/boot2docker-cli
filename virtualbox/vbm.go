@@ -9,12 +9,18 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 
 	"github.com/boot2docker/boot2docker-cli/driver"
 )
 
 func init() {
+	if runtime.GOOS == "darwin" {
+		// remove DYLD_LIBRARY_PATH and LD_LIBRARY_PATH as they break VBoxManage on OSX
+		os.Setenv("DYLD_LIBRARY_PATH", "")
+		os.Setenv("LD_LIBRARY_PATH", "")
+	}
 }
 
 var (
