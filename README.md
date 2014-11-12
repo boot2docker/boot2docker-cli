@@ -123,7 +123,7 @@ The `boot2docker` binary reads configuration from `$BOOT2DOCKER_PROFILE` if set,
 `%USERPROFILE%/.boot2docker/profile`.  `boot2docker config` will
 tell you where it is looking for the file, and will also output the settings that 
 are in use, so you can initialise a default file to customize using 
-`boot2docker config > /home/sven/.boot2docker/profile`.
+`boot2docker config > ~/.boot2docker/profile`.
 
 Currently you can configure the following options (undefined options take 
 default values):
@@ -137,7 +137,7 @@ VBM = "VBoxManage"
 # path to SSH client utility
 SSH = "ssh"
 SSHGen = "ssh-keygen"
-SSHKey = "/Users/sven/.ssh/id_boot2docker"
+SSHKey = "~/.ssh/id_boot2docker"
 
 # name of boot2docker virtual machine
 VM = "boot2docker-vm"
@@ -150,7 +150,7 @@ ISOURL = "https://api.github.com/repos/boot2docker/boot2docker/releases"
 #ISOURL = "https://internal.corp.org/b2d.iso"
 
 # path to boot2docker ISO image
-ISO = "/Users/sven/.boot2docker/boot2docker.iso"
+ISO = "~/.boot2docker/boot2docker.iso"
 
 # VM disk image size in MB
 DiskSize = 20000
