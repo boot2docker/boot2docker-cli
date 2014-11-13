@@ -137,7 +137,7 @@ VBM = "VBoxManage"
 # path to SSH client utility
 SSH = "ssh"
 SSHGen = "ssh-keygen"
-SSHKey = "~/.ssh/id_boot2docker"
+SSHKey = "/Users/sven/.ssh/id_boot2docker"
 
 # name of boot2docker virtual machine
 VM = "boot2docker-vm"
@@ -150,7 +150,7 @@ ISOURL = "https://api.github.com/repos/boot2docker/boot2docker/releases"
 #ISOURL = "https://internal.corp.org/b2d.iso"
 
 # path to boot2docker ISO image
-ISO = "~/.boot2docker/boot2docker.iso"
+ISO = "/Users/sven/.boot2docker/boot2docker.iso"
 
 # VM disk image size in MB
 DiskSize = 20000
