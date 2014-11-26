@@ -13,6 +13,7 @@ import (
 
 	_ "github.com/boot2docker/boot2docker-cli/dummy"
 	_ "github.com/boot2docker/boot2docker-cli/virtualbox"
+	_ "github.com/boot2docker/boot2docker-cli/vsphere"
 
 	"github.com/boot2docker/boot2docker-cli/driver"
 )
@@ -84,7 +85,7 @@ func cmdUp() error {
 	fmt.Println("Waiting for VM and Docker daemon to start...")
 	//give the VM a little time to start, so we don't kill the Serial Pipe/Socket
 	time.Sleep(time.Duration(B2D.Waittime) * time.Millisecond)
-	natSSH := fmt.Sprintf("localhost:%d", m.GetSSHPort())
+	natSSH := fmt.Sprintf("%s:%d", m.GetAddr(), m.GetSSHPort())
 	IP := ""
 	for i := 1; i < B2D.Retries; i++ {
 		print(".")

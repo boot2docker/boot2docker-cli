@@ -45,6 +45,7 @@ type Machine interface {
 	GetSerialFile() string
 	GetDockerPort() uint
 	GetSSHPort() uint
+	GetAddr() string
 }
 
 var (

@@ -122,6 +122,11 @@ func (m *Machine) GetName() string {
 	return m.Name
 }
 
+// Get machine address
+func (m *Machine) GetAddr() string {
+	return "localhost"
+}
+
 // Get current state
 func (m *Machine) GetState() driver.MachineState {
 	return m.State
