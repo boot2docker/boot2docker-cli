@@ -411,9 +411,7 @@ func cmdIP() error {
 		}
 	}
 	if IP != "" {
-		fmt.Fprintf(os.Stderr, "\nThe VM's Host only interface IP address is: ")
-		fmt.Printf("%s", IP)
-		fmt.Fprintf(os.Stderr, "\n\n")
+		fmt.Println(IP)
 	} else {
 		fmt.Fprintf(os.Stderr, "\nFailed to get VM Host only IP address.\n")
 		fmt.Fprintf(os.Stderr, "\tWas the VM initialized using boot2docker?\n")
