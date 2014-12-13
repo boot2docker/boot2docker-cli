@@ -2,10 +2,12 @@
 
 FROM golang:1.3-cross
 
-ADD . /go/src/github.com/boot2docker/boot2docker-cli
 WORKDIR /go/src/github.com/boot2docker/boot2docker-cli
 
 # Download (but not install) dependencies
-RUN go get -d -v ./...
+RUN go get github.com/BurntSushi/toml
+RUN go get github.com/ogier/pflag 
+
+ADD . /go/src/github.com/boot2docker/boot2docker-cli
 
 CMD ["make", "all"]
