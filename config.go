@@ -93,12 +93,11 @@ func config() (*flag.FlagSet, error) {
 	B2D.Dir = dir
 	flags.StringVar(&B2D.ISOURL, "iso-url", "https://api.github.com/repos/boot2docker/boot2docker/releases", "source URL to provision the boot2docker ISO image.")
 	flags.StringVar(&B2D.ISO, "iso", filepath.Join(dir, "boot2docker.iso"), "path to boot2docker ISO image.")
-	if runtime.GOOS == "darwin" {
-		// clobber by default
-		flags.BoolVar(&B2D.Clobber, "clobber", true, "overwrite Docker client binary on boot2docker upgrade")
-	} else {
-		flags.BoolVar(&B2D.Clobber, "clobber", false, "overwrite Docker client binary on boot2docker upgrade")
-	}
+
+	// clobber (overwrite client binary) by default on OSX. it's more likely that
+	// users have installed through package manager on Linux, and if so, they should
+	// upgrade that way.
+	flags.BoolVar(&B2D.Clobber, "clobber", (runtime.GOOS == "darwin"), "overwrite Docker client binary on boot2docker upgrade")
 
 	flags.BoolVar(&B2D.ForceUpgradeDownload, "force-upgrade-download", false, "always download on boot2docker upgrade, never skip")
 
