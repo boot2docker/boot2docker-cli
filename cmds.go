@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,10 +13,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/boot2docker/boot2docker-cli/driver"
 	_ "github.com/boot2docker/boot2docker-cli/dummy"
 	_ "github.com/boot2docker/boot2docker-cli/virtualbox"
-
-	"github.com/boot2docker/boot2docker-cli/driver"
 )
 
 // Initialize the boot2docker VM from scratch.
@@ -277,6 +278,19 @@ func cmdPoweroff() error {
 
 // Upgrade the boot2docker ISO - preserving server state
 func cmdUpgrade() error {
+	if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
+		if B2D.Clobber {
+			err := upgradeDockerClientBinary()
+			if err != nil {
+				return err
+			}
+		} else {
+			fmt.Println("Skipping client binary download, use --clobber=true to enable...")
+		}
+	}
+	if err := upgradeBoot2DockerBinary(); err != nil {
+		return fmt.Errorf("Error upgrading boot2docker binary: %s", err)
+	}
 	m, err := driver.GetMachine(&B2D)
 	if err == nil {
 		if m.GetState() == driver.Running || m.GetState() == driver.Saved || m.GetState() == driver.Paused {
@@ -290,6 +304,133 @@ func cmdUpgrade() error {
 		}
 	}
 	return cmdDownload()
+}
+
+func upgradeBoot2DockerBinary() error {
+	var (
+		goos, arch, ext string
+	)
+	latestVersion, err := getLatestReleaseName("https://api.github.com/repos/boot2docker/boot2docker-cli/releases")
+	if err != nil {
+		return fmt.Errorf("Error attempting to get the latest boot2docker-cli release: %s", err)
+	}
+	baseUrl := "https://github.com/boot2docker/boot2docker-cli/releases/download"
+
+	ext = ""
+
+	switch runtime.GOARCH {
+	case "amd64":
+		arch = "amd64"
+	default:
+		return fmt.Errorf("Architecture not supported")
+	}
+
+	switch runtime.GOOS {
+	case "darwin", "linux":
+		goos = runtime.GOOS
+	case "windows":
+		goos = "windows"
+		arch = "amd64"
+		ext = ".exe"
+	default:
+		return fmt.Errorf("Operating system not supported")
+	}
+	binaryUrl := fmt.Sprintf("%s/%s/boot2docker-%s-%s-%s%s", baseUrl, latestVersion, latestVersion, goos, arch, ext)
+	currentBoot2DockerVersion := Version
+	if err := attemptUpgrade(binaryUrl, "boot2docker", latestVersion, currentBoot2DockerVersion); err != nil {
+		return fmt.Errorf("Error attempting upgrade: %s", err)
+	}
+	return nil
+}
+
+func upgradeDockerClientBinary() error {
+	var (
+		clientOs, clientArch string
+	)
+	resp, err := http.Get("https://get.docker.com/latest")
+	if err != nil {
+		return fmt.Errorf("Error checking the latest version of Docker: %s", err)
+	}
+	defer resp.Body.Close()
+	latestVersionBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("Error reading response body on latest version of Docker call: %s", err)
+	}
+	latestVersion := strings.TrimSpace(string(latestVersionBytes))
+	localClientVersion, err := getLocalClientVersion()
+	if err != nil {
+		return fmt.Errorf("Error getting local Docker client version: %s", err)
+	}
+	switch runtime.GOARCH {
+	case "amd64":
+		clientArch = "x86_64"
+	default:
+		return fmt.Errorf("Architecture not supported")
+	}
+
+	switch runtime.GOOS {
+	case "darwin":
+		clientOs = "Darwin"
+	case "linux":
+		clientOs = "Linux"
+	default:
+		return fmt.Errorf("Operating system not supported")
+	}
+	binaryUrl := fmt.Sprintf("https://get.docker.com/builds/%s/%s/docker-latest", clientOs, clientArch)
+	if err := attemptUpgrade(binaryUrl, "docker", latestVersion, localClientVersion); err != nil {
+		return fmt.Errorf("Error attempting upgrade: %s", err)
+	}
+	return nil
+}
+
+func attemptUpgrade(binaryUrl, binaryName, latestVersion, localVersion string) error {
+	if (latestVersion != localVersion && !strings.Contains(latestVersion, "rc")) || B2D.ForceUpgradeDownload {
+		if err := backupAndDownload(binaryUrl, binaryName, localVersion); err != nil {
+			return fmt.Errorf("Error attempting backup and download of Docker client binary: %s", err)
+		}
+	} else {
+		fmt.Printf("%s is up to date (%s), skipping upgrade...\n", binaryName, localVersion)
+	}
+	return nil
+}
+
+func backupAndDownload(binaryUrl, binaryName, localVersion string) error {
+	binaryPath, err := exec.LookPath(binaryName)
+	if err != nil {
+		return fmt.Errorf("Error attempting to locate local binary: %s", err)
+	}
+	path := strings.TrimSpace(string(binaryPath))
+
+	fmt.Println("Backing up existing", binaryName, "binary...")
+	if err := backupBinary(binaryName, localVersion, path); err != nil {
+		return fmt.Errorf("Error backing up docker client: %s", err)
+	}
+
+	fmt.Println("Downloading new", binaryName, "client binary...")
+	if err := download(path, binaryUrl); err != nil {
+		return fmt.Errorf("Error attempting to download new client binary: %s", err)
+	}
+	if err := os.Chmod(path, 0755); err != nil {
+		return err
+	}
+	fmt.Printf("Success: downloaded %s\n\tto %s\n\tThe old version is backed up to ~/.boot2docker.\n", binaryUrl, path)
+	return nil
+}
+
+func backupBinary(binaryName, localVersion, path string) error {
+	dir, err := cfgDir(".boot2docker")
+	if err != nil {
+		return fmt.Errorf("Error getting boot2docker config dir: %s", err)
+	}
+	buf, err := ioutil.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("Error opening binary for reading at %s: %s", path, err)
+	}
+	backupName := fmt.Sprintf("%s-%s", binaryName, localVersion)
+	if err := ioutil.WriteFile(filepath.Join(dir, backupName), buf, 0755); err != nil {
+		return fmt.Errorf("Error creating backup file: %s", err)
+	}
+	return nil
 }
 
 // Gracefully stop and then start the VM.

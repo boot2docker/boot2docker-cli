@@ -187,6 +187,40 @@ You can override the configurations using matching command-line flags. Type
 `boot2docker -h` for more information. The configuration file options are
 the same as the command-line flags with long names.
 
+## Upgrade
+
+You can use boot2docker-cli to upgrade:
+
+1. The ISO you are using in the VM (and consequently the Docker daemon version)
+2. The Docker client binary on your host system
+3. The boot2docker-cli binary itself
+
+To do so, run the `boot2docker upgrade` command.
+
+```console
+$ boot2docker upgrade
+Backing up existing docker binary...
+Downloading new docker client binary...
+Success: downloaded https://get.docker.com/builds/Darwin/x86_64/docker-latest
+        to /usr/local/bin/docker
+        The old version is backed up to ~/.boot2docker.
+Backing up existing boot2docker binary...
+Downloading new boot2docker client binary...
+Success: downloaded https://github.com/boot2docker/boot2docker-cli/releases/download/v1.4.0/boot2docker-v1.4.0-darwin-amd64
+        to /usr/local/bin/boot2docker
+        The old version is backed up to ~/.boot2docker.
+Latest release for boot2docker/boot2docker is v1.4.0
+Downloading boot2docker ISO image...
+Success: downloaded https://github.com/boot2docker/boot2docker/releases/download/v1.4.0/boot2docker.iso
+        to /Users/youruser/.boot2docker/boot2docker.iso
+Waiting for VM and Docker daemon to start...
+.................ooo
+Started.
+```
+
+This will back up your current `docker` and `boot2docker` binaries to 
+`~/.boot2docker` and download the latest ISO, `docker` binary and `boot2docker`
+binary in place of the old versions.
 
 
 ## Contribution

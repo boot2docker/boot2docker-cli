@@ -21,6 +21,11 @@ import (
 	"github.com/boot2docker/boot2docker-cli/driver"
 )
 
+var (
+	// We're looking to get e.g. "1.2.0" from "Docker version 1.2.0, build fa7b24f"
+	versionRe = regexp.MustCompile(`(\d+\.?){3}`)
+)
+
 // Try if addr tcp://addr is readable for n times at wait interval.
 func read(addr string, n int, wait time.Duration) error {
 	var lastErr error
@@ -105,6 +110,7 @@ func getLatestReleaseName(url string) (string, error) {
 	defer rsp.Body.Close()
 
 	var t []struct {
+		Name    string `json:"name"`
 		TagName string `json:"tag_name"`
 	}
 	body, err := ioutil.ReadAll(rsp.Body)
@@ -125,7 +131,27 @@ func getLatestReleaseName(url string) (string, error) {
 	if len(t) == 0 {
 		return "", fmt.Errorf("no releases found")
 	}
-	return t[0].TagName, nil
+
+	// Looking up by tag instead of release.
+	// Github API call for docker releases yields nothing,
+	// so we use tags API call in this case.
+	name := ""
+	if strings.Contains(url, "tags") {
+		name = t[0].Name
+	} else {
+		name = t[0].TagName
+	}
+	return name, nil
+}
+
+func getLocalClientVersion() (string, error) {
+	versionOutput, err := exec.Command("docker", "-v").Output()
+	if err != nil {
+		return "", err
+	}
+	versionNumber := versionRe.FindString(string(versionOutput))
+
+	return versionNumber, nil
 }
 
 func cmdInteractive(m driver.Machine, args ...string) error {
