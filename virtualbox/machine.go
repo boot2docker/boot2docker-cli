@@ -636,10 +636,12 @@ func (m *Machine) Modify() error {
 		"--bioslogodisplaytime", "0",
 		"--biosbootmenu", "disabled",
 
-		// VirtualBox's DNS Host Resolver doesn't support SRV records
+		// the DNS Host Resolver doesn't support SRV records
+		// the DNS proxy has performance issues
 		// direct DNS pass-through doesn't support roaming laptops well
-		// so we explicitly enable the DNS proxy
-		"--natdnsproxy1", "on",
+		// we can't win, so let's go direct and at least get performance
+		"--natdnshostresolver1", "off",
+		"--natdnsproxy1", "off",
 
 		"--ostype", m.OSType,
 		"--cpus", fmt.Sprintf("%d", m.CPUs),
