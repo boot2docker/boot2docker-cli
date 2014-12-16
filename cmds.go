@@ -3,9 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,10 +13,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/boot2docker/boot2docker-cli/driver"
 	_ "github.com/boot2docker/boot2docker-cli/dummy"
 	_ "github.com/boot2docker/boot2docker-cli/virtualbox"
-
-	"github.com/boot2docker/boot2docker-cli/driver"
 )
 
 // Initialize the boot2docker VM from scratch.
@@ -332,7 +330,7 @@ func upgradeBoot2DockerBinary() error {
 		goos = runtime.GOOS
 	case "windows":
 		goos = "windows"
-		arch = "windows"
+		arch = "amd64"
 		ext = ".exe"
 	default:
 		return fmt.Errorf("Operating system not supported")

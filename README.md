@@ -197,7 +197,7 @@ You can use boot2docker-cli to upgrade:
 
 To do so, run the `boot2docker upgrade` command.
 
-```
+```console
 $ boot2docker upgrade
 Backing up existing docker binary...
 Downloading new docker client binary...
