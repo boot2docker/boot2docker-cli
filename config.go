@@ -195,7 +195,7 @@ Commands:
    ip                  Display the IP address of the VM's Host-only network.
    shellinit           Display the shell commands to set up the Docker client.
    status              Display current state of VM.
-   download            Download Boot2Docker ISO image.
+   download [version]  Download latest (or specific) Boot2Docker ISO image.
    upgrade             Upgrade the Boot2Docker ISO image (restart if running).
    version             Display version information.
 
