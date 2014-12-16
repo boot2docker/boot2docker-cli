@@ -420,7 +420,7 @@ func backupAndDownload(binaryUrl, binaryName, localVersion string) error {
 func backupBinary(binaryName, localVersion, path string) error {
 	dir, err := cfgDir(".boot2docker")
 	if err != nil {
-		return fmt.Errorf("Error getting boot2docker config dir", err)
+		return fmt.Errorf("Error getting boot2docker config dir: %s", err)
 	}
 	buf, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -428,7 +428,7 @@ func backupBinary(binaryName, localVersion, path string) error {
 	}
 	backupName := fmt.Sprintf("%s-%s", binaryName, localVersion)
 	if err := ioutil.WriteFile(filepath.Join(dir, backupName), buf, 0755); err != nil {
-		return fmt.Errorf("Error creating backup file", err)
+		return fmt.Errorf("Error creating backup file: %s", err)
 	}
 	return nil
 }
