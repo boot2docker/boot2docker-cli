@@ -5,33 +5,62 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
 )
 
 var (
-	ErrMachineExist    = errors.New("machine already exists")
-	ErrMachineNotExist = errors.New("machine does not exist")
-	ErrVMRUNNotFound   = errors.New("VMRUN not found")
+	ErrVMRUNNotFound = errors.New("VMRUN not found")
 )
 
-func vmrun(args ...string) (string, string, error) {
+func vmrun(args ...string) error {
+	cmd := exec.Command(cfg.VMRUN, args...)
+	if verbose {
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		log.Printf("executing: %v %v", cfg.VMRUN, strings.Join(args, " "))
+	}
+	if err := cmd.Run(); err != nil {
+		if ee, ok := err.(*exec.Error); ok && ee == exec.ErrNotFound {
+			return ErrVMRUNNotFound
+		}
+		return err
+	}
+	return nil
+}
+
+func vmrunOut(args ...string) (string, error) {
+	cmd := exec.Command(cfg.VMRUN, args...)
+	if verbose {
+		cmd.Stderr = os.Stderr
+		log.Printf("executing: %v %v", cfg.VMRUN, strings.Join(args, " "))
+	}
+
+	b, err := cmd.Output()
+	if err != nil {
+		if ee, ok := err.(*exec.Error); ok && ee == exec.ErrNotFound {
+			err = ErrVMRUNNotFound
+		}
+	}
+	return string(b), err
+}
+
+func vmrunOutErr(args ...string) (string, string, error) {
 	cmd := exec.Command(cfg.VMRUN, args...)
 	if verbose {
 		log.Printf("executing: %v %v", cfg.VMRUN, strings.Join(args, " "))
 	}
-
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd.Stdout, cmd.Stderr = &stdout, &stderr
-
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	err := cmd.Run()
 	if err != nil {
 		if ee, ok := err.(*exec.Error); ok && ee == exec.ErrNotFound {
 			err = ErrVMRUNNotFound
 		}
 	}
-
 	return stdout.String(), stderr.String(), err
 }
 

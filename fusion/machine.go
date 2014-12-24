@@ -102,7 +102,7 @@ func (m *Machine) Stop() error {
 
 // Poweroff forcefully stops the machine. State is lost and might corrupt the disk image.
 func (m *Machine) Poweroff() error {
-	vmrun("stop", m.VMX, "nogui")
+	vmrun("stop", m.VMX, "nogui hard")
 	return nil
 }
 
@@ -125,7 +125,7 @@ func (m *Machine) GetName() string {
 
 // Get vm hostname
 func (m *Machine) GetHostname() string {
-	stdout, _, _ := vmrun("getGuestIPAddress", m.VMX)
+	stdout, _, _ := vmrunOutErr("getGuestIPAddress", m.VMX)
 	return strings.TrimSpace(stdout)
 }
 
@@ -161,7 +161,7 @@ func (m *Machine) Modify() error {
 	return m.Refresh()
 }
 
-// AddNATPF adds a NAT port forarding rule to the n-th NIC with the given name.
+// AddNATPF adds a NAT port forwarding rule to the n-th NIC with the given name.
 func (m *Machine) AddNATPF(n int, name string, rule driver.PFRule) error {
 	fmt.Println("Add NAT PF")
 	return nil
@@ -200,13 +200,13 @@ func (m *Machine) AttachStorage(ctlName string, medium driver.StorageMedium) err
 // GetMachine finds a machine.
 func GetMachine(vmx string) (*Machine, error) {
 	if _, err := os.Stat(vmx); os.IsNotExist(err) {
-		return nil, ErrMachineNotExist
+		return nil, driver.ErrMachineNotExist
 	}
 
 	m := &Machine{VMX: vmx, State: driver.Poweroff}
 
 	// VMRUN only tells use if the vm is running or not
-	if stdout, _, _ := vmrun("list"); strings.Contains(stdout, m.VMX) {
+	if stdout, _, _ := vmrunOutErr("list"); strings.Contains(stdout, m.VMX) {
 		m.State = driver.Running
 	}
 
@@ -244,7 +244,7 @@ func CreateMachine(mc *driver.MachineConfig) (*Machine, error) {
 	}
 
 	if _, err := os.Stat(getVMX(mc)); err == nil {
-		return nil, ErrMachineExist
+		return nil, driver.ErrMachineExist
 	}
 
 	// Generate vmx config file from template
