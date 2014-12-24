@@ -202,7 +202,7 @@ func getSSHCommand(m driver.Machine, args ...string) *exec.Cmd {
 		"-o", "LogLevel=quiet", // suppress "Warning: Permanently added '[localhost]:2022' (ECDSA) to the list of known hosts."
 		"-p", fmt.Sprintf("%d", m.GetSSHPort()),
 		"-i", B2D.SSHKey,
-		"docker@localhost",
+		fmt.Sprintf("docker@%s", m.GetHostname()),
 	}
 
 	sshArgs := append(DefaultSSHArgs, args...)

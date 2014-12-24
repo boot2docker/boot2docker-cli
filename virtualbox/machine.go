@@ -303,6 +303,12 @@ func (m *Machine) Delete() error {
 	return vbm("unregistervm", m.Name, "--delete")
 }
 
+// Get machine hostname
+func (m *Machine) GetHostname() string {
+	return "localhost"
+}
+
+
 // Get current state
 func (m *Machine) GetName() string {
 	return m.Name
