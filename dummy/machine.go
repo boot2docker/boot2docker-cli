@@ -49,6 +49,7 @@ func ConfigFlags(B2D *driver.MachineConfig, flags *flag.FlagSet) error {
 type Machine struct {
 	Name       string
 	UUID       string
+	Hostname   string
 	State      driver.MachineState
 	CPUs       uint
 	Memory     uint // main memory (in MB)
@@ -120,6 +121,11 @@ func (m *Machine) Reset() error {
 // Get current name
 func (m *Machine) GetName() string {
 	return m.Name
+}
+
+// Get machine hostname
+func (m *Machine) GetHostname() string {
+	return m.Hostname
 }
 
 // Get current state
