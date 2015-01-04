@@ -2,12 +2,14 @@ package fusion
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/boot2docker/boot2docker-cli/driver"
 	"github.com/ogier/pflag"
@@ -64,6 +66,7 @@ type Machine struct {
 	Memory uint64 // main memory (in MB)
 	VMX    string
 	OSType string
+	MAC1   string
 }
 
 // Refresh reloads the machine information.
@@ -125,8 +128,64 @@ func (m *Machine) GetName() string {
 
 // Get vm hostname
 func (m *Machine) GetHostname() string {
-	stdout, _, _ := vmrunOutErr("getGuestIPAddress", m.VMX)
-	return strings.TrimSpace(stdout)
+	stdout, _, err := vmrunOutErr("getGuestIPAddress", m.VMX)
+	if err == nil {
+		return strings.TrimSpace(stdout)
+	}
+	// fall back to reading last new entry in the dhcp lease file
+	name, _ := m.GetHostnameFromDhcpLease()
+	return name
+}
+
+// GetHostnameFromDhcpLease.
+func (m *Machine) GetHostnameFromDhcpLease() (string, error) {
+	// the nated interface network leases file on OSX
+	leaseFile := "/var/db/vmware/vmnet-dhcpd-vmnet8.leases"
+	if _, err := os.Stat(leaseFile); os.IsNotExist(err) {
+		return "", errors.New("Lease file does not exist")
+	}
+
+	// Parse the lease file
+	leases, err := os.Open(leaseFile)
+	if err != nil {
+		return "", err
+	}
+	defer leases.Close()
+
+	//lease 172.16.227.129 {
+	//        starts 5 2015/01/02 11:58:10;
+	//        ends 5 2015/01/02 12:28:10;
+	//        hardware ethernet 00:50:56:3b:2c:db;
+	//        uid 01:00:50:56:3b:2c:db;
+	//        client-hostname "boot2docker";
+	//}
+
+	var possibleLeaseEnd time.Time
+	var possibleIP string
+	var leaseEnd time.Time
+	var MAC string
+	// default to the possible /etc/hosts entry
+	IP := "boot2docker"
+	leasescan := bufio.NewScanner(leases)
+	for leasescan.Scan() {
+		if leasetokens := strings.Split(strings.TrimSpace(leasescan.Text()), " "); len(leasetokens) > 1 {
+			key := strings.TrimSpace(leasetokens[0])
+			switch key {
+			case "lease":
+				possibleIP = leasetokens[1]
+			case "ends":
+				possibleLeaseEnd, _ = time.Parse("2006/01/02 15:04:05", leasetokens[2]+" "+strings.TrimSuffix(leasetokens[3], ";"))
+			case "hardware":
+				MAC = strings.ToLower(strings.TrimSuffix(strings.TrimSpace(leasetokens[2]), ";"))
+				// if the MAC matches, and the end date is more recent, pick it
+				if MAC == strings.ToLower(m.MAC1) && leaseEnd.Before(possibleLeaseEnd) {
+					IP = possibleIP
+					leaseEnd = possibleLeaseEnd
+				}
+			}
+		}
+	}
+	return IP, nil
 }
 
 // Get current state
@@ -231,6 +290,8 @@ func GetMachine(vmx string) (*Machine, error) {
 				m.Memory, _ = strconv.ParseUint(vmxvalue, 10, 0)
 			case "numvcpus":
 				m.CPUs, _ = strconv.ParseUint(vmxvalue, 10, 0)
+			case "ethernet0.address":
+				m.MAC1 = vmxvalue
 			}
 		}
 	}

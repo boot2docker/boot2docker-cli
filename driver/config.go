@@ -38,6 +38,7 @@ type MachineConfig struct {
 	LowerIP     net.IP
 	UpperIP     net.IP
 	DHCPEnabled bool
+	MAC1        string
 
 	// Serial console pipe/socket
 	Serial     bool

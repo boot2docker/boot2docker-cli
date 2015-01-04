@@ -48,6 +48,7 @@ func ConfigFlags(B2D *driver.MachineConfig, flags *flag.FlagSet) error {
 // Machine information.
 type Machine struct {
 	UUID       string
+	Name       string
 	Hostname   string
 	State      driver.MachineState
 	CPUs       uint

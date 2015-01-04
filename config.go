@@ -125,6 +125,8 @@ func config() (*flag.FlagSet, error) {
 	flags.IPVar(&B2D.LowerIP, "lowerip", net.ParseIP("192.168.59.103"), "VirtualBox host-only network DHCP lower bound.")
 	flags.IPVar(&B2D.UpperIP, "upperip", net.ParseIP("192.168.59.254"), "VirtualBox host-only network DHCP upper bound.")
 
+	flags.StringVar(&B2D.MAC1, "mac1", "00:14:4F:D0:CC:EA", "Set the MAC address for the NAT based network.")
+
 	flags.IntVar(&B2D.Waittime, "waittime", 300, "Time in milliseconds to wait between port knocking retries during 'start'")
 	flags.IntVar(&B2D.Retries, "retries", 75, "number of port knocking retries during 'start'")
 
