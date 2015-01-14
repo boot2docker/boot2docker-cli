@@ -42,7 +42,6 @@ type Machine interface {
 	AttachStorage(ctlName string, medium StorageMedium) error
 	GetState() MachineState
 	GetName() string
-	GetHostname() string
 	GetSerialFile() string
 	GetDockerPort() uint
 	GetSSHPort() uint

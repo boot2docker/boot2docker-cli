@@ -308,11 +308,6 @@ func (m *Machine) GetName() string {
 	return m.Name
 }
 
-// Get machine hostname
-func (m *Machine) GetHostname() string {
-	return "localhost"
-}
-
 // Get current state
 func (m *Machine) GetState() driver.MachineState {
 	return m.State
