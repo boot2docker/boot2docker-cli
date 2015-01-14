@@ -1,3 +1,11 @@
+# Pending Deprecation
+
+This project is officially in bug fixing/maintenance mode in favor of all
+concerted effort going towards [Docker
+Machine](https://github.com/docker/machine) instead.  Merging of complex
+features will require some pretty strong convincing as to why they should exist
+here, and not instead be proposed for Docker Machine.
+
 # boot2docker command line management tool
 
 This tool downloads the boot2docker ISO image, creates a VirtualBox virtual
