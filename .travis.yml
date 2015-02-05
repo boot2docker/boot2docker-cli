@@ -1,21 +1,19 @@
 language: go
 
-# this should be exactly the same as what's in the Dockerfile
-go: 1.3
+go:
+    - 1.4.1
+    - 1.3.3
 
 # let us have pretty experimental Docker-based Travis workers
 sudo: false
 
 env:
-    - _GOOS=linux _GOARCH=amd64
-    - _GOOS=darwin _GOARCH=amd64
-    - _GOOS=windows _GOARCH=amd64
+    - GIMME_OS=linux GIMME_ARCH=amd64
+    - GIMME_OS=darwin GIMME_ARCH=amd64
+    - GIMME_OS=windows GIMME_ARCH=amd64
 
 install:
     - env | sort
-    - gvm cross "$_GOOS" "$_GOARCH"
-    - export GOOS="$_GOOS" GOARCH="$_GOARCH"
-    - go env
     - go get -d -v ./...
 
 script:
