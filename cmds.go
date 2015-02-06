@@ -576,12 +576,11 @@ func cmdDownload() error {
 		host := matches[1]
 		org := matches[3]
 		repo := matches[4]
-		fmt.Printf("Latest release for %s/%s is %s\n", org, repo, tag)
 		if host == "api.github.com" {
-			url = fmt.Sprintf("https://github.com/%s/%s/releases/download/%s/boot2docker.iso", org, repo, tag)
-		} else {
-			url = fmt.Sprintf("https://%s/%s/%s/releases/download/%s/boot2docker.iso", host, org, repo, tag)
+			host = "github.com"
 		}
+		fmt.Printf("Latest release for %s/%s/%s is %s\n", host, org, repo, tag)
+		url = fmt.Sprintf("https://%s/%s/%s/releases/download/%s/boot2docker.iso", host, org, repo, tag)
 	}
 
 	fmt.Println("Downloading boot2docker ISO image...")
