@@ -52,7 +52,7 @@ var (
 	machines map[string]InitFunc
 
 	ErrNotSupported    = errors.New("driver not supported")
-	ErrMachineNotExist = errors.New("machine not exist")
+	ErrMachineNotExist = errors.New("machine does not exist (Did you run `boot2docker init`?)")
 	ErrMachineExist    = errors.New("machine already exists")
 	ErrPrerequisites   = errors.New("prerequisites for machine not satisfied (hypervisor installed?)")
 )
