@@ -133,6 +133,9 @@ func ConfigFlags(B2D *driver.MachineConfig, flags *flag.FlagSet) error {
 		shareDefault = "/Users" + shareSliceSep + "Users"
 	case "windows":
 		shareDefault = "C:\\Users" + shareSliceSep + "c/Users"
+	case "linux":
+		// This needs to be Users on the VB side since /home already exists in the VM
+		shareDefault = "/home" + shareSliceSep + "Users"
 	}
 
 	var defaultText string
