@@ -18,6 +18,10 @@ import (
 	_ "github.com/boot2docker/boot2docker-cli/virtualbox"
 )
 
+func vmNotRunningError(vmName string) error {
+	return fmt.Errorf("VM %q is not running. (Did you run `boot2docker up`?)", vmName)
+}
+
 // Initialize the boot2docker VM from scratch.
 func cmdInit() error {
 	B2D.Init = false
@@ -165,7 +169,7 @@ func cmdShellInit() error {
 	}
 
 	if m.GetState() != driver.Running {
-		return fmt.Errorf("VM %q is not running.", B2D.VM)
+		return vmNotRunningError(B2D.VM)
 	}
 
 	socket, err := RequestSocketFromSSH(m)
@@ -506,7 +510,7 @@ func cmdSSH() error {
 	}
 
 	if m.GetState() != driver.Running {
-		return fmt.Errorf("VM %q is not running.", B2D.VM)
+		return vmNotRunningError(B2D.VM)
 	}
 
 	// find the ssh cmd string and then pass any remaining strings to ssh
@@ -530,7 +534,7 @@ func cmdIP() error {
 	}
 
 	if m.GetState() != driver.Running {
-		return fmt.Errorf("VM %q is not running.", B2D.VM)
+		return vmNotRunningError(B2D.VM)
 	}
 
 	IP := ""
