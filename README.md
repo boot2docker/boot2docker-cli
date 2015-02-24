@@ -54,7 +54,7 @@ and `make` installed.
 
 ### Install from source
 
-You need to have the [Go compiler (v1.3 or higher)](http://golang.org) installed, and `$GOPATH`
+You need to have the [Go compiler (v1.4 or higher)](http://golang.org) installed, and `$GOPATH`
 [properly setup](http://golang.org/doc/code.html#GOPATH). Then run
 
     go get github.com/boot2docker/boot2docker-cli
@@ -77,7 +77,7 @@ You can cross compile to OS X, Windows, and Linux. For that you need to first
 [make your Go compiler ready for cross compiling to the target
 platforms](http://stackoverflow.com/questions/12168873/cross-compile-go-on-osx).
 
-Please make sure you build with golang v1.3 or later - it is required for 
+Please make sure you build with golang v1.4 or later - it is required for 
 `boot2docker download` to work on OS X.
 
 We provide a Makefile to make the process a bit easier.
