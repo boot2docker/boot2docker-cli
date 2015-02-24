@@ -18,8 +18,8 @@ import (
 func init() {
 	if runtime.GOOS == "darwin" {
 		// remove DYLD_LIBRARY_PATH and LD_LIBRARY_PATH as they break VBoxManage on OSX
-		os.Setenv("DYLD_LIBRARY_PATH", "")
-		os.Setenv("LD_LIBRARY_PATH", "")
+		os.Unsetenv("DYLD_LIBRARY_PATH")
+		os.Unsetenv("LD_LIBRARY_PATH")
 	}
 }
 
