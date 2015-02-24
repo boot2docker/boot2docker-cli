@@ -166,6 +166,9 @@ DiskSize = 20000
 # VM memory size in MB
 Memory = 2048
 
+# Number of CPUs
+CPUs = 1
+
 # host port forwarding to port 22 in the VM
 SSHPort = 2022
 

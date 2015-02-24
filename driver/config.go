@@ -26,6 +26,7 @@ type MachineConfig struct {
 	ISO                  string // boot2docker ISO image path
 	DiskSize             uint   // VM disk image size (MB)
 	Memory               uint   // VM memory size (MB)
+	CPUs                 uint   // Number of CPUs
 
 	// NAT network: port forwarding
 	SSHPort    uint16 // host SSH port (forward to port 22 in VM)
