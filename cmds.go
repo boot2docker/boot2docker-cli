@@ -198,21 +198,14 @@ func checkEnvironment(socket, certPath string) bool {
 }
 
 func printExport(socket, certPath string) {
-	for name, value := range exports(socket, certPath) {
-		switch filepath.Base(os.Getenv("SHELL")) {
-		case "fish":
-			if value == "" {
-				fmt.Printf("    set -e %s\n", name)
-			} else {
-				fmt.Printf("    set -x %s %s\n", name, value)
-			}
-		default: // default command to export variables POSIX shells, like bash, zsh, etc.
-			if value == "" {
-				fmt.Printf("    unset %s\n", name)
-			} else {
-				fmt.Printf("    export %s=%s\n", name, value)
-			}
-		}
+	env := exports(socket, certPath)
+	switch filepath.Base(os.Getenv("SHELL")) {
+	case "fish":
+		fmt.Printf("set -x DOCKER_TLS_VERIFY %s\nset -x DOCKER_CERT_PATH %s\nset -x DOCKER_HOST %s\n",
+			env["DOCKER_TLS_VERIFY"], strings.Replace(env["DOCKER_CERT_PATH"], ` `, `\ `, -1), env["DOCKER_HOST"])
+	default:
+		fmt.Printf("export DOCKER_TLS_VERIFY=%s DOCKER_CERT_PATH=%s DOCKER_HOST=%s\n",
+			env["DOCKER_TLS_VERIFY"], strings.Replace(env["DOCKER_CERT_PATH"], ` `, `\ `, -1), env["DOCKER_HOST"])
 	}
 }
 
@@ -225,7 +218,7 @@ func exports(socket, certPath string) map[string]string {
 	if certPath == "" {
 		out["DOCKER_TLS_VERIFY"] = ""
 	} else {
-		out["DOCKER_TLS_VERIFY"] = "1"
+		out["DOCKER_TLS_VERIFY"] = "yes"
 	}
 
 	return out
