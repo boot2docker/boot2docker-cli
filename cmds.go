@@ -237,21 +237,21 @@ func exports(socket, certPath string) map[string]string {
 			ip := matches[1]
 
 			//first check for an existing lower case no_proxy var
-			no_proxy_var := "no_proxy"
-			no_proxy_value := os.Getenv("no_proxy")
 			//otherweise try allcaps HTTP_PROXY
-			if no_proxy_value == "" {
-				no_proxy_var = "NO_PROXY"
-				no_proxy_value = os.Getenv("NO_PROXY")
+			name := "no_proxy"
+			val := os.Getenv("no_proxy")
+			if val == "" {
+				name = "NO_PROXY"
+				val = os.Getenv("NO_PROXY")
 			}
 
 			switch {
-			case no_proxy_value == "":
-				out[no_proxy_var] = ip
-			case strings.Contains(no_proxy_value, ip):
-				out[no_proxy_var] = no_proxy_value
+			case val == "":
+				out[name] = ip
+			case strings.Contains(val, ip):
+				out[name] = val
 			default:
-				out[no_proxy_var] = fmt.Sprintf("%s,%s", no_proxy_value, ip)
+				out[name] = fmt.Sprintf("%s,%s", val, ip)
 			}
 		}
 	}
