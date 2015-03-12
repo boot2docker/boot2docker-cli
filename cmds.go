@@ -231,7 +231,7 @@ func exports(socket, certPath string) map[string]string {
 	//if a http_proxy is set, we need to make sure the boot2docker ip
 	//is added to the NO_PROXY environment variable
 	if os.Getenv("http_proxy") != "" || os.Getenv("HTTP_PROXY") != "" {
-		//get the ip from the docket/DOCKER_HOST
+		//get the ip from socket/DOCKER_HOST
 		re := regexp.MustCompile("tcp://([^:]+):")
 		if matches := re.FindStringSubmatch(socket); len(matches) == 2 {
 			ip := matches[1]
