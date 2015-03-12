@@ -235,9 +235,6 @@ func exports(socket, certPath string) map[string]string {
 		re := regexp.MustCompile("tcp://([^:]+):")
 		if matches := re.FindStringSubmatch(socket); len(matches) == 2 {
 			ip := matches[1]
-
-			//first check for an existing lower case no_proxy var
-			//otherweise try allcaps HTTP_PROXY
 			name := "no_proxy"
 			val := os.Getenv("no_proxy")
 			if val == "" {
@@ -255,7 +252,6 @@ func exports(socket, certPath string) map[string]string {
 			}
 		}
 	}
-
 	return out
 }
 
