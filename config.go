@@ -22,11 +22,10 @@ var (
 
 func homeDir() (string, error) {
 	dir := ""
-
-	// *nix and MSYS Windows
-	if dir = os.Getenv("HOME"); dir == "" {
-		// Windows (if not running under MSYS)
+	if runtime.GOOS == "windows" {
 		dir = os.Getenv("USERPROFILE")
+	} else {
+		dir = os.Getenv("HOME")
 	}
 	if _, err := os.Stat(dir); err != nil {
 		return "", err
