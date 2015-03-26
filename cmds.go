@@ -138,23 +138,17 @@ func cmdUp() error {
 		// These errors are not fatal
 		fmt.Fprintf(os.Stderr, "Warning: error copying certificates: %s\n", err)
 	}
-	switch runtime.GOOS {
-	case "windows":
-		fmt.Printf("Docker client does not run on Windows for now. Please use\n")
-		fmt.Printf("    \"%s\" ssh\n", os.Args[0])
-		fmt.Printf("to SSH into the VM instead.\n")
-	default:
-		if socket == "" {
-			fmt.Fprintf(os.Stderr, "Auto detection of the VM's Docker socket failed.\n")
-			fmt.Fprintf(os.Stderr, "Please run `boot2docker -v up` to diagnose.\n")
+
+	if socket == "" {
+		fmt.Fprintf(os.Stderr, "Auto detection of the VM's Docker socket failed.\n")
+		fmt.Fprintf(os.Stderr, "Please run `boot2docker -v up` to diagnose.\n")
+	} else {
+		// Check if $DOCKER_* ENV vars are properly configured.
+		if !checkEnvironment(socket, certPath) {
+			fmt.Printf("\nTo connect the Docker client to the Docker daemon, please set:\n")
+			printExport(socket, certPath)
 		} else {
-			// Check if $DOCKER_* ENV vars are properly configured.
-			if !checkEnvironment(socket, certPath) {
-				fmt.Printf("\nTo connect the Docker client to the Docker daemon, please set:\n")
-				printExport(socket, certPath)
-			} else {
-				fmt.Printf("Your environment variables are already set correctly.\n")
-			}
+			fmt.Printf("Your environment variables are already set correctly.\n")
 		}
 	}
 	fmt.Printf("\n")
@@ -189,6 +183,7 @@ func cmdShellInit() error {
 
 func checkEnvironment(socket, certPath string) bool {
 	for name, value := range exports(socket, certPath) {
+		value = strings.Trim(value, `"'`) // remove surrounding quotes
 		if os.Getenv(name) != value {
 			return false
 		}
@@ -198,7 +193,20 @@ func checkEnvironment(socket, certPath string) bool {
 }
 
 func printExport(socket, certPath string) {
-	for name, value := range exports(socket, certPath) {
+	values := exports(socket, certPath)
+	if runtime.GOOS == "windows" && !isUnixShellOnWindows() {
+		printExportWindows(values)
+	} else {
+		printExportUnix(values)
+	}
+}
+
+func isUnixShellOnWindows() bool {
+	return os.Getenv("TERM") != ""
+}
+
+func printExportUnix(values map[string]string) {
+	for name, value := range values {
 		switch filepath.Base(os.Getenv("SHELL")) {
 		case "fish":
 			if value == "" {
@@ -216,11 +224,45 @@ func printExport(socket, certPath string) {
 	}
 }
 
+func printExportWindows(values map[string]string) {
+	// Print cmd.exe instructions to stderr
+	fmt.Fprintln(os.Stderr, "If you are running inside Windows Command Prompt (cmd.exe), copy and paste the")
+	fmt.Fprintln(os.Stderr, "following commands to your terminal to set the environment variables:")
+	for name, value := range values {
+		if value == "" {
+			fmt.Fprintf(os.Stderr, "    set %s=\n", name)
+		} else {
+			fmt.Fprintf(os.Stderr, "    set %s=%s\n", name, value)
+		}
+	}
+	fmt.Fprintln(os.Stderr, "")
+	// Print powershell instructions to stderr
+	fmt.Fprintln(os.Stderr, "If you are running inside PowerShell, copy or paste the following commands")
+	fmt.Fprintln(os.Stderr, `to your shell or run "boot2docker shellinit | Invoke-Expression" to set the`)
+	fmt.Fprintln(os.Stderr, "environment variables:")
+
+	// Print powershell exports to stdout
+	for name, value := range values {
+		if value == "" {
+			fmt.Printf("    Remove-Item Env:\\%s\n", name)
+		} else {
+			fmt.Printf("    $Env:%s = \"%s\"\n", name, value)
+		}
+	}
+}
+
 func exports(socket, certPath string) map[string]string {
 	out := make(map[string]string)
 
 	out["DOCKER_HOST"] = socket
 	out["DOCKER_CERT_PATH"] = certPath
+
+	if runtime.GOOS == "windows" && isUnixShellOnWindows() {
+		// Surround Windows-style paths with single quotes in exported path otherwise
+		// bash swallows the backslashes in export statements like:
+		//   export DOCKER_CERT_PATH=C:\Users\ahmet\.boot2docker\certs\boot2docker-vm
+		out["DOCKER_CERT_PATH"] = fmt.Sprintf("'%s'", out["DOCKER_CERT_PATH"])
+	}
 
 	if certPath == "" {
 		out["DOCKER_TLS_VERIFY"] = ""
