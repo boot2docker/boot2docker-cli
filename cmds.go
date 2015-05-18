@@ -176,7 +176,13 @@ func cmdShellInit() error {
 		// These errors are not fatal
 		fmt.Fprintf(os.Stderr, "Warning: error copying certificates: %s\n", err)
 	}
-	printExport(socket, certPath)
+
+	// Check if $DOCKER_* ENV vars are properly configured.
+	if !checkEnvironment(socket, certPath) {
+		printExport(socket, certPath)
+	} else {
+		fmt.Fprintf(os.Stderr, "Your environment variables are already set correctly.\n")
+	}
 
 	return nil
 }
