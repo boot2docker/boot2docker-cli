@@ -147,6 +147,7 @@ func cmdUp() error {
 		if !checkEnvironment(socket, certPath) {
 			fmt.Printf("\nTo connect the Docker client to the Docker daemon, please set:\n")
 			printExport(socket, certPath)
+			fmt.Printf("\nOr run: `eval \"$(boot2docker shellinit)\"`\n")
 		} else {
 			fmt.Printf("Your environment variables are already set correctly.\n")
 		}
