@@ -66,6 +66,8 @@ func cmdInit() error {
 	if err != nil {
 		return fmt.Errorf("Failed to initialize machine %q: %s", B2D.VM, err)
 	}
+	fmt.Printf("Initialization of virtual machine %q complete.\n", B2D.VM)
+	fmt.Printf("Use `boot2docker up` to start it.\n")
 	return nil
 }
 
