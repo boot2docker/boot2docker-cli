@@ -658,7 +658,7 @@ func (m *Machine) Modify() error {
 		"--cpuhotplug", m.Flag.Get(F_cpuhotplug),
 		"--pae", m.Flag.Get(F_pae),
 		"--longmode", m.Flag.Get(F_longmode),
-		"--synthcpu", m.Flag.Get(F_synthcpu),
+		//"--synthcpu", m.Flag.Get(F_synthcpu),
 		"--hpet", m.Flag.Get(F_hpet),
 		"--hwvirtex", m.Flag.Get(F_hwvirtex),
 		"--triplefaultreset", m.Flag.Get(F_triplefaultreset),
