@@ -690,13 +690,13 @@ func (m *Machine) Modify() error {
 
 // AddNATPF adds a NAT port forarding rule to the n-th NIC with the given name.
 func (m *Machine) AddNATPF(n int, name string, rule driver.PFRule) error {
-	return vbm("controlvm", m.Name, fmt.Sprintf("natpf%d", n),
+	return vbm("modifyvm", m.Name, fmt.Sprintf("--natpf%d", n),
 		fmt.Sprintf("%s,%s", name, rule.Format()))
 }
 
 // DelNATPF deletes the NAT port forwarding rule with the given name from the n-th NIC.
 func (m *Machine) DelNATPF(n int, name string) error {
-	return vbm("controlvm", m.Name, fmt.Sprintf("natpf%d", n), "delete", name)
+	return vbm("modifyvm", m.Name, fmt.Sprintf("--natpf%d", n), "delete", name)
 }
 
 // SetNIC set the n-th NIC.
