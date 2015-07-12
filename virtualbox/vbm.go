@@ -3,6 +3,7 @@ package virtualbox
 import (
 	"bytes"
 	"errors"
+    "fmt"
 	"io"
 	"log"
 	"os"
@@ -99,6 +100,11 @@ func getHostOnlyNetworkInterface(mc *driver.MachineConfig) (string, error) {
 
 	for _, n := range nets {
 		if dhcp, ok := dhcps[n.NetworkName]; ok {
+            fmt.Printf("IPv4 / DHCP IP: %s == %s\n", dhcp.IPv4.IP, mc.DHCPIP)
+            fmt.Printf("IPv4 netmask: %s == %s\n", dhcp.IPv4.Mask, mc.NetMask)
+            fmt.Printf("DHCP lower bound: %s == %s\n", dhcp.LowerIP, mc.LowerIP)
+            fmt.Printf("DHCP upper bound: %s == %s\n", dhcp.UpperIP, mc.UpperIP)
+            fmt.Printf("DHCP enabled: %s == %s\n", dhcp.Enabled, mc.DHCPEnabled)
 			if dhcp.IPv4.IP.Equal(mc.DHCPIP) &&
 				dhcp.IPv4.Mask.String() == mc.NetMask.String() &&
 				dhcp.LowerIP.Equal(mc.LowerIP) &&
