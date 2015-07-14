@@ -28,7 +28,6 @@ const (
 	F_cpuhotplug
 	F_pae
 	F_longmode
-	F_synthcpu
 	F_hpet
 	F_hwvirtex
 	F_triplefaultreset
@@ -658,7 +657,6 @@ func (m *Machine) Modify() error {
 		"--cpuhotplug", m.Flag.Get(F_cpuhotplug),
 		"--pae", m.Flag.Get(F_pae),
 		"--longmode", m.Flag.Get(F_longmode),
-		"--synthcpu", m.Flag.Get(F_synthcpu),
 		"--hpet", m.Flag.Get(F_hpet),
 		"--hwvirtex", m.Flag.Get(F_hwvirtex),
 		"--triplefaultreset", m.Flag.Get(F_triplefaultreset),
@@ -690,7 +688,7 @@ func (m *Machine) Modify() error {
 
 // AddNATPF adds a NAT port forarding rule to the n-th NIC with the given name.
 func (m *Machine) AddNATPF(n int, name string, rule driver.PFRule) error {
-	return vbm("controlvm", m.Name, fmt.Sprintf("natpf%d", n),
+	return vbm("modifyvm", m.Name, fmt.Sprintf("--natpf%d", n),
 		fmt.Sprintf("%s,%s", name, rule.Format()))
 }
 
