@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 // The following vars will be injected during the build process.
@@ -20,6 +21,8 @@ func (e unknownCommandError) Error() string {
 }
 
 func main() {
+	fmt.Fprintf(os.Stderr, "\n  WARNING: the %q command is officially deprecated.\n    Please switch to Docker Machine (https://docs.docker.com/machine/)\n    as soon as possible.\n\n", filepath.Base(os.Args[0]))
+
 	// os.Exit will terminate the program at the place of call without running
 	// any deferred cleanup statements. It might cause unintended effects. To
 	// be safe, we wrap the program in run() and only os.Exit() outside the

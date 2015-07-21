@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -357,16 +356,6 @@ func cmdPoweroff() error {
 
 // Upgrade the boot2docker ISO - preserving server state
 func cmdUpgrade() error {
-	if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
-		if B2D.Clobber {
-			err := upgradeDockerClientBinary()
-			if err != nil {
-				return err
-			}
-		} else {
-			fmt.Println("Skipping client binary download, use --clobber=true to enable...")
-		}
-	}
 	if err := upgradeBoot2DockerBinary(); err != nil {
 		return fmt.Errorf("Error upgrading boot2docker binary: %s", err)
 	}
@@ -417,46 +406,6 @@ func upgradeBoot2DockerBinary() error {
 	binaryUrl := fmt.Sprintf("%s/%s/boot2docker-%s-%s-%s%s", baseUrl, latestVersion, latestVersion, goos, arch, ext)
 	currentBoot2DockerVersion := Version
 	if err := attemptUpgrade(binaryUrl, "boot2docker", latestVersion, currentBoot2DockerVersion); err != nil {
-		return fmt.Errorf("Error attempting upgrade: %s", err)
-	}
-	return nil
-}
-
-func upgradeDockerClientBinary() error {
-	var (
-		clientOs, clientArch string
-	)
-	resp, err := http.Get("https://get.docker.com/latest")
-	if err != nil {
-		return fmt.Errorf("Error checking the latest version of Docker: %s", err)
-	}
-	defer resp.Body.Close()
-	latestVersionBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("Error reading response body on latest version of Docker call: %s", err)
-	}
-	latestVersion := strings.TrimSpace(string(latestVersionBytes))
-	localClientVersion, err := getLocalClientVersion()
-	if err != nil {
-		return fmt.Errorf("Error getting local Docker client version: %s", err)
-	}
-	switch runtime.GOARCH {
-	case "amd64":
-		clientArch = "x86_64"
-	default:
-		return fmt.Errorf("Architecture not supported")
-	}
-
-	switch runtime.GOOS {
-	case "darwin":
-		clientOs = "Darwin"
-	case "linux":
-		clientOs = "Linux"
-	default:
-		return fmt.Errorf("Operating system not supported")
-	}
-	binaryUrl := fmt.Sprintf("https://get.docker.com/builds/%s/%s/docker-latest", clientOs, clientArch)
-	if err := attemptUpgrade(binaryUrl, "docker", latestVersion, localClientVersion); err != nil {
 		return fmt.Errorf("Error attempting upgrade: %s", err)
 	}
 	return nil

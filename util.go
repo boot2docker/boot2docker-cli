@@ -110,8 +110,12 @@ func getLatestReleaseName(url string) (string, error) {
 	defer rsp.Body.Close()
 
 	var t []struct {
-		Name    string `json:"name"`
-		TagName string `json:"tag_name"`
+		// ".../tags" endpoints
+		Name string `json:"name"`
+
+		// ".../releases" endpoints
+		TagName    string `json:"tag_name"`
+		Prerelease bool   `json:"prerelease"`
 	}
 	body, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {
@@ -129,19 +133,25 @@ func getLatestReleaseName(url string) (string, error) {
 		return "", fmt.Errorf("Error getting releases: %s\n see %s", e.Message, e.DocumentationUrl)
 	}
 	if len(t) == 0 {
-		return "", fmt.Errorf("no releases found")
+		return "", fmt.Errorf("no releases found at %q", url)
 	}
 
 	// Looking up by tag instead of release.
 	// Github API call for docker releases yields nothing,
 	// so we use tags API call in this case.
-	name := ""
 	if strings.Contains(url, "tags") {
-		name = t[0].Name
-	} else {
-		name = t[0].TagName
+		return t[0].Name, nil
 	}
-	return name, nil
+
+	for _, rel := range t {
+		if rel.Prerelease {
+			// skip "pre-releases" (RCs, etc) entirely
+			continue
+		}
+		return rel.TagName, nil
+	}
+
+	return "", fmt.Errorf("no non-prerelease releases found at %q", url)
 }
 
 func getLocalClientVersion() (string, error) {

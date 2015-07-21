@@ -1,10 +1,6 @@
-# Pending Deprecation
+# Deprecated
 
-This project is officially in bug fixing/maintenance mode in favor of all
-concerted effort going towards [Docker
-Machine](https://github.com/docker/machine) instead.  Merging of complex
-features will require some pretty strong convincing as to why they should exist
-here, and not instead be proposed for Docker Machine.
+This project is officially deprecated in favor of [Docker Machine](https://docs.docker.com/machine/).  The code and documentation here only exist as a reference for users who have not yet switched over (but please do soon).
 
 # boot2docker command line management tool
 
