@@ -31,7 +31,7 @@ func read(addr string, n int, wait time.Duration) error {
 	var lastErr error
 	for i := 0; i < n; i++ {
 		if B2D.Verbose {
-			fmt.Printf("Connecting to tcp://%v (attempt #%d)", addr, i)
+			fmt.Printf("Connecting to tcp://%v (attempt #%d)\n", addr, i)
 		}
 		conn, err := net.DialTimeout("tcp", addr, 1*time.Second)
 		if err != nil {
