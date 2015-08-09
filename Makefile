@@ -12,14 +12,13 @@ default: dockerbuild
 	@true # stop from matching "%" later
 
 
-# Build binaries in Docker container. The `|| true` hack is a temporary fix for
-# https://github.com/dotcloud/docker/issues/3986
+# Build binaries in Docker container.
 dockerbuild: clean
 	docker build -t "$(DOCKER_IMAGE)" .
 	docker run --name "$(DOCKER_CONTAINER)" "$(DOCKER_IMAGE)" 
-	docker cp "$(DOCKER_CONTAINER)":"$(DOCKER_SRC_PATH)"/$(PREFIX)-$(VERSION)-darwin-$(GOARCH) . || true
-	docker cp "$(DOCKER_CONTAINER)":"$(DOCKER_SRC_PATH)"/$(PREFIX)-$(VERSION)-linux-$(GOARCH) . || true
-	docker cp "$(DOCKER_CONTAINER)":"$(DOCKER_SRC_PATH)"/$(PREFIX)-$(VERSION)-windows-$(GOARCH).exe . || true
+	docker cp "$(DOCKER_CONTAINER)":"$(DOCKER_SRC_PATH)"/$(PREFIX)-$(VERSION)-darwin-$(GOARCH) .
+	docker cp "$(DOCKER_CONTAINER)":"$(DOCKER_SRC_PATH)"/$(PREFIX)-$(VERSION)-linux-$(GOARCH) .
+	docker cp "$(DOCKER_CONTAINER)":"$(DOCKER_SRC_PATH)"/$(PREFIX)-$(VERSION)-windows-$(GOARCH).exe .
 	docker rm "$(DOCKER_CONTAINER)"
 
 
