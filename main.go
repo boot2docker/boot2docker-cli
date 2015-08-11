@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 )
 
@@ -9,6 +11,16 @@ import (
 var (
 	Version string
 	GitSHA  string
+)
+
+const (
+	hardcodedWarning = `
+        WARNING: The 'boot2docker' command line interface is being officially deprecated.
+	Users are expected to switch to Docker Machine (https://docs.docker.com/machine/) instead ASAP.
+	The Docker Toolbox is the recommended way to install it: https://docker.com/toolbox/
+
+`
+	warningURL = "https://raw.githubusercontent.com/boot2docker/boot2docker-cli/master/DEPRECATION_WARNING"
 )
 
 type unknownCommandError struct {
@@ -48,8 +60,10 @@ func run() error {
 	case "config", "cfg":
 		return cmdConfig()
 	case "init":
+		printDeprecationWarning()
 		return cmdInit()
 	case "up", "start", "boot", "resume":
+		printDeprecationWarning()
 		return cmdUp()
 	case "save", "suspend":
 		return cmdSave()
@@ -87,4 +101,28 @@ func run() error {
 	default:
 		return unknownCommandError{cmd: cmd}
 	}
+}
+
+func printDeprecationWarning() {
+	var (
+		warning string
+	)
+
+	// Try to get the warning from the Github raw URL.  If there's any
+	// failure along the way, e.g. network, just fall back to the default
+	// warning hardcoded in the source.
+	resp, err := http.Get(warningURL)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		warning = hardcodedWarning
+	} else {
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			warning = hardcodedWarning
+		} else {
+			warning = string(body)
+		}
+	}
+
+	fmt.Fprintln(os.Stderr, warning)
 }
