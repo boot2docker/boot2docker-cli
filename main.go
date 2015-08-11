@@ -15,10 +15,11 @@ var (
 
 const (
 	hardcodedWarning = `
-        WARNING: The 'boot2docker' command line interface is being officially deprecated.
-	Users are expected to switch to Docker Machine (https://docs.docker.com/machine/) instead ASAP.
-	The Docker Toolbox is the recommended way to install it: https://docker.com/toolbox/
+  WARNING: The 'boot2docker' command line interface is officially deprecated.
 
+  Please switch to Docker Machine (https://docs.docker.com/machine/) ASAP.
+
+  Docker Toolbox (https://docker.com/toolbox) is the recommended install method.
 `
 	warningURL = "https://raw.githubusercontent.com/boot2docker/boot2docker-cli/master/DEPRECATION_WARNING"
 )
@@ -55,13 +56,11 @@ func run() error {
 	}
 
 	switch cmd := flags.Arg(0); cmd {
-	case "download":
-		return cmdDownload()
+	case "download", "upgrade", "init":
+		printDeprecationWarning()
+		return cmdNotSupported(cmd)
 	case "config", "cfg":
 		return cmdConfig()
-	case "init":
-		printDeprecationWarning()
-		return cmdInit()
 	case "up", "start", "boot", "resume":
 		printDeprecationWarning()
 		return cmdUp()
@@ -87,8 +86,6 @@ func run() error {
 		return cmdSSH()
 	case "ip":
 		return cmdIP()
-	case "upgrade":
-		return cmdUpgrade()
 	case "version":
 		// Version is now printed by the call to config()
 		return nil
