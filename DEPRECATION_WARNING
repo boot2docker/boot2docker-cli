@@ -1,0 +1,6 @@
+
+  WARNING: The 'boot2docker' command line interface is officially deprecated.
+
+  Please switch to Docker Machine (https://docs.docker.com/machine/) ASAP.
+
+  Docker Toolbox (https://docker.com/toolbox) is the recommended install method.
