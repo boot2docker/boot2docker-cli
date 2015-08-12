@@ -15,10 +15,11 @@ var (
 
 const (
 	hardcodedWarning = `
-        WARNING: The 'boot2docker' command line interface is being officially deprecated.
-	Users are expected to switch to Docker Machine (https://docs.docker.com/machine/) instead ASAP.
-	The Docker Toolbox is the recommended way to install it: https://docker.com/toolbox/
+  WARNING: The 'boot2docker' command line interface is officially deprecated.
 
+  Please switch to Docker Machine (https://docs.docker.com/machine/) ASAP.
+
+  Docker Toolbox (https://docker.com/toolbox) is the recommended install method.
 `
 	warningURL = "https://raw.githubusercontent.com/boot2docker/boot2docker-cli/master/DEPRECATION_WARNING"
 )
