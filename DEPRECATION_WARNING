@@ -1,5 +1,6 @@
 
-  WARNING: The 'boot2docker' command line interface is officially deprecated.
+  WARNING: The 'boot2docker' command line interface (not to be confused with
+  'boot2docker' the operating system) is officially deprecated.
 
   Please switch to Docker Machine (https://docs.docker.com/machine/) ASAP.
 
