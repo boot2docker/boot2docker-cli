@@ -214,22 +214,27 @@ func isUnixShellOnWindows() bool {
 }
 
 func printExportUnix(values map[string]string) {
+	var exports []string
+	var unsets []string
 	for name, value := range values {
 		switch filepath.Base(os.Getenv("SHELL")) {
 		case "fish":
 			if value == "" {
-				fmt.Printf("    set -e %s\n", name)
+				unsets = append(unsets, fmt.Sprintf("    set -e %s", name))
 			} else {
-				fmt.Printf("    set -x %s %s\n", name, value)
+				exports = append(exports, fmt.Sprintf("    set -x %s %s", name, value))
 			}
 		default: // default command to export variables POSIX shells, like bash, zsh, etc.
 			if value == "" {
-				fmt.Printf("    unset %s\n", name)
+				unsets = append(unsets, fmt.Sprintf("    unset %s", name))
 			} else {
-				fmt.Printf("    export %s=%s\n", name, value)
+				exports = append(exports, fmt.Sprintf("    export %s=%s", name, value))
 			}
 		}
 	}
+	// exports must be declared before unsets for at least bash
+	fmt.Println(strings.Join(exports, "\n"))
+	fmt.Println(strings.Join(unsets, "\n"))
 }
 
 func printExportWindows(values map[string]string) {
