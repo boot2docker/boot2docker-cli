@@ -1,0 +1,4 @@
+*.iso
+boot2docker-*
+*~
+persist.raw
