@@ -56,13 +56,11 @@ func run() error {
 	}
 
 	switch cmd := flags.Arg(0); cmd {
-	case "download":
-		return cmdDownload()
+	case "download", "upgrade", "init":
+		printDeprecationWarning()
+		return cmdNotSupported(cmd)
 	case "config", "cfg":
 		return cmdConfig()
-	case "init":
-		printDeprecationWarning()
-		return cmdInit()
 	case "up", "start", "boot", "resume":
 		printDeprecationWarning()
 		return cmdUp()
@@ -88,8 +86,6 @@ func run() error {
 		return cmdSSH()
 	case "ip":
 		return cmdIP()
-	case "upgrade":
-		return cmdUpgrade()
 	case "version":
 		// Version is now printed by the call to config()
 		return nil

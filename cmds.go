@@ -21,53 +21,8 @@ func vmNotRunningError(vmName string) error {
 	return fmt.Errorf("VM %q is not running. (Did you run `boot2docker up`?)", vmName)
 }
 
-// Initialize the boot2docker VM from scratch.
-func cmdInit() error {
-	B2D.Init = false
-	_, err := driver.GetMachine(&B2D)
-	if err == nil {
-		fmt.Printf("Virtual machine %s already exists\n", B2D.VM)
-		return nil
-	}
-
-	if _, err := os.Stat(B2D.ISO); err != nil {
-		if !os.IsNotExist(err) {
-			return fmt.Errorf("Failed to open ISO image %q: %s", B2D.ISO, err)
-		}
-
-		if err := cmdDownload(); err != nil {
-			return err
-		}
-	}
-
-	if _, err := os.Stat(B2D.SSHKey); err != nil {
-		if !os.IsNotExist(err) {
-			return fmt.Errorf("Something wrong with SSH Key file %q: %s", B2D.SSHKey, err)
-		}
-
-		cmd := exec.Command(B2D.SSHGen, "-t", "rsa", "-N", "", "-f", B2D.SSHKey)
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if B2D.Verbose {
-			cmd.Stderr = os.Stderr
-			fmt.Printf("executing: %v %v\n", cmd.Path, strings.Join(cmd.Args, " "))
-		}
-
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("Error generating new SSH Key into %s: %s", B2D.SSHKey, err)
-		}
-	}
-	//TODO: print a ~/.ssh/config entry for our b2d connection that the user can c&p
-
-	B2D.Init = true
-	_, err = driver.GetMachine(&B2D)
-	if err != nil {
-		return fmt.Errorf("Failed to initialize machine %q: %s", B2D.VM, err)
-	}
-	fmt.Printf("Initialization of virtual machine %q complete.\n", B2D.VM)
-	fmt.Printf("Use `boot2docker up` to start it.\n")
-	return nil
+func cmdNotSupported(cmd string) error {
+	return fmt.Errorf("Sorry, command %q is no longer supported.", cmd)
 }
 
 // Bring up the VM from all possible states.
@@ -355,24 +310,6 @@ func cmdPoweroff() error {
 }
 
 // Upgrade the boot2docker ISO - preserving server state
-func cmdUpgrade() error {
-	if err := upgradeBoot2DockerBinary(); err != nil {
-		return fmt.Errorf("Error upgrading boot2docker binary: %s", err)
-	}
-	m, err := driver.GetMachine(&B2D)
-	if err == nil {
-		if m.GetState() == driver.Running || m.GetState() == driver.Saved || m.GetState() == driver.Paused {
-			// Windows won't let us move the ISO aside while it's in use
-			if err = cmdStop(); err == nil {
-				if err = cmdDownload(); err == nil {
-					err = cmdUp()
-				}
-			}
-			return err
-		}
-	}
-	return cmdDownload()
-}
 
 func upgradeBoot2DockerBinary() error {
 	var (
@@ -585,36 +522,5 @@ func cmdIP() error {
 		fmt.Fprintf(os.Stderr, "\nFailed to get VM Host only IP address.\n")
 		fmt.Fprintf(os.Stderr, "\tWas the VM initialized using boot2docker?\n")
 	}
-	return nil
-}
-
-// Download the boot2docker ISO image.
-func cmdDownload() error {
-	url := B2D.ISOURL
-
-	// match github (enterprise) release urls:
-	// https://api.github.com/repos/../../relases or
-	// https://some.github.enterprise/api/v3/repos/../../relases
-	re := regexp.MustCompile("https://([^/]+)(/api/v3)?/repos/([^/]+)/([^/]+)/releases")
-	if matches := re.FindStringSubmatch(url); len(matches) == 5 {
-		tag, err := getLatestReleaseName(url)
-		if err != nil {
-			return fmt.Errorf("Failed to get latest release: %s", err)
-		}
-		host := matches[1]
-		org := matches[3]
-		repo := matches[4]
-		if host == "api.github.com" {
-			host = "github.com"
-		}
-		fmt.Printf("Latest release for %s/%s/%s is %s\n", host, org, repo, tag)
-		url = fmt.Sprintf("https://%s/%s/%s/releases/download/%s/boot2docker.iso", host, org, repo, tag)
-	}
-
-	fmt.Println("Downloading boot2docker ISO image...")
-	if err := download(B2D.ISO, url); err != nil {
-		return fmt.Errorf("Failed to download ISO image: %s", err)
-	}
-	fmt.Printf("Success: downloaded %s\n\tto %s\n", url, B2D.ISO)
 	return nil
 }
