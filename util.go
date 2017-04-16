@@ -386,3 +386,22 @@ func RequestCertsUsingSSH(m driver.Machine) (string, error) {
 	}
 	return certDir, nil
 }
+
+func RequestTLSVerifyUsingSSH(m driver.Machine) (bool, error) {
+	// without true it is hard to decide if grep or ssh caused the non 0 return
+	cmd := getSSHCommand(m, "grep tlsverify /proc/$(cat /var/run/docker.pid)/cmdline || true")
+
+	tlsVerify := false
+
+	b, err := cmd.Output()
+	if err != nil {
+		return tlsVerify, err
+	}
+	out := string(b)
+	if B2D.Verbose {
+		fmt.Printf("SSH returned: %s\nEND SSH\n", out)
+	}
+
+	tlsVerify = strings.Index(out, "--tlsverify") != -1
+	return tlsVerify, nil
+}
