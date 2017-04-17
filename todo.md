@@ -1,4 +1,4 @@
-##ToDos to replace the shell script:
+## ToDos to replace the shell script:
 
 ### Configuration
 - [X] modify standard values with enviroment variables
